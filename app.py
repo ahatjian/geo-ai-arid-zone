@@ -1,0 +1,393 @@
+"""
+Geo AI 干旱区遥感智能分析平台 — 首页入口
+版本 v0.5 — 支持 Planetary Computer 真实卫星数据
+"""
+
+import streamlit as st
+import sys
+import os
+
+sys.path.insert(0, os.path.dirname(__file__))
+
+from config import APP_TITLE, APP_ICON, STUDY_AREAS
+from utils.error_handler import StreamlitErrorBoundary
+
+# ============================================
+# 页面配置
+# ============================================
+st.set_page_config(
+    page_title=APP_TITLE,
+    page_icon=APP_ICON,
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
+
+# ============================================
+# 自定义 CSS
+# ============================================
+st.markdown("""
+<style>
+    .main-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, #1f77b4, #2ca02c);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 0.5rem;
+    }
+    .subtitle {
+        font-size: 1.1rem;
+        color: #666;
+        margin-bottom: 1.5rem;
+    }
+    .area-card {
+        padding: 1.5rem;
+        border-radius: 12px;
+        border: 1px solid #e0e0e0;
+        background: linear-gradient(135deg, #f8fbff, #f0f7f0);
+        height: 100%;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .area-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .area-name {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #1f77b4;
+        margin-bottom: 0.5rem;
+    }
+    .area-desc {
+        font-size: 0.85rem;
+        color: #555;
+        line-height: 1.5;
+    }
+    .area-tags {
+        margin-top: 0.5rem;
+    }
+    .area-tags span {
+        display: inline-block;
+        padding: 2px 8px;
+        margin: 2px;
+        border-radius: 12px;
+        background: #e8f4fd;
+        color: #1f77b4;
+        font-size: 0.75rem;
+    }
+    .nav-card {
+        padding: 1.2rem;
+        border-radius: 10px;
+        border: 1px solid #e0e0e0;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .nav-card:hover {
+        border-color: #1f77b4;
+        background: #f0f7fb;
+    }
+    .nav-icon {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+    }
+    .nav-label {
+        font-weight: 600;
+        color: #333;
+    }
+    .nav-desc {
+        font-size: 0.78rem;
+        color: #888;
+        margin-top: 0.3rem;
+    }
+    .stats-box {
+        text-align: center;
+        padding: 0.8rem;
+        background: linear-gradient(135deg, #f0f7fb, #f0f7f0);
+        border-radius: 8px;
+        margin: 0.3rem;
+    }
+    .stats-number {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: #1f77b4;
+    }
+    .stats-label {
+        font-size: 0.78rem;
+        color: #888;
+    }
+    hr.divider {
+        margin: 2rem 0;
+        border: none;
+        border-top: 1px solid #e8e8e8;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# ============================================
+# 标题区
+# ============================================
+st.markdown(f'<p class="main-title">{APP_ICON} {APP_TITLE}</p>', unsafe_allow_html=True)
+st.markdown(
+    '<p class="subtitle">免费卫星数据 + 遥感指数自动计算 = 不写代码做科研级遥感分析</p>',
+    unsafe_allow_html=True,
+)
+
+# ============================================
+# 侧边栏 - 平台信息
+# ============================================
+with st.sidebar:
+    st.title("🛰️ 平台面板")
+
+    # 快速统计
+    st.subheader("平台能力")
+    cols = st.columns(2)
+    with cols[0]:
+        st.markdown(
+            '<div class="stats-box"><div class="stats-number">6</div><div class="stats-label">预设研究区</div></div>',
+            unsafe_allow_html=True,
+        )
+    with cols[1]:
+        st.markdown(
+            '<div class="stats-box"><div class="stats-number">3</div><div class="stats-label">卫星数据源</div></div>',
+            unsafe_allow_html=True,
+        )
+
+    cols2 = st.columns(2)
+    with cols2[0]:
+        st.markdown(
+            '<div class="stats-box"><div class="stats-number">4+</div><div class="stats-label">遥感指数</div></div>',
+            unsafe_allow_html=True,
+        )
+    with cols2[1]:
+        st.markdown(
+            '<div class="stats-box"><div class="stats-number">AI</div><div class="stats-label">深度学习</div></div>',
+            unsafe_allow_html=True,
+        )
+
+    st.divider()
+
+    st.subheader("当前研究区")
+    if "selected_area" in st.session_state:
+        area = st.session_state["selected_area"]
+        st.info(f"📍 **{area}**\n\n{STUDY_AREAS[area]['description']}")
+    else:
+        st.info("👈 请在下方选择研究区")
+
+    st.divider()
+    st.caption("📡 数据源: Microsoft Planetary Computer")
+    st.caption("🧠 AI 引擎: PyTorch + geoai-py")
+    st.caption("🚀 部署: Streamlit Cloud (免费)")
+
+# ============================================
+# Tab1: 功能导航
+# ============================================
+tab_intro, tab_areas, tab_about = st.tabs(["🚀 快速开始", "🌏 研究区选择", "📖 关于平台"])
+
+with tab_intro:
+    st.subheader("选择功能模块开始分析")
+
+    col1, col2, col3, col4 = st.columns(4)
+
+    nav_items = [
+        {
+            "icon": "🗺️",
+            "label": "数据浏览",
+            "desc": "搜索卫星影像\n预览与下载",
+            "page": "1_数据浏览",
+        },
+        {
+            "icon": "💧",
+            "label": "水体监测",
+            "desc": "MNDWI/AWEIsh\n水体面积统计",
+            "page": "2_水体监测",
+        },
+        {
+            "icon": "🌿",
+            "label": "植被分析",
+            "desc": "NDVI/EVI计算\n趋势分析",
+            "page": "3_植被分析",
+        },
+        {
+            "icon": "🤖",
+            "label": "AI 分类",
+            "desc": "深度学习\n地物分割",
+            "page": "4_AI分类",
+        },
+        {
+            "icon": "🔄",
+            "label": "变化检测",
+            "desc": "双时相对比\n变化识别",
+            "page": "5_变化检测",
+        },
+        {
+            "icon": "📄",
+            "label": "报告导出",
+            "desc": "汇总结果\n生成报告",
+            "page": "6_报告导出",
+        },
+    ]
+
+    # 第一行: 4 cards
+    for i, col in enumerate([col1, col2, col3, col4]):
+        with col:
+            item = nav_items[i]
+            st.markdown(
+                f"""<div class="nav-card">
+                <div class="nav-icon">{item['icon']}</div>
+                <div class="nav-label">{item['label']}</div>
+                <div class="nav-desc">{item['desc'].replace(chr(10),'<br>')}</div>
+                </div>""",
+                unsafe_allow_html=True,
+            )
+            if st.button(f"进入 {item['label']}", key=f"nav_{i}", use_container_width=True):
+                st.switch_page(f"pages/{item['page']}.py")
+
+    # 第二行: 2 cards (居中)
+    col5, col6, _ = st.columns([1, 1, 2])
+    for j, col in enumerate([col5, col6]):
+        with col:
+            item = nav_items[4 + j]
+            st.markdown(
+                f"""<div class="nav-card">
+                <div class="nav-icon">{item['icon']}</div>
+                <div class="nav-label">{item['label']}</div>
+                <div class="nav-desc">{item['desc'].replace(chr(10),'<br>')}</div>
+                </div>""",
+                unsafe_allow_html=True,
+            )
+            if st.button(f"进入 {item['label']}", key=f"nav_{4 + j}", use_container_width=True):
+                st.switch_page(f"pages/{item['page']}.py")
+
+    st.divider()
+
+    st.subheader("🔄 工作流程")
+    st.markdown("""
+    ```
+    ① 选择研究区 → ② 搜索卫星影像 → ③ 计算遥感指数 → ④ AI/统计分析 → ⑤ 导出结果
+    ```
+    """)
+
+    st.info("💡 **提示**: 所有功能模块共享同一研究区和影像搜索结果，选择后可在各页面间自由切换。")
+
+with tab_areas:
+    st.subheader("研究区快速选择")
+
+    # 2行3列布局
+    areas = list(STUDY_AREAS.items())
+    for row_idx in range(0, len(areas), 3):
+        cols = st.columns(3)
+        for col_idx in range(3):
+            idx = row_idx + col_idx
+            if idx >= len(areas):
+                break
+            name, info = areas[idx]
+            with cols[col_idx]:
+                tags_html = " ".join(
+                    f"<span>{t}</span>" for t in info["keywords"]
+                )
+                st.markdown(
+                    f"""<div class="area-card">
+                    <div class="area-name">📍 {name}</div>
+                    <div class="area-desc">{info['description']}</div>
+                    <div class="area-tags">{tags_html}</div>
+                    </div>""",
+                    unsafe_allow_html=True,
+                )
+                if st.button(
+                    f"选择 {name}",
+                    key=f"area_{idx}",
+                    use_container_width=True,
+                ):
+                    st.session_state["selected_area"] = name
+                    st.session_state["selected_bbox"] = info["bbox"]
+                    st.session_state["selected_center"] = info["center"]
+                    st.rerun()
+
+    st.divider()
+
+    # 概览地图
+    st.subheader("研究区概览")
+    with StreamlitErrorBoundary("研究区概览地图", st=st, show_traceback=False):
+        import leafmap
+
+        m = leafmap.Map(center=[40, 90], zoom=4, height=400)
+
+        # 添加所有研究区边界
+        from shapely.geometry import box
+        import geopandas as gpd
+
+        for name, info in STUDY_AREAS.items():
+            bbox = info["bbox"]
+            bbox_geom = box(bbox[0], bbox[1], bbox[2], bbox[3])
+            gdf = gpd.GeoDataFrame(
+                {"name": [name]}, geometry=[bbox_geom], crs="EPSG:4326"
+            )
+            m.add_gdf(
+                gdf,
+                layer_name=name,
+                style={"color": "blue", "fillOpacity": 0.08, "weight": 1.5},
+            )
+
+        m.add_basemap("Esri.WorldImagery")
+        m.to_streamlit(height=400)
+
+with tab_about:
+    st.subheader("关于本平台")
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.markdown("""
+        ### 💡 核心价值
+        
+        **免费卫星数据 + AI 自动分析 = 不写代码做科研级遥感分析**
+        
+        - 🛰️ **真实卫星数据**: Sentinel-2 (10m) + Landsat-8/9 (30m)
+        - 🧮 **自动指数计算**: NDVI, EVI, MNDWI, AWEIsh 一键生成
+        - 🤖 **AI 深度学习**: UNet/DeepLabV3+ 地物分类与水體分割
+        - 📊 **专业分析**: Sen+MK 趋势分析、年际变化检测
+        - 💾 **结果导出**: GeoTIFF / CSV / PNG 标准格式
+        
+        ### 🎯 适用场景
+        - 干旱区水资源监测
+        - 绿洲植被覆盖变化
+        - 湖泊面积时序追踪
+        - 土地覆盖分类制图
+        """)
+
+    with col2:
+        st.markdown("""
+        ### 🛠️ 技术栈
+        
+        | 层级 | 技术 |
+        |------|------|
+        | 前端 | Streamlit + leafmap |
+        | 数据 | Planetary Computer STAC |
+        | 分析 | NumPy + SciPy + Rasterio |
+        | AI | PyTorch + smp |
+        | 可视化 | Plotly + Matplotlib |
+        | 部署 | Streamlit Cloud (免费) |
+        
+        ### 📡 数据源
+        
+        | 卫星 | 分辨率 | 重访周期 |
+        |------|--------|----------|
+        | Sentinel-2 | 10m | 5天 |
+        | Landsat-8 | 30m | 16天 |
+        | Landsat-9 | 30m | 16天 |
+        
+        ### 🔬 预设研究区
+        """)
+
+        for name in STUDY_AREAS:
+            st.markdown(f"- 📍 {name}")
+
+    st.divider()
+
+    st.markdown("""
+    <div style='text-align: center; color: gray; font-size: 0.85rem;'>
+        <p>Geo AI 干旱区遥感分析平台 v0.5 | Powered by Microsoft Planetary Computer</p>
+        <p>🛰️ Sentinel-2 (10m) | Landsat-8/9 (30m) | 完全免费</p>
+    </div>
+    """, unsafe_allow_html=True)

@@ -1,0 +1,30 @@
+# Streamlit Cloud 部署配置
+# 控制主题、服务器行为、性能参数
+
+[theme]
+# 干旱区地理主题 — 沙土色系
+primaryColor = "#D2691E"          # 主色调: 沙漠橙
+backgroundColor = "#FAF5EF"        # 背景: 暖米色
+secondaryBackgroundColor = "#F0E6D3"    # 卡片背景: 沙色
+textColor = "#2C1810"              # 文字: 深棕色
+font = "sans serif"
+
+[browser]
+gatherUsageStats = false
+serverAddress = "0.0.0.0"
+
+[server]
+# 流式部署设置
+maxUploadSize = 500                # 最大上传 500 MB
+maxMessageSize = 200               # 最大消息 200 MB
+enableXsrfProtection = false
+enableCORS = false
+runOnSave = false
+
+[logger]
+level = "info"
+messageFormat = "%(asctime)s %(levelname)s %(message)s"
+
+[runner]
+# 性能: 允许快速重新运行
+fastReruns = true

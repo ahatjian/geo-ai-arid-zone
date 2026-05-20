@@ -1,0 +1,8 @@
+# Streamlit Cloud 系统依赖 (apt-get)
+# GDAL/Rasterio 底层 C 库
+gdal-bin
+libgdal-dev
+libspatialindex-dev
+# OpenCV 依赖
+libgl1-mesa-glx
+libglib2.0-0
