@@ -414,10 +414,12 @@ with tab_about:
         - 💾 **结果导出**: GeoTIFF / CSV / PNG 标准格式
         
         ### 🎯 适用场景
-        - 干旱区水资源监测
-        - 绿洲植被覆盖变化
-        - 湖泊面积时序追踪
-        - 土地覆盖分类制图
+        - 干旱区水资源监测 (水体 + 干旱)
+        - 绿洲植被覆盖变化 (NDVI 时序 + 动画)
+        - 冰川/积雪消融追踪 (冰冻圈)
+        - 农业灌溉需求评估 (农业干旱)
+        - 土地覆盖分类制图 (AI 分类)
+        - 沙漠化监测与生态安全 (沙漠化 + PSR)
         """)
 
     with col2:
@@ -451,7 +453,7 @@ with tab_about:
 
     st.markdown("""
     <div style='text-align: center; color: gray; font-size: 0.85rem;'>
-        <p>Geo AI 干旱区遥感分析平台 v1.6 | Powered by Microsoft Planetary Computer</p>
+        <p>Geo AI 干旱区遥感分析平台 v1.7 | Powered by Microsoft Planetary Computer</p>
         <p>🛰️ Sentinel-2 (10m) | Landsat 4-9 (30m, 1982-至今) | 完全免费</p>
     </div>
     """, unsafe_allow_html=True)
