@@ -17,8 +17,8 @@ serverAddress = "0.0.0.0"
 # 流式部署设置
 maxUploadSize = 500                # 最大上传 500 MB
 maxMessageSize = 200               # 最大消息 200 MB
-enableXsrfProtection = false
-enableCORS = false
+enableXsrfProtection = true
+enableCORS = true
 runOnSave = false
 
 [logger]

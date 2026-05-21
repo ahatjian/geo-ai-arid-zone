@@ -11,6 +11,7 @@ from PIL import Image
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from config import STUDY_AREAS, COLLECTIONS
+from utils.error_handler import StreamlitErrorBoundary
 from utils.pc_data import search_images, get_rgb_preview_cached, download_multiband
 
 st.set_page_config(page_title="时序动画", page_icon="🎬", layout="wide")

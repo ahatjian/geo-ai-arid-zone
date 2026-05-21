@@ -90,8 +90,9 @@ def _get_api_key() -> str:
         key = st.secrets.get("DEEPSEEK_API_KEY", "")
         if key:
             return key
-    except Exception:
-        pass
+    except Exception as e:
+        import logging
+        logging.debug(f"LLM st.secrets/query error: {e}")
     # 3. 环境变量
     return os.environ.get("DEEPSEEK_API_KEY", "")
 
@@ -141,8 +142,9 @@ def query_deepseek(prompt: str, api_key: Optional[str] = None) -> Dict:
         if json_match:
             parsed = json.loads(json_match.group())
             return _validate_result(parsed)
-    except Exception:
-        pass
+    except Exception as e:
+        import logging
+        logging.debug(f"LLM st.secrets/query error: {e}")
 
     return fallback_parse(prompt)
 

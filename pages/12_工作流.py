@@ -13,6 +13,7 @@ import re
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from config import STUDY_AREAS, COLLECTIONS
+from utils.error_handler import StreamlitErrorBoundary
 from utils.pc_data import search_images, download_multiband
 
 st.set_page_config(page_title="工作流", page_icon="⚡", layout="wide")
@@ -96,7 +97,8 @@ with tab_query:
             cols = st.columns(min(3, len(matched)))
             for i, m in enumerate(matched):
                 with cols[i % 3]:
-                    score_bar = "█" * min(m["score"], 5) + "░" * max(0, 5 - m["score"])
+                    score = m.get("score", 1)
+                    score_bar = "█" * min(score, 5) + "░" * max(0, 5 - score)
                     st.markdown(f"""
                     <div style="border:1px solid #444;border-radius:8px;padding:14px;
                     background:linear-gradient(135deg, #1a1a2e, #16213e);margin-bottom:8px">

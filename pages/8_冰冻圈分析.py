@@ -18,6 +18,7 @@ from PIL import Image
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from config import STUDY_AREAS, COLLECTIONS, COLORMAPS, CACHE_CONFIG
+from utils.error_handler import StreamlitErrorBoundary
 from utils.pc_data import (
     search_images, get_rgb_preview_cached,
     download_multiband,
