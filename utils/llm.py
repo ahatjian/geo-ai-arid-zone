@@ -81,6 +81,21 @@ SYSTEM_PROMPT = """你是一个西北干旱区遥感分析助手。用户用中�
 如果没有明确研究区，默认"塔里木盆地"。如果没有明确年份，默认今年。"""
 
 
+def _get_api_key() -> str:
+    """从多个来源获取 API Key"""
+    # 1. 传入参数
+    # 2. Streamlit secrets
+    try:
+        import streamlit as st
+        key = st.secrets.get("DEEPSEEK_API_KEY", "")
+        if key:
+            return key
+    except Exception:
+        pass
+    # 3. 环境变量
+    return os.environ.get("DEEPSEEK_API_KEY", "")
+
+
 def query_deepseek(prompt: str, api_key: Optional[str] = None) -> Dict:
     """
     调用 DeepSeek API 解析自然语言查询
@@ -93,7 +108,7 @@ def query_deepseek(prompt: str, api_key: Optional[str] = None) -> Dict:
         dict: 解析结果
     """
     if api_key is None:
-        api_key = os.environ.get("DEEPSEEK_API_KEY", "")
+        api_key = _get_api_key()
 
     if not api_key:
         # 无 API Key → 降级到模板匹配
@@ -206,5 +221,4 @@ def _validate_result(result: Dict) -> Dict:
 
 def is_llm_available() -> bool:
     """检查 LLM 是否可用"""
-    key = os.environ.get("DEEPSEEK_API_KEY", "")
-    return bool(key)
+    return bool(_get_api_key())
