@@ -1,6 +1,6 @@
 """
 Geo AI 干旱区遥感智能分析平台 — 首页入口
-版本 v1.7 — 11模块: 数据→水体→植被→AI→变化→报告→干旱→冰冻圈→农业→动画→生态
+版本 v1.7 — 12模块完整链路: 从数据浏览到智能工作流
 """
 
 import streamlit as st
@@ -168,7 +168,7 @@ with st.sidebar:
     cols3 = st.columns(2)
     with cols3[0]:
         st.markdown(
-            '<div class="stats-box"><div class="stats-number">11</div><div class="stats-label">分析模块</div></div>',
+            '<div class="stats-box"><div class="stats-number">12</div><div class="stats-label">分析模块</div></div>',
             unsafe_allow_html=True,
         )
     with cols3[1]:
@@ -268,6 +268,12 @@ with tab_intro:
             "desc": "PSR 压力-状态-响应\n生态安全评价",
             "page": "11_生态评估",
         },
+        {
+            "icon": "⚡",
+            "label": "智能工作流",
+            "desc": "自然语言查询\n一键分析 + 报告",
+            "page": "12_工作流",
+        },
     ]
 
     # 第一行: 4 cards
@@ -301,9 +307,9 @@ with tab_intro:
             if st.button(f"进入 {item['label']}", key=f"nav_{4 + j}", use_container_width=True):
                 st.switch_page(f"pages/{item['page']}.py")
 
-    # 第三行: 3 cards (居中)
-    col9, col10, col11, _ = st.columns([1, 1, 1, 1])
-    for k, col in enumerate([col9, col10, col11]):
+    # 第三行: 4 cards
+    col9, col10, col11, col12 = st.columns(4)
+    for k, col in enumerate([col9, col10, col11, col12]):
         with col:
             item = nav_items[8 + k]
             st.markdown(
