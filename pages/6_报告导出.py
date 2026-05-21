@@ -175,7 +175,7 @@ with st.sidebar:
     # ---- 元数据 ----
     # 自动填充研究区
     auto_area = _safe_get("selected_area", "")
-    area_names_map = {info["name"]: info for info in STUDY_AREAS}
+    area_names_map = {name: info for name, info in STUDY_AREAS.items()}
     area_names_list = list(area_names_map.keys())
 
     if auto_collect and auto_area and auto_area in area_names_list:
