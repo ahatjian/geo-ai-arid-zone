@@ -18,42 +18,33 @@ from utils.pc_data import search_images, download_multiband
 st.set_page_config(page_title="工作流", page_icon="⚡", layout="wide")
 
 # ============================================================
-# 智能查询引擎 (模板匹配, 无需 LLM)
+# 智能查询引擎 (LLM + 模板降级)
 # ============================================================
-QUERY_TEMPLATES = [
-    {"keywords": ["ndvi", "植被", "绿洲", "覆盖"], "module": "植被分析", "page": "3_植被分析",
-     "icon": "🌿", "desc": "NDVI/EVI 计算 + Sen+MK 趋势分析"},
-    {"keywords": ["水体", "湖泊", "mndwi", "水面", "水库", "面积"], "module": "水体监测", "page": "2_水体监测",
-     "icon": "💧", "desc": "MNDWI/AWEIsh + AI 水体分割"},
-    {"keywords": ["干旱", "vci", "nddi", "spi", "缺水", "距平"], "module": "干旱监测", "page": "7_干旱监测",
-     "icon": "🏜️", "desc": "多指数干旱 + 预测 + 沙漠化"},
-    {"keywords": ["分类", "地物", "土地", "覆盖", "ai", "分割"], "module": "AI分类", "page": "4_AI分类",
-     "icon": "🤖", "desc": "ESA/ESRI + 深度学习地物分割"},
-    {"keywords": ["变化", "检测", "对比", "前后"], "module": "变化检测", "page": "5_变化检测",
-     "icon": "🔄", "desc": "双时相 7 级变化分类"},
-    {"keywords": ["冰川", "雪", "ndsi", "冻土", "冰", "积雪"], "module": "冰冻圈分析", "page": "8_冰冻圈分析",
-     "icon": "❄️", "desc": "NDSI 雪盖 + 冰川边界 + 冻土"},
-    {"keywords": ["农业", "作物", "灌溉", "cwsi", "农田", "土壤水分"], "module": "农业干旱", "page": "9_农业干旱",
-     "icon": "🌾", "desc": "CWSI + 土壤水分 + 灌溉需求"},
-    {"keywords": ["动画", "gif", "视频", "时序", "动态"], "module": "时序动画", "page": "10_时序动画",
-     "icon": "🎬", "desc": "NDVI/水体/雪盖 GIF 动画"},
-    {"keywords": ["生态", "安全", "psr", "评估", "环境"], "module": "生态评估", "page": "11_生态评估",
-     "icon": "🌍", "desc": "PSR 生态安全评价"},
-    {"keywords": ["报告", "导出", "汇总"], "module": "报告导出", "page": "6_报告导出",
-     "icon": "📄", "desc": "HTML 综合分析报告"},
-]
-
+from utils.llm import query_deepseek, fallback_parse, is_llm_available
 
 def parse_query(query: str) -> list:
     """解析自然语言查询, 返回匹配的分析模块列表"""
-    query_lower = query.lower()
-    matched = []
-    for tmpl in QUERY_TEMPLATES:
-        score = sum(1 for kw in tmpl["keywords"] if kw in query_lower)
-        if score > 0:
-            matched.append({**tmpl, "score": score})
-    matched.sort(key=lambda x: x["score"], reverse=True)
-    return matched
+    if is_llm_available():
+        try:
+            result = query_deepseek(query)
+            modules = result.get("modules", [])
+            if modules:
+                # LLM 返回的模块可能只有 name, 补齐完整信息
+                enriched = []
+                for m in modules:
+                    if isinstance(m, dict) and "page" in m:
+                        enriched.append(m)
+                    else:
+                        enriched.append({"name": str(m), "icon": "🤖", "desc": "LLM 推荐", "page": "", "score": 5})
+                return enriched
+        except Exception:
+            pass
+    # 降级到模板匹配
+    result = fallback_parse(query)
+    return result.get("modules", [])
+
+# LLM 状态提示
+LLM_AVAILABLE = is_llm_available()
 
 
 # ============================================================
@@ -66,7 +57,10 @@ tab_query, tab_wizard, tab_report = st.tabs(["💬 自然语言查询", "🧭 �
 # ---- Tab 1: 自然语言查询 ----
 with tab_query:
     st.subheader("💬 告诉我你想分析什么")
-    st.caption("用自然语言描述需求, 系统自动匹配分析模块")
+    if LLM_AVAILABLE:
+        st.caption("🧠 DeepSeek AI 已激活 — 智能理解你的分析需求")
+    else:
+        st.caption("关键词匹配模式 — 设置 DEEPSEEK_API_KEY 启用 AI")
 
     col_q, col_btn = st.columns([4, 1])
     with col_q:
