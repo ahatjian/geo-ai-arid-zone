@@ -46,3 +46,18 @@ from .error_handler import (
     StreamlitProgress, check_dependencies,
     get_memory_usage_mb, safe_cleanup,
 )
+from .drought import (
+    DROUGHT_CATEGORIES, SPI_THRESHOLDS, VCI_THRESHOLDS,
+    classify_drought, classify_spi, classify_vci,
+    calc_spi, calc_spi_pixelwise,
+    calc_pet_thornthwaite, calc_spei,
+    calc_vci, calc_vci_pixelwise,
+    calc_tci, calc_tci_pixelwise,
+    calc_vhi, calc_vhi_pixelwise,
+    calc_nddi, calc_ndwi_s2,
+    calc_ndvi_anomaly, calc_ndvi_anomaly_pixelwise,
+    calc_tvdi,
+    calc_composite_drought_index,
+    compute_drought_stats, compute_drought_index_stats,
+    analyze_drought_remote,
+)

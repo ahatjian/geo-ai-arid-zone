@@ -104,6 +104,30 @@ COLLECTIONS = {
 }
 
 # ============================================
+# 干旱指数阈值配置
+# ============================================
+DROUGHT_INDEX_THRESHOLDS = {
+    "SPI": {
+        "extreme_dry": -2.0, "severe_dry": -1.5, "moderate_dry": -1.0,
+        "normal": 1.0, "moderate_wet": 1.5, "extreme_wet": 2.0,
+    },
+    "VCI": {
+        "extreme_dry": 10, "severe_dry": 20, "moderate_dry": 30,
+        "normal": 40, "good": 50, "excellent": 70,
+    },
+    "NDDI": {
+        "drought": 0.5, "severe_drought": 0.7,
+    },
+    "TVDI": {
+        "wet": 0.2, "normal": 0.4, "dry": 0.6, "very_dry": 0.8,
+    },
+    "NDVI_ANOMALY": {
+        "severe_decrease": -2.0, "moderate_decrease": -1.0,
+        "normal": 1.0, "increase": 2.0,
+    },
+}
+
+# ============================================
 # 遥感指数阈值配置
 # ============================================
 INDEX_THRESHOLDS = {
@@ -192,6 +216,16 @@ COLORMAPS = {
     "water_mask": "Blues",
     "land_cover": "Set1",
     "change": "RdYlGn",  # 红=减少, 绿=增加, 黄=不变
+    # 干旱指数专用色带
+    "SPI": "RdYlBu",           # 红(干) ↔ 蓝(湿)
+    "SPEI": "RdYlBu",
+    "VCI": "YlOrRd_r",         # 反转: 绿色(好) → 红色(干)
+    "VHI": "YlOrRd_r",
+    "NDDI": "YlOrRd",          # 红=干旱
+    "TVDI": "YlOrRd",
+    "NDVI_ANOMALY": "RdBu_r",  # 蓝(增加) ↔ 红(减少)
+    "CDI": "RdYlGn",           # 红(干) ↔ 绿(湿)
+    "DROUGHT_CATEGORY": "YlOrRd",
 }
 
 # ============================================
