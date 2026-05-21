@@ -24,6 +24,8 @@ planetary-computer>=1.0.0
 # AI / ML (CPU 模式 — 推理优化)
 # ============================================
 torch>=2.0.0
+# 💡 Streamlit Cloud 部署建议: 添加 --extra-index-url https://download.pytorch.org/whl/cpu
+#    避免下载 ~2GB CUDA wheel (CPU 环境不需要 CUDA)
 torchvision>=0.15.0
 segmentation-models-pytorch>=0.3.0
 
