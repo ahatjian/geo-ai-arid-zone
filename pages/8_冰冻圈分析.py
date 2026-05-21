@@ -153,7 +153,7 @@ if search_clicked:
                 preview = None
 
             if preview:
-                st.image(preview, use_container_width=True)
+                st.image(preview)
             else:
                 st.markdown(
                     '<div style="width:100%;height:120px;background:#1a1a2e;'
@@ -315,7 +315,7 @@ if search_clicked:
                 plt.savefig(buf, format="png", dpi=120, bbox_inches="tight")
                 plt.close()
                 buf.seek(0)
-                st.image(Image.open(buf), use_container_width=True)
+                st.image(Image.open(buf))
 
             with col_s:
                 ndsi_valid = ndsi_main[np.isfinite(ndsi_main)]
@@ -355,7 +355,7 @@ if search_clicked:
                 plt.savefig(buf, format="png", dpi=120, bbox_inches="tight")
                 plt.close()
                 buf.seek(0)
-                st.image(Image.open(buf), use_container_width=True)
+                st.image(Image.open(buf))
 
             with col_s:
                 names = [s["name"] for s in result.stats]
@@ -375,7 +375,7 @@ if search_clicked:
                 plt.savefig(buf2, format="png", dpi=100, bbox_inches="tight")
                 plt.close()
                 buf2.seek(0)
-                st.image(Image.open(buf2), use_container_width=True)
+                st.image(Image.open(buf2))
 
             with st.expander("📋 详细统计表"):
                 df_snow = pd.DataFrame(result.stats)
@@ -385,7 +385,7 @@ if search_clicked:
                 })
                 st.dataframe(
                     df_snow[["类型", "像元数", "占比", "面积(km²)"]],
-                    use_container_width=True, hide_index=True,
+                    height=300, hide_index=True,
                 )
 
     # Tab 3: 冰川边界
@@ -413,7 +413,7 @@ if search_clicked:
                 plt.savefig(buf, format="png", dpi=120, bbox_inches="tight")
                 plt.close()
                 buf.seek(0)
-                st.image(Image.open(buf), use_container_width=True)
+                st.image(Image.open(buf))
 
             with col_s:
                 glacier_stats = compute_glacier_stats(result.glacier_mask, pixel_size)
@@ -475,7 +475,7 @@ if search_clicked:
                 plt.savefig(buf_t, format="png", dpi=80, bbox_inches="tight")
                 plt.close()
                 buf_t.seek(0)
-                st.image(Image.open(buf_t), use_container_width=True)
+                st.image(Image.open(buf_t))
 
     # ---- 导出 ----
     st.divider()

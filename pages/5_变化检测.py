@@ -182,7 +182,7 @@ if data_mode == "🛰️ STAC 自动下载":
     t1_cloud = st.sidebar.slider("最大云量 (%)", 0, 100, 20, key="t1_cloud")
     t1_max = st.sidebar.slider("最大影像数", 1, 20, 5, key="t1_max")
 
-    if st.sidebar.button("🔍 搜索 T1 影像", use_container_width=True):
+    if st.sidebar.button("🔍 搜索 T1 影像"):
         with st.spinner("正在搜索 T1 影像..."):
             with StreamlitErrorBoundary("T1 影像搜索", st=st, show_traceback=False):
                 from utils.pc_data import search_images
@@ -214,7 +214,7 @@ if data_mode == "🛰️ STAC 自动下载":
     t2_cloud = st.sidebar.slider("最大云量 (%)", 0, 100, 20, key="t2_cloud")
     t2_max = st.sidebar.slider("最大影像数", 1, 20, 5, key="t2_max")
 
-    if st.sidebar.button("🔍 搜索 T2 影像", use_container_width=True):
+    if st.sidebar.button("🔍 搜索 T2 影像"):
         with st.spinner("正在搜索 T2 影像..."):
             with StreamlitErrorBoundary("T2 影像搜索", st=st, show_traceback=False):
                 from utils.pc_data import search_images
@@ -251,7 +251,7 @@ if data_mode == "🛰️ STAC 自动下载":
                 }
                 for r in t1_results
             ])
-            st.dataframe(t1_df, use_container_width=True, hide_index=True)
+            st.dataframe(t1_df, height=300, hide_index=True)
 
             # 单选
             t1_options = [f"{r['datetime']} | 云量 {r['cloud_cover']}% | {r['id'][:20]}" for r in t1_results]
@@ -270,7 +270,7 @@ if data_mode == "🛰️ STAC 自动下载":
                             width=400,
                         )
                         if preview:
-                            st.image(preview, caption=f"T1: {t1_results[idx]['datetime']}", use_container_width=True)
+                            st.image(preview, caption=f"T1: {t1_results[idx]['datetime']}")
                     except Exception:
                         pass
         else:
@@ -288,7 +288,7 @@ if data_mode == "🛰️ STAC 自动下载":
                 }
                 for r in t2_results
             ])
-            st.dataframe(t2_df, use_container_width=True, hide_index=True)
+            st.dataframe(t2_df, height=300, hide_index=True)
 
             t2_options = [f"{r['datetime']} | 云量 {r['cloud_cover']}% | {r['id'][:20]}" for r in t2_results]
             t2_choice = st.radio("选择 T2 影像", t2_options, key="t2_radio")
@@ -305,7 +305,7 @@ if data_mode == "🛰️ STAC 自动下载":
                             width=400,
                         )
                         if preview:
-                            st.image(preview, caption=f"T2: {t2_results[idx]['datetime']}", use_container_width=True)
+                            st.image(preview, caption=f"T2: {t2_results[idx]['datetime']}")
                     except Exception:
                         pass
         else:
@@ -334,7 +334,7 @@ if data_mode == "🛰️ STAC 自动下载":
         help="分析变化区域在不同土地覆盖类型上的分布 (需额外下载ESA数据)",
     )
 
-    if st.button("🔍 执行变化检测分析", type="primary", use_container_width=True, disabled=not can_analyze_stac):
+    if st.button("🔍 执行变化检测分析", type="primary", disabled=not can_analyze_stac):
         with StreamlitErrorBoundary("STAC变化检测分析", st=st, show_traceback=True):
             with st.spinner("正在下载影像并计算变化..."):
                 from utils.pc_data import download_multiband, get_rgb_preview
@@ -434,7 +434,7 @@ else:
 
         st.divider()
 
-        if st.button("🔍 执行变化检测分析", type="primary", use_container_width=True):
+        if st.button("🔍 执行变化检测分析", type="primary"):
             with StreamlitErrorBoundary("手动上传变化检测分析", st=st, show_traceback=True):
                 with st.spinner("正在计算两期指数并检测变化..."):
                     from utils.indices import load_bands_from_geotiff, calc_ndvi, calc_mndwi, calc_evi
@@ -734,11 +734,11 @@ if st.session_state.get("cd_analysis_done"):
     with col_v1:
         st.caption(f"{t1_date} — 均值: {stats['idx_t1_mean']:.4f}")
         fig_t1 = render_index(index_t1, title=f"T1 {idx_cfg['label']}", cmap="RdYlGn", vmin=-1, vmax=1)
-        st.image(fig_t1, use_container_width=True)
+        st.image(fig_t1)
     with col_v2:
         st.caption(f"{t2_date} — 均值: {stats['idx_t2_mean']:.4f}")
         fig_t2 = render_index(index_t2, title=f"T2 {idx_cfg['label']}", cmap="RdYlGn", vmin=-1, vmax=1)
-        st.image(fig_t2, use_container_width=True)
+        st.image(fig_t2)
 
     st.divider()
 
@@ -751,7 +751,7 @@ if st.session_state.get("cd_analysis_done"):
         title=f"{idx_cfg['label']} 多级变化 ({t1_date} → {t2_date})",
         figsize=(12, 9),
     )
-    st.image(multilevel_fig, use_container_width=True)
+    st.image(multilevel_fig)
 
     st.divider()
 
@@ -775,7 +775,7 @@ if st.session_state.get("cd_analysis_done"):
                 alpha=0.5,
                 figsize=(12, 9),
             )
-            st.image(overlay_fig, use_container_width=True)
+            st.image(overlay_fig)
         else:
             # 手动模式: 用 T1 指数图做底图
             st.info("手动上传模式: RGB 叠加需要 RGB 影像底图，当前使用指数灰度图代替")
@@ -791,7 +791,7 @@ if st.session_state.get("cd_analysis_done"):
                 alpha=0.5,
                 figsize=(12, 9),
             )
-            st.image(overlay_fig, use_container_width=True)
+            st.image(overlay_fig)
 
     st.divider()
 
@@ -805,7 +805,7 @@ if st.session_state.get("cd_analysis_done"):
             title=f"{idx_cfg['label']} 多级变化面积占比",
             height=400,
         )
-        st.plotly_chart(bar_fig, use_container_width=True)
+        st.plotly_chart(bar_fig)
 
     with col_ch2:
         st.subheader("🥧 变化方向占比")
@@ -821,7 +821,7 @@ if st.session_state.get("cd_analysis_done"):
             textinfo="label+percent",
         )])
         pie_fig.update_layout(title="变化方向占比", height=450, template="plotly_white")
-        st.plotly_chart(pie_fig, use_container_width=True)
+        st.plotly_chart(pie_fig)
 
     st.divider()
 
@@ -843,7 +843,7 @@ if st.session_state.get("cd_analysis_done"):
         xaxis_title=f"{idx_cfg['label']} 值", yaxis_title="像素数",
         template="plotly_white",
     )
-    st.plotly_chart(hist_fig, use_container_width=True)
+    st.plotly_chart(hist_fig)
 
     st.divider()
 
@@ -865,7 +865,7 @@ if st.session_state.get("cd_analysis_done"):
         })
 
     stats_df = pd.DataFrame(stats_rows)
-    st.dataframe(stats_df, use_container_width=True, hide_index=True)
+    st.dataframe(stats_df, height=300, hide_index=True)
 
     # --- 土地覆盖交叉表 ---
     lc_cross = st.session_state.get("cd_landcover_cross")
@@ -900,7 +900,7 @@ if st.session_state.get("cd_analysis_done"):
             yaxis_title="变化级别",
             template="plotly_white",
         )
-        st.plotly_chart(heatmap_fig, use_container_width=True)
+        st.plotly_chart(heatmap_fig)
 
         # 导出CSV
         cross_csv = BytesIO()
@@ -990,7 +990,7 @@ if st.session_state.get("cd_analysis_done"):
             data_mode,
         ],
     })
-    st.dataframe(summary_df, use_container_width=True, hide_index=True)
+    st.dataframe(summary_df, height=300, hide_index=True)
 
 # ============================================
 # 底部说明

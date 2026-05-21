@@ -343,7 +343,7 @@ if geotiff_path:
     # ============================================
     # ============================================
     if not is_ai_mode and not is_onnx_mode:
-        if st.button("🔬 计算水体指数", type="primary", use_container_width=True):
+        if st.button("🔬 计算水体指数", type="primary"):
             with st.spinner("正在计算水体指数..."):
                 with StreamlitErrorBoundary("水体指数计算", st=st, show_traceback=True):
                     from utils.indices import (
@@ -400,10 +400,10 @@ if geotiff_path:
                             img = render_mndwi(index_arr, title=f"MNDWI (阈值={threshold})")
                         else:
                             img = render_aweish(index_arr, title=f"AWEIsh (阈值={threshold})")
-                        st.image(img, use_container_width=True)
+                        st.image(img)
                     with viz_col2:
                         mask_img = render_water_mask(water_mask, title=f"水体提取结果 (>{threshold})")
-                        st.image(mask_img, use_container_width=True)
+                        st.image(mask_img)
 
                     st.divider()
                     st.subheader("📈 指数分布")
@@ -413,7 +413,7 @@ if geotiff_path:
                         x_label=index_type.split(" ")[0],
                         title=f"{index_type.split(' ')[0]} 分布直方图",
                     )
-                    st.plotly_chart(hist_fig, use_container_width=True)
+                    st.plotly_chart(hist_fig)
 
                     # ---- 导出 ----
                     st.divider()
@@ -456,7 +456,7 @@ if geotiff_path:
     # ============================================
     # ============================================
     elif is_ai_mode:
-        if st.button("🤖 运行 AI 水体分割", type="primary", use_container_width=True):
+        if st.button("🤖 运行 AI 水体分割", type="primary"):
             with st.spinner("🤖 AI 模型正在推理中... 这可能需要几分钟，请耐心等待"):
                 with StreamlitErrorBoundary("AI 水体分割", st=st, show_traceback=True):
                     from utils.ai_engine import segment_water_ai, build_band_order, get_model_info
@@ -510,7 +510,7 @@ if geotiff_path:
                                 water_mask,
                                 title="AI 水体分割掩膜 (OmniWaterMask)"
                             )
-                            st.image(mask_img, use_container_width=True)
+                            st.image(mask_img)
 
                         with viz_col2:
                             # 显示 RGB 预览 + 叠加
@@ -532,7 +532,7 @@ if geotiff_path:
                                 water_mask, rgb_image=rgb_img,
                                 title="AI 水体叠加 RGB"
                             )
-                            st.image(overlay_img, use_container_width=True)
+                            st.image(overlay_img)
 
                         # ---- 直方图 ----
                         st.divider()
@@ -545,7 +545,7 @@ if geotiff_path:
                             title="AI 水体分割类别分布",
                             color="#0066FF",
                         )
-                        st.plotly_chart(hist_fig, use_container_width=True)
+                        st.plotly_chart(hist_fig)
 
                         # ---- 模型信息 ----
                         with st.expander("🔬 模型详情"):
@@ -718,7 +718,7 @@ if geotiff_path:
                                 water_mask,
                                 title="ONNX 水体分割掩膜"
                             )
-                            st.image(mask_img, use_container_width=True)
+                            st.image(mask_img)
 
                         with viz_col2:
                             # RGB 叠加
@@ -739,7 +739,7 @@ if geotiff_path:
                                 water_mask, rgb_image=rgb_img,
                                 title="ONNX 水体叠加 RGB"
                             )
-                            st.image(overlay_img, use_container_width=True)
+                            st.image(overlay_img)
 
                         # ---- ONNX 模型信息 ----
                         with st.expander("🔬 ONNX 模型详情"):

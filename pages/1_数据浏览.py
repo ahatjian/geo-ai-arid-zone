@@ -75,7 +75,7 @@ with st.sidebar:
     max_items = st.slider("最大结果数", 1, 20, 5)
 
     # 搜索按钮
-    search_clicked = st.button("🔍 搜索影像", type="primary", use_container_width=True)
+    search_clicked = st.button("🔍 搜索影像", type="primary")
 
     st.divider()
 
@@ -177,7 +177,7 @@ if "search_results" in st.session_state and st.session_state["search_results"]:
                 "ID": r["id"][:40] + "...",
             }
         )
-    st.dataframe(result_data, use_container_width=True)
+    st.dataframe(result_data)
 
     # ============================================
     # 影像预览
@@ -214,16 +214,16 @@ if "search_results" in st.session_state and st.session_state["search_results"]:
                     if preview_type == "RGB 真彩色":
                         img = get_rgb_preview_cached(item.id, collection=satellite_used, width=800)
                         if img:
-                            st.image(img, caption=f"{results[selected_idx]['datetime']} RGB 真彩色 ({satellite_used})", use_container_width=True)
+                            st.image(img, caption=f"{results[selected_idx]['datetime']} RGB 真彩色 ({satellite_used})")
                         else:
                             thumb = get_thumbnail(item)
                             if thumb:
-                                st.image(thumb, caption="缩略图 (回退)", use_container_width=True)
+                                st.image(thumb, caption="缩略图 (回退)")
 
                     elif preview_type == "NDVI 植被指数":
                         img = get_ndvi_preview_cached(item.id, collection=satellite_used, width=800)
                         if img:
-                            st.image(img, caption=f"{results[selected_idx]['datetime']} NDVI", use_container_width=True)
+                            st.image(img, caption=f"{results[selected_idx]['datetime']} NDVI")
                             st.caption("🟢 绿色=植被茂密 | 🟡 黄色=稀疏 | 🔴 红色=裸地/水体")
                         else:
                             st.error("NDVI 预览加载失败")
@@ -231,7 +231,7 @@ if "search_results" in st.session_state and st.session_state["search_results"]:
                     elif preview_type == "MNDWI 水体指数":
                         img = get_mndwi_preview_cached(item.id, collection=satellite_used, width=800)
                         if img:
-                            st.image(img, caption=f"{results[selected_idx]['datetime']} MNDWI", use_container_width=True)
+                            st.image(img, caption=f"{results[selected_idx]['datetime']} MNDWI")
                             st.caption("🔵 蓝色=水体 | ⚪ 白色=非水体")
                         else:
                             st.error("MNDWI 预览加载失败")
@@ -264,7 +264,7 @@ if "search_results" in st.session_state and st.session_state["search_results"]:
         with col2:
             st.write("")
             st.write("")
-            if st.button("📥 下载波段", type="primary", use_container_width=True):
+            if st.button("📥 下载波段", type="primary"):
                 if selected_idx is not None:
                     with st.spinner("下载中..."):
                         with StreamlitErrorBoundary("单波段下载", st=st):

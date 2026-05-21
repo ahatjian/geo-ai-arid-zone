@@ -94,7 +94,7 @@ with st.sidebar:
         cwsi_dry = st.number_input("CWIS 干旱参考 NDVI", value=0.0, min_value=0.0, max_value=1.0,
                                    help="0=自动 (建议)")
 
-    search_clicked = st.button("🔍 搜索影像 & 分析", type="primary", use_container_width=True)
+    search_clicked = st.button("🔍 搜索影像 & 分析", type="primary")
 
 # ============================================================
 # 主页面
@@ -135,7 +135,7 @@ if search_clicked:
             except Exception:
                 preview = None
             if preview:
-                st.image(preview, use_container_width=True)
+                st.image(preview)
             else:
                 st.markdown('<div style="height:100px;background:#1a1a2e;border-radius:6px;display:flex;'
                            'align-items:center;justify-content:center;color:#666">无预览</div>',
@@ -267,7 +267,7 @@ if search_clicked:
                 plt.savefig(buf, format="png", dpi=120, bbox_inches="tight")
                 plt.close()
                 buf.seek(0)
-                st.image(Image.open(buf), use_container_width=True)
+                st.image(Image.open(buf))
 
             with col_s:
                 names = [s["name"] for s in stats]
@@ -287,7 +287,7 @@ if search_clicked:
                 plt.savefig(buf2, format="png", dpi=100, bbox_inches="tight")
                 plt.close()
                 buf2.seek(0)
-                st.image(Image.open(buf2), use_container_width=True)
+                st.image(Image.open(buf2))
 
     if use_smi:
         with tabs[t_idx]:
@@ -306,7 +306,7 @@ if search_clicked:
                 plt.savefig(buf, format="png", dpi=120, bbox_inches="tight")
                 plt.close()
                 buf.seek(0)
-                st.image(Image.open(buf), use_container_width=True)
+                st.image(Image.open(buf))
 
             with col_s:
                 smi_v = smi_comb[np.isfinite(smi_comb)]
@@ -341,7 +341,7 @@ if search_clicked:
                 plt.savefig(buf, format="png", dpi=120, bbox_inches="tight")
                 plt.close()
                 buf.seek(0)
-                st.image(Image.open(buf), use_container_width=True)
+                st.image(Image.open(buf))
 
             with col_s:
                 for stat in stats:
@@ -372,7 +372,7 @@ if search_clicked:
         csv = df_export.to_csv(index=False).encode("utf-8")
         st.download_button("📊 下载农业干旱统计 CSV", csv,
                           f"agri_drought_{area_name}_{main_date}.csv",
-                          "text/csv", use_container_width=True)
+                          "text/csv")
     with col_d2:
         st.info("💡 精确灌溉量需结合 **气象站数据** (降水/蒸发) 和 **土壤类型** 校准。")
 

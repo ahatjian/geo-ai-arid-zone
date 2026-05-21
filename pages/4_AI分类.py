@@ -205,7 +205,7 @@ if "公开" in run_mode:
                     {"切片": t["name"], "边界": f"[{t['bbox'][0]}, {t['bbox'][1]}, {t['bbox'][2]}, {t['bbox'][3]}]"}
                     for t in tiles
                 ])
-                st.dataframe(tile_df, use_container_width=True)
+                st.dataframe(tile_df)
                 st.caption("COG 格式，只拉取需要的窗口区域，无需下载完整文件")
             else:
                 st.info("无覆盖切片")
@@ -213,7 +213,7 @@ if "公开" in run_mode:
     # ---- 执行按钮 ----
     col_btn1, col_btn2 = st.columns([1, 3])
     with col_btn1:
-        run_btn = st.button("🚀 获取土地覆盖数据", type="primary", use_container_width=True)
+        run_btn = st.button("🚀 获取土地覆盖数据", type="primary")
 
     if run_btn:
         with st.spinner(f"正在从 {source} 拉取土地覆盖数据... (COG 远程读取，首次可能较慢)"):
@@ -259,7 +259,7 @@ if "公开" in run_mode:
             }
             for s in stats if s["pixel_count"] > 0
         ])
-        st.dataframe(stat_df, use_container_width=True)
+        st.dataframe(stat_df)
 
         # ---- 可视化: 柱状图 + 饼图 ----
         col_chart1, col_chart2 = st.columns(2)
@@ -288,7 +288,7 @@ if "公开" in run_mode:
                 xaxis_title="",
                 yaxis_title="面积 (km²)",
             )
-            st.plotly_chart(fig_bar, use_container_width=True)
+            st.plotly_chart(fig_bar)
 
         with col_chart2:
             # 饼图
@@ -306,7 +306,7 @@ if "公开" in run_mode:
                 template="plotly_white",
                 margin=dict(l=20, r=20, t=40, b=20),
             )
-            st.plotly_chart(fig_pie, use_container_width=True)
+            st.plotly_chart(fig_pie)
 
         # ---- 分类地图 ----
         st.subheader("🗺️ 分类可视化地图")
@@ -324,7 +324,7 @@ if "公开" in run_mode:
             class_colors=render_colors,
             title=f"{result['source_label']} | {area_name}",
         )
-        st.image(class_img, use_container_width=True)
+        st.image(class_img)
 
         # ---- 色块图例 ----
         color_html = '<div style="margin:10px 0;display:flex;flex-wrap:wrap;gap:8px;">'
@@ -347,7 +347,7 @@ if "公开" in run_mode:
 
         with col_exp1:
             # GeoTIFF 导出
-            if st.button("💾 导出分类 GeoTIFF", use_container_width=True):
+            if st.button("💾 导出分类 GeoTIFF"):
                 with StreamlitErrorBoundary("GeoTIFF 导出", st=st):
                     from utils.landcover import export_landcover_geotiff
                     import tempfile
@@ -719,7 +719,7 @@ else:
         if valid_rows:
             st.dataframe(
                 pd.DataFrame([{k: v for k, v in r.items() if k != "颜色"} for r in valid_rows]),
-                use_container_width=True
+                height=300
             )
 
         # 可视化: 柱状图 + 饼图
@@ -745,7 +745,7 @@ else:
                 template="plotly_white",
                 margin=dict(l=20, r=20, t=40, b=20),
             )
-            st.plotly_chart(fig_bar, use_container_width=True)
+            st.plotly_chart(fig_bar)
 
         with col_ch2:
             fig_pie = go.Figure()
@@ -762,7 +762,7 @@ else:
                 template="plotly_white",
                 margin=dict(l=20, r=20, t=40, b=20),
             )
-            st.plotly_chart(fig_pie, use_container_width=True)
+            st.plotly_chart(fig_pie)
 
         # 分类地图
         st.subheader("🗺️ ONNX 分类地图")
@@ -773,7 +773,7 @@ else:
             class_colors=class_colors_list[:onnx_num_classes],
             title=f"ONNX 语义分割 | {'土地覆盖' if '土地' in task_type else '水体分割'} | 耗时 {inference_time:.1f}s",
         )
-        st.image(class_img, use_container_width=True)
+        st.image(class_img)
 
         # 图例
         legend_html = '<div style="margin:10px 0;display:flex;flex-wrap:wrap;gap:8px;">'
@@ -864,7 +864,7 @@ else:
                         "像元数": f"{cnt:,}",
                         "占比": f"{cnt/total*100:.2f}%",
                     })
-                st.dataframe(pd.DataFrame(stat_rows), use_container_width=True)
+                st.dataframe(pd.DataFrame(stat_rows))
 
                 # 可视化
                 render_names = [class_labels[i] for i in range(6)]
@@ -875,7 +875,7 @@ else:
                     class_colors=render_colors,
                     title="指数阈值分类结果 (NDVI + MNDWI 基线)",
                 )
-                st.image(img, use_container_width=True)
+                st.image(img)
 
                 # 图例
                 legend_html = '<div style="margin:10px 0;display:flex;flex-wrap:wrap;gap:8px;">'

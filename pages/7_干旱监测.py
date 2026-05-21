@@ -183,7 +183,7 @@ if search_clicked:
                 preview = None
 
             if preview:
-                st.image(preview, use_container_width=True)
+                st.image(preview)
             else:
                 st.markdown(
                     f'<div style="width:100%;height:140px;background:#1a1a2e;'
@@ -454,7 +454,7 @@ if search_clicked:
                 plt.savefig(buf, format="png", dpi=120, bbox_inches="tight")
                 plt.close()
                 buf.seek(0)
-                st.image(Image.open(buf), use_container_width=True)
+                st.image(Image.open(buf))
 
             with col_chart:
                 # 干旱等级分布柱状图
@@ -480,7 +480,7 @@ if search_clicked:
                     plt.savefig(buf2, format="png", dpi=100, bbox_inches="tight")
                     plt.close()
                     buf2.seek(0)
-                    st.image(Image.open(buf2), use_container_width=True)
+                    st.image(Image.open(buf2))
 
             # 详细统计表
             with st.expander("📋 详细统计表"):
@@ -561,7 +561,7 @@ if search_clicked:
         plt.savefig(buf3, format="png", dpi=120, bbox_inches="tight")
         plt.close()
         buf3.seek(0)
-        st.image(Image.open(buf3), use_container_width=True)
+        st.image(Image.open(buf3))
 
     with col_slope:
         st.subheader("趋势统计")
@@ -638,7 +638,7 @@ if search_clicked:
                         fig.savefig(buf_f, format="png", dpi=120, bbox_inches="tight")
                         plt.close(fig)
                         buf_f.seek(0)
-                        st.image(Image.open(buf_f), use_container_width=True)
+                        st.image(Image.open(buf_f))
 
                         # 各方法指标
                         cols_f = st.columns(min(3, len(results)))
@@ -665,7 +665,7 @@ if search_clicked:
                         fig.savefig(buf_f, format="png", dpi=120, bbox_inches="tight")
                         plt.close(fig)
                         buf_f.seek(0)
-                        st.image(Image.open(buf_f), use_container_width=True)
+                        st.image(Image.open(buf_f))
 
                         # 指标
                         col_m1, col_m2, col_m3, col_m4 = st.columns(4)
@@ -769,7 +769,7 @@ if search_clicked:
                                 plt.savefig(buf_d, format="png", dpi=120, bbox_inches="tight")
                                 plt.close()
                                 buf_d.seek(0)
-                                st.image(Image.open(buf_d), use_container_width=True)
+                                st.image(Image.open(buf_d))
 
                             with col_c2:
                                 # 分级柱状图
@@ -793,7 +793,7 @@ if search_clicked:
                                 plt.savefig(buf_d2, format="png", dpi=100, bbox_inches="tight")
                                 plt.close()
                                 buf_d2.seek(0)
-                                st.image(Image.open(buf_d2), use_container_width=True)
+                                st.image(Image.open(buf_d2))
 
                             # 详细统计表
                             with st.expander("📋 沙漠化分级详细统计"):
@@ -805,7 +805,7 @@ if search_clicked:
                                 })
                                 st.dataframe(
                                     df_desert[["等级", "像元数", "占比", "面积(km²)", "风险"]],
-                                    use_container_width=True, hide_index=True,
+                                    height=300, hide_index=True,
                                 )
 
                         # Tab 2-5: 各指数图
@@ -832,7 +832,7 @@ if search_clicked:
                                 plt.savefig(buf, format="png", dpi=120, bbox_inches="tight")
                                 plt.close()
                                 buf.seek(0)
-                                st.image(Image.open(buf), use_container_width=True)
+                                st.image(Image.open(buf))
 
                                 # 统计
                                 valid = data[np.isfinite(data)]

@@ -503,9 +503,9 @@ st.divider()
 col_btn1, col_btn2 = st.columns(2)
 
 with col_btn1:
-    preview = st.button("👁️ 预览报告", type="secondary", use_container_width=True)
+    preview = st.button("👁️ 预览报告", type="secondary")
 with col_btn2:
-    generate = st.button("📥 生成并下载报告", type="primary", use_container_width=True)
+    generate = st.button("📥 生成并下载报告", type="primary")
 
 # ============================================
 # HTML 报告模板
@@ -741,7 +741,7 @@ if preview or generate:
 
         if preview:
             st.subheader("👁️ 报告预览")
-            st.components.v1.html(report_html, height=800, scrolling=True)
+            st.html(report_html, height=800)
 
         if generate:
             st.subheader("📥 下载报告")

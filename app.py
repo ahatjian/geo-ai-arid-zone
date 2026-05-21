@@ -288,7 +288,7 @@ with tab_intro:
                 </div>""",
                 unsafe_allow_html=True,
             )
-            if st.button(f"进入 {item['label']}", key=f"nav_{i}", use_container_width=True):
+            if st.button(f"进入 {item['label']}", key=f"nav_{i}"):
                 st.switch_page(f"pages/{item['page']}.py")
 
     # 第二行: 4 cards
@@ -304,7 +304,7 @@ with tab_intro:
                 </div>""",
                 unsafe_allow_html=True,
             )
-            if st.button(f"进入 {item['label']}", key=f"nav_{4 + j}", use_container_width=True):
+            if st.button(f"进入 {item['label']}", key=f"nav_{4 + j}"):
                 st.switch_page(f"pages/{item['page']}.py")
 
     # 第三行: 4 cards
@@ -320,7 +320,7 @@ with tab_intro:
                 </div>""",
                 unsafe_allow_html=True,
             )
-            if st.button(f"进入 {item['label']}", key=f"nav_{8 + k}", use_container_width=True):
+            if st.button(f"进入 {item['label']}", key=f"nav_{8 + k}"):
                 st.switch_page(f"pages/{item['page']}.py")
 
     st.divider()

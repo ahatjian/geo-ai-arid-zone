@@ -45,7 +45,7 @@ with st.sidebar:
         fps = st.slider("帧率 (fps)", 1, 10, 2)
         dpi = st.slider("分辨率 (dpi)", 60, 200, 100)
 
-    search_clicked = st.button("🔍 搜索 & 生成动画", type="primary", use_container_width=True)
+    search_clicked = st.button("🔍 搜索 & 生成动画", type="primary")
 
 # === 主页面 ===
 st.title("🎬 时序遥感动画")
@@ -168,10 +168,10 @@ if search_clicked:
 
     if gif:
         st.subheader("🎬 生成的动画")
-        st.image(gif, use_container_width=True, caption=f"{len(all_ndvi)} 帧 @ {fps} fps")
+        st.image(gif, caption=f"{len(all_ndvi)} 帧 @ {fps} fps")
         st.download_button("💾 下载 GIF", gif,
                           f"animation_{area_name}_{anim_type}.gif",
-                          "image/gif", use_container_width=True)
+                          "image/gif")
     else:
         st.error("❌ 动画生成失败")
 

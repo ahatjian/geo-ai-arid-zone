@@ -139,7 +139,7 @@ if "单景" in data_mode and geotiff_path:
         band_swir2 = st.number_input("SWIR2", 1, max(1, n_bands), 6)
 
     # 计算
-    if st.button("🔬 计算植被指数", type="primary", use_container_width=True):
+    if st.button("🔬 计算植被指数", type="primary"):
         with st.spinner("正在计算植被指数..."):
             with StreamlitErrorBoundary("植被指数计算", st=st, show_traceback=True):
                 from utils.indices import (
@@ -203,7 +203,7 @@ if "单景" in data_mode and geotiff_path:
                         img = render_ndvi(index_arr)
                     else:
                         img = render_evi(index_arr)
-                    st.image(img, use_container_width=True)
+                    st.image(img)
 
                 with viz_col2:
                     hist_fig = plot_histogram(
@@ -212,7 +212,7 @@ if "单景" in data_mode and geotiff_path:
                         x_label=index_type.split(" ")[0],
                         title=f"{index_type.split(' ')[0]} 分布直方图",
                     )
-                    st.plotly_chart(hist_fig, use_container_width=True)
+                    st.plotly_chart(hist_fig)
 
                 # 导出
                 st.divider()
@@ -276,7 +276,7 @@ elif "多景" in data_mode and len(uploaded_files_list) >= 2:
         dates.append(d.strftime("%Y-%m-%d"))
 
     # 执行趋势分析
-    if st.button("📈 执行时序趋势分析", type="primary", use_container_width=True):
+    if st.button("📈 执行时序趋势分析", type="primary"):
         with st.spinner("正在处理多时相影像..."):
             with StreamlitErrorBoundary("Sen+MK 趋势分析", st=st, show_traceback=True):
                 from utils.indices import calc_ndvi, calc_evi
@@ -359,7 +359,7 @@ elif "多景" in data_mode and len(uploaded_files_list) >= 2:
                     y_label=f"平均 {index_label}",
                     title=f"{index_label} 时序变化 (n={len(mean_values)})",
                 )
-                st.plotly_chart(fig1, use_container_width=True)
+                st.plotly_chart(fig1)
 
                 # 趋势散点
                 st.subheader("📉 Sen + Mann-Kendall 趋势检验")
@@ -372,7 +372,7 @@ elif "多景" in data_mode and len(uploaded_files_list) >= 2:
                     x_label="影像序号",
                     y_label=f"平均 {index_label}",
                 )
-                st.plotly_chart(fig2, use_container_width=True)
+                st.plotly_chart(fig2)
 
                 # 导出
                 st.divider()

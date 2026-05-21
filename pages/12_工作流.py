@@ -74,7 +74,7 @@ with tab_query:
                              placeholder='例如: "帮我分析塔里木盆地 2025 年的植被变化和干旱情况"',
                              label_visibility="collapsed")
     with col_btn:
-        analyze_btn = st.button("🔍 分析需求", type="primary", use_container_width=True)
+        analyze_btn = st.button("🔍 分析需求", type="primary")
 
     if analyze_btn and query:
         matched = parse_query(query)
@@ -112,12 +112,12 @@ with tab_query:
                     <div style="font-size:10px;color:#666">匹配度: {score_bar} ({m['score']})</div>
                     </div>
                     """, unsafe_allow_html=True)
-                    if st.button(f"进入 {m['module']}", key=f"q_{i}", use_container_width=True):
+                    if st.button(f"进入 {m['module']}", key=f"q_{i}"):
                         st.switch_page(f"pages/{m['page']}.py")
 
             # 快捷: 一键设置所有匹配模块
             st.divider()
-            if st.button("⚡ 一键进入首个推荐模块", type="primary", use_container_width=True):
+            if st.button("⚡ 一键进入首个推荐模块", type="primary"):
                 st.switch_page(f"pages/{matched[0]['page']}.py")
         else:
             st.warning("🔍 未匹配到相关模块, 试试: 植被 / 水体 / 干旱 / 冰川 / 农业 / 生态")
@@ -195,7 +195,7 @@ with tab_wizard:
         wiz_cloud = st.slider("云量阈值 (%)", 0, 100, 15)
         wiz_items = st.slider("影像数", 1, 12, 3)
 
-        run_wiz = st.button("🚀 一键执行分析", type="primary", use_container_width=True)
+        run_wiz = st.button("🚀 一键执行分析", type="primary")
 
         if run_wiz:
             bbox = wiz_info["bbox"]
@@ -299,7 +299,7 @@ with tab_wizard:
                 with btn_cols[i % 4]:
                     page = page_map.get(mod_name)
                     if page:
-                        if st.button(f"进入 {mod_name}", key=f"wiz_{i}", use_container_width=True):
+                        if st.button(f"进入 {mod_name}", key=f"wiz_{i}"):
                             st.switch_page(f"pages/{page}.py")
 
             # 保存到 session
@@ -367,8 +367,8 @@ with tab_report:
 
         st.download_button("📥 下载 HTML 报告", report_html.encode("utf-8"),
                           f"report_{wf_results['study_area']}_{wf_results['date']}.html",
-                          "text/html", use_container_width=True)
+                          "text/html")
 
         st.divider()
         st.subheader("📄 报告预览")
-        st.components.v1.html(report_html, height=500, scrolling=True)
+        st.html(report_html, height=500)

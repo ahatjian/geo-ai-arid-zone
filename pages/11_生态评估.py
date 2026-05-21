@@ -57,7 +57,7 @@ with st.sidebar:
     with st.expander("⚙️ 高级"):
         pixel_size = st.number_input("像元大小 (m)", value=10.0, min_value=1.0)
 
-    search_clicked = st.button("🔍 评估生态安全", type="primary", use_container_width=True)
+    search_clicked = st.button("🔍 评估生态安全", type="primary")
 
 st.title("🌍 生态安全评估 (PSR 模型)")
 st.markdown(f"**{area_name}** | {satellite} | {start_date} → {end_date}")
@@ -182,7 +182,7 @@ if search_clicked:
                 buf = BytesIO()
                 plt.tight_layout(); plt.savefig(buf, format="png", dpi=120, bbox_inches="tight")
                 plt.close(); buf.seek(0)
-                st.image(Image.open(buf), use_container_width=True)
+                st.image(Image.open(buf))
             with col_s:
                 valid = data[np.isfinite(data)]
                 st.metric("均值", f"{np.nanmean(valid):.4f}")
@@ -207,19 +207,19 @@ if search_clicked:
     buf2 = BytesIO()
     plt.tight_layout(); plt.savefig(buf2, format="png", dpi=100, bbox_inches="tight")
     plt.close(); buf2.seek(0)
-    st.image(Image.open(buf2), use_container_width=True)
+    st.image(Image.open(buf2))
 
     with st.expander("📋 详细统计"):
         df = pd.DataFrame(result.stats)
         df = df.rename(columns={"name":"等级","pixel_count":"像元","ratio":"占比","area_km2":"面积km²","status":"状态"})
-        st.dataframe(df[["等级","像元","占比","面积km²","状态"]], use_container_width=True, hide_index=True)
+        st.dataframe(df[["等级","像元","占比","面积km²","状态"]], height=300, hide_index=True)
 
     # 导出
     st.divider()
     col_d1, col_d2 = st.columns(2)
     with col_d1:
         csv = df.to_csv(index=False).encode("utf-8")
-        st.download_button("📊 下载生态评估 CSV", csv, f"eco_{area_name}_{main_date}.csv", "text/csv", use_container_width=True)
+        st.download_button("📊 下载生态评估 CSV", csv, f"eco_{area_name}_{main_date}.csv", "text/csv")
     with col_d2:
         st.info(f"💡 PSR 权重: P={wp:.0%} S={ws:.0%} R={wr:.0%} | 基于 OECD PSR 框架")
 
