@@ -1,6 +1,6 @@
 """
 Geo AI 干旱区遥感智能分析平台 — 首页入口
-版本 v1.6 — 9模块: 数据→水体→植被→AI→变化→报告→干旱→冰冻圈→农业
+版本 v1.7 — 11模块: 数据→水体→植被→AI→变化→报告→干旱→冰冻圈→农业→动画→生态
 """
 
 import streamlit as st
@@ -168,7 +168,7 @@ with st.sidebar:
     cols3 = st.columns(2)
     with cols3[0]:
         st.markdown(
-            '<div class="stats-box"><div class="stats-number">9</div><div class="stats-label">分析模块</div></div>',
+            '<div class="stats-box"><div class="stats-number">11</div><div class="stats-label">分析模块</div></div>',
             unsafe_allow_html=True,
         )
     with cols3[1]:
@@ -256,6 +256,18 @@ with tab_intro:
             "desc": "CWSI/土壤水分\n灌溉需求评估",
             "page": "9_农业干旱",
         },
+        {
+            "icon": "🎬",
+            "label": "时序动画",
+            "desc": "NDVI/水体/雪盖\n年际变化 GIF",
+            "page": "10_时序动画",
+        },
+        {
+            "icon": "🌍",
+            "label": "生态评估",
+            "desc": "PSR 压力-状态-响应\n生态安全评价",
+            "page": "11_生态评估",
+        },
     ]
 
     # 第一行: 4 cards
@@ -289,20 +301,21 @@ with tab_intro:
             if st.button(f"进入 {item['label']}", key=f"nav_{4 + j}", use_container_width=True):
                 st.switch_page(f"pages/{item['page']}.py")
 
-    # 第三行: 1 card (居中)
-    col9, _, _, _ = st.columns([1, 1, 1, 1])
-    with col9:
-        item = nav_items[8]
-        st.markdown(
-            f"""<div class="nav-card">
-            <div class="nav-icon">{item['icon']}</div>
-            <div class="nav-label">{item['label']}</div>
-            <div class="nav-desc">{item['desc'].replace(chr(10),'<br>')}</div>
-            </div>""",
-            unsafe_allow_html=True,
-        )
-        if st.button(f"进入 {item['label']}", key="nav_8", use_container_width=True):
-            st.switch_page(f"pages/{item['page']}.py")
+    # 第三行: 3 cards (居中)
+    col9, col10, col11, _ = st.columns([1, 1, 1, 1])
+    for k, col in enumerate([col9, col10, col11]):
+        with col:
+            item = nav_items[8 + k]
+            st.markdown(
+                f"""<div class="nav-card">
+                <div class="nav-icon">{item['icon']}</div>
+                <div class="nav-label">{item['label']}</div>
+                <div class="nav-desc">{item['desc'].replace(chr(10),'<br>')}</div>
+                </div>""",
+                unsafe_allow_html=True,
+            )
+            if st.button(f"进入 {item['label']}", key=f"nav_{8 + k}", use_container_width=True):
+                st.switch_page(f"pages/{item['page']}.py")
 
     st.divider()
 

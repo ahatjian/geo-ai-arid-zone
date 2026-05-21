@@ -91,3 +91,13 @@ from .agri_drought import (
     estimate_irrigation_demand, compute_agri_stats,
     assess_agri_drought,
 )
+from .animation import (
+    create_timeseries_animation, create_multi_index_animation,
+    create_trend_animation,
+)
+from .ecology import (
+    ECO_SECURITY_LEVELS, EcoSecurityResult,
+    calc_psi, calc_ssi, calc_rsi, calc_esi,
+    classify_eco_security, compute_eco_stats,
+    assess_eco_security,
+)
