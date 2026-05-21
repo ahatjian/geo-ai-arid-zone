@@ -305,7 +305,7 @@ def download_multiband(item, output_path, collection="Sentinel-2 L2A", band_name
     下载多个波段并合成为一个多波段 GeoTIFF
 
     参数:
-        item: STAC Item 对象
+        item: STAC Item 对象 或 dict (含 id 键)
         output_path: 输出文件路径
         collection: 数据集名称
         band_names: 波段名称列表，默认 6 波段
@@ -313,6 +313,11 @@ def download_multiband(item, output_path, collection="Sentinel-2 L2A", band_name
     返回:
         str: 成功返回输出路径，失败返回 None
     """
+    # 缓存命中: 文件已存在且有效
+    import os
+    if os.path.exists(output_path) and os.path.getsize(output_path) > 1024:
+        return output_path
+
     try:
         import rasterio
         from rasterio.transform import from_bounds

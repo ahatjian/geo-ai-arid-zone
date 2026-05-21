@@ -1,3 +1,4 @@
+# TODO: 拆分超大文件 (977行) — 按功能模式拆为独立组件
 """
 AI 地物分类页面 — 公开土地覆盖产品 + AI 深度学习推理
 支持 ESA WorldCover (10m) / ESRI Land Cover (10m) 即开即用

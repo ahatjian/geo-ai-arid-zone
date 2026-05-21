@@ -1,3 +1,4 @@
+# TODO: 拆分超大文件 (933行) — 按功能模式拆为独立组件
 """
 水体监测页面 — MNDWI / AWEIsh 指数阈值法 + AI 语义分割 (OmniWaterMask)
 支持多波段 GeoTIFF 输入

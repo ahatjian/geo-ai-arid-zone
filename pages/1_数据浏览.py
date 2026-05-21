@@ -84,7 +84,7 @@ with st.sidebar:
     uploaded_file = st.file_uploader("上传 GeoTIFF", type=["tif", "tiff"])
     if uploaded_file:
         tmp_dir = tempfile.gettempdir()
-        local_tif = os.path.join(tmp_dir, uploaded_file.name)
+        local_tif = os.path.join(tmp_dir, os.path.basename(uploaded_file.name))
         with open(local_tif, "wb") as f:
             f.write(uploaded_file.getvalue())
         st.session_state["local_tif"] = local_tif
