@@ -88,30 +88,42 @@ VCI_THRESHOLDS = [
 ]
 
 
-def classify_drought(index_value: float, thresholds: List[Tuple[float, int]]) -> int:
+def classify_drought(index_value, thresholds: List[Tuple[float, int]]):
     """
-    根据阈值表对干旱指数进行分类
+    根据阈值表对干旱指数进行分类 (支持标量和数组)
 
     参数:
-        index_value: 指数值
+        index_value: 指数值 (float 或 np.ndarray)
         thresholds: [(threshold, category), ...] 从高到低排列
 
     返回:
-        int: 干旱等级 (-3 到 4)
+        int 或 np.ndarray: 干旱等级 (-3 到 4)
     """
-    for threshold, category in thresholds:
-        if index_value >= threshold:
-            return category
-    return thresholds[-1][1]
+    index_value = np.asarray(index_value)
+    if index_value.ndim == 0:
+        # 标量
+        for threshold, category in thresholds:
+            if float(index_value) >= threshold:
+                return category
+        return thresholds[-1][1]
+    else:
+        # 数组: 向量化分类 (阈值从高到低，首次匹配优先)
+        result = np.full(index_value.shape, thresholds[-1][1], dtype=int)
+        unassigned = np.ones(index_value.shape, dtype=bool)
+        for threshold, category in thresholds:
+            match = unassigned & (index_value >= threshold)
+            result[match] = category
+            unassigned[match] = False
+        return result
 
 
-def classify_spi(spi: float) -> int:
-    """SPI/SPEI 值 → 干旱等级"""
+def classify_spi(spi):
+    """SPI/SPEI 值 → 干旱等级 (支持标量和数组)"""
     return classify_drought(spi, SPI_THRESHOLDS)
 
 
-def classify_vci(vci: float) -> int:
-    """VCI 值 → 干旱等级"""
+def classify_vci(vci):
+    """VCI 值 → 干旱等级 (支持标量和数组)"""
     return classify_drought(vci, VCI_THRESHOLDS)
 
 

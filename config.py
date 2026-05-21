@@ -85,7 +85,8 @@ COLLECTIONS = {
             "swir2": "SR_B7",
         },
         "rgb_bands": ["SR_B4", "SR_B3", "SR_B2"],
-        "description": "USGS Landsat-8，30m分辨率，16天重访"
+        "description": "USGS Landsat-8，30m分辨率，16天重访 (2013-至今)",
+        "temporal_range": "2013-至今",
     },
     "Landsat-9": {
         "id": "landsat-c2-l2",
@@ -99,9 +100,48 @@ COLLECTIONS = {
             "swir2": "SR_B7",
         },
         "rgb_bands": ["SR_B4", "SR_B3", "SR_B2"],
-        "description": "USGS Landsat-9，30m分辨率，16天重访"
+        "description": "USGS Landsat-9，30m分辨率，16天重访 (2021-至今)",
+        "temporal_range": "2021-至今",
+    },
+    "Landsat-7": {
+        "id": "landsat-c2-l2",
+        "resolution": 30,
+        "bands": {
+            "blue": "SR_B2",
+            "green": "SR_B3",
+            "red": "SR_B4",
+            "nir": "SR_B5",
+            "swir1": "SR_B6",
+            "swir2": "SR_B7",
+        },
+        "rgb_bands": ["SR_B4", "SR_B3", "SR_B2"],
+        "description": "USGS Landsat-7，30m分辨率，16天重访 (1999-至今，有条带)",
+        "temporal_range": "1999-至今",
+    },
+    "Landsat-4-5": {
+        "id": "landsat-c2-l2",
+        "resolution": 30,
+        "bands": {
+            "blue": "SR_B2",
+            "green": "SR_B3",
+            "red": "SR_B4",
+            "nir": "SR_B5",
+            "swir1": "SR_B6",
+            "swir2": "SR_B7",
+        },
+        "rgb_bands": ["SR_B4", "SR_B3", "SR_B2"],
+        "description": "USGS Landsat 4-5，30m分辨率，16天重访 (1982-2013)",
+        "temporal_range": "1982-2013",
     },
 }
+
+# ============================================================
+# Landsat 长时序说明
+# ============================================================
+# Planetary Computer 的 landsat-c2-l2 涵盖 Landsat 4-9 全部 Level-2 数据
+# 最长时序: Landsat-4-5 (1982) 至今 ~40年 NDVI 重建
+# 推荐使用 Landsat 4-5/7/8/9 组合进行长时序分析
+# STAC 筛选: platform=landsat-5 / landsat-7 / landsat-8 / landsat-9
 
 # ============================================
 # 干旱指数阈值配置

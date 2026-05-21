@@ -1,6 +1,6 @@
 """
 Geo AI 干旱区遥感智能分析平台 — 首页入口
-版本 v0.5 — 支持 Planetary Computer 真实卫星数据
+版本 v1.6 — 9模块: 数据→水体→植被→AI→变化→报告→干旱→冰冻圈→农业
 """
 
 import streamlit as st
@@ -156,12 +156,24 @@ with st.sidebar:
     cols2 = st.columns(2)
     with cols2[0]:
         st.markdown(
-            '<div class="stats-box"><div class="stats-number">4+</div><div class="stats-label">遥感指数</div></div>',
+            '<div class="stats-box"><div class="stats-number">7+</div><div class="stats-label">遥感指数</div></div>',
             unsafe_allow_html=True,
         )
     with cols2[1]:
         st.markdown(
             '<div class="stats-box"><div class="stats-number">AI</div><div class="stats-label">深度学习</div></div>',
+            unsafe_allow_html=True,
+        )
+
+    cols3 = st.columns(2)
+    with cols3[0]:
+        st.markdown(
+            '<div class="stats-box"><div class="stats-number">9</div><div class="stats-label">分析模块</div></div>',
+            unsafe_allow_html=True,
+        )
+    with cols3[1]:
+        st.markdown(
+            '<div class="stats-box"><div class="stats-number">FREE</div><div class="stats-label">完全免费</div></div>',
             unsafe_allow_html=True,
         )
 
@@ -226,6 +238,24 @@ with tab_intro:
             "desc": "汇总结果\n生成报告",
             "page": "6_报告导出",
         },
+        {
+            "icon": "🏜️",
+            "label": "干旱监测",
+            "desc": "VCI/NDDI/距平\n多指数干旱分析",
+            "page": "7_干旱监测",
+        },
+        {
+            "icon": "❄️",
+            "label": "冰冻圈分析",
+            "desc": "NDSI/雪盖/冰川\n冻土活动层分析",
+            "page": "8_冰冻圈分析",
+        },
+        {
+            "icon": "🌾",
+            "label": "农业干旱",
+            "desc": "CWSI/土壤水分\n灌溉需求评估",
+            "page": "9_农业干旱",
+        },
     ]
 
     # 第一行: 4 cards
@@ -243,9 +273,9 @@ with tab_intro:
             if st.button(f"进入 {item['label']}", key=f"nav_{i}", use_container_width=True):
                 st.switch_page(f"pages/{item['page']}.py")
 
-    # 第二行: 2 cards (居中)
-    col5, col6, _ = st.columns([1, 1, 2])
-    for j, col in enumerate([col5, col6]):
+    # 第二行: 4 cards
+    col5, col6, col7, col8 = st.columns(4)
+    for j, col in enumerate([col5, col6, col7, col8]):
         with col:
             item = nav_items[4 + j]
             st.markdown(
@@ -258,6 +288,21 @@ with tab_intro:
             )
             if st.button(f"进入 {item['label']}", key=f"nav_{4 + j}", use_container_width=True):
                 st.switch_page(f"pages/{item['page']}.py")
+
+    # 第三行: 1 card (居中)
+    col9, _, _, _ = st.columns([1, 1, 1, 1])
+    with col9:
+        item = nav_items[8]
+        st.markdown(
+            f"""<div class="nav-card">
+            <div class="nav-icon">{item['icon']}</div>
+            <div class="nav-label">{item['label']}</div>
+            <div class="nav-desc">{item['desc'].replace(chr(10),'<br>')}</div>
+            </div>""",
+            unsafe_allow_html=True,
+        )
+        if st.button(f"进入 {item['label']}", key="nav_8", use_container_width=True):
+            st.switch_page(f"pages/{item['page']}.py")
 
     st.divider()
 
@@ -371,11 +416,11 @@ with tab_about:
         
         ### 📡 数据源
         
-        | 卫星 | 分辨率 | 重访周期 |
-        |------|--------|----------|
-        | Sentinel-2 | 10m | 5天 |
-        | Landsat-8 | 30m | 16天 |
-        | Landsat-9 | 30m | 16天 |
+        | 卫星 | 分辨率 | 重访周期 | 时序 |
+        |------|--------|----------|------|
+        | Sentinel-2 | 10m | 5天 | 2015-至今 |
+        | Landsat-8/9 | 30m | 16天 | 2013-至今 |
+        | Landsat-4-5/7 | 30m | 16天 | 1982-至今 |
         
         ### 🔬 预设研究区
         """)
@@ -387,7 +432,7 @@ with tab_about:
 
     st.markdown("""
     <div style='text-align: center; color: gray; font-size: 0.85rem;'>
-        <p>Geo AI 干旱区遥感分析平台 v0.5 | Powered by Microsoft Planetary Computer</p>
-        <p>🛰️ Sentinel-2 (10m) | Landsat-8/9 (30m) | 完全免费</p>
+        <p>Geo AI 干旱区遥感分析平台 v1.6 | Powered by Microsoft Planetary Computer</p>
+        <p>🛰️ Sentinel-2 (10m) | Landsat 4-9 (30m, 1982-至今) | 完全免费</p>
     </div>
     """, unsafe_allow_html=True)

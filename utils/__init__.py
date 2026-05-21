@@ -24,6 +24,14 @@ from .trend import (
     calc_sen_mk_trend, calc_sen_mk_trend_pixelwise,
     calc_mean_timeseries_trend, theil_sen_slope,
 )
+from .forecast import (
+    ForecastResult,
+    prepare_ndvi_timeseries, split_train_test, evaluate_forecast,
+    forecast_sarima, forecast_lstm, forecast_holt_winters,
+    forecast_drought_trend,
+    plot_forecast, plot_forecast_comparison,
+    analyze_drought_forecast,
+)
 from .export import (
     export_raster_geotiff, export_index_geotiff, export_mask_geotiff,
     export_classification_geotiff,
@@ -60,4 +68,26 @@ from .drought import (
     calc_composite_drought_index,
     compute_drought_stats, compute_drought_index_stats,
     analyze_drought_remote,
+)
+from .desertification import (
+    DESERTIFICATION_LEVELS, DesertificationResult,
+    calc_albedo_s2, calc_albedo_landsat,
+    calc_tgsi, calc_ndmi, calc_ddi,
+    classify_desertification, compute_desertification_stats,
+    assess_desertification, assess_desertification_cached,
+    analyze_desertification_trend, get_desertification_colormap,
+)
+from .cryosphere import (
+    SNOW_COVER_CLASSES, GLACIER_CLASSES, CryosphereResult,
+    calc_ndsi, calc_ndsi_nir, calc_snow_cover,
+    extract_glacier_mask, estimate_snow_line,
+    analyze_frozen_ground, compute_snow_cover_stats,
+    compute_glacier_stats, assess_cryosphere,
+)
+from .agri_drought import (
+    AGRI_DROUGHT_LEVELS, AgriDroughtResult,
+    calc_cwsi_ndvi, calc_smi_swir, calc_smi_combined,
+    calc_mpdi, classify_agri_drought,
+    estimate_irrigation_demand, compute_agri_stats,
+    assess_agri_drought,
 )
