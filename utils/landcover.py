@@ -598,7 +598,7 @@ def _get_esri_landcover(bbox: List[float]) -> Tuple[np.ndarray, dict]:
 
 def get_tile_list_for_area(area_name: str, study_areas: dict) -> List[Dict]:
     """
-    获取研究区对应的 ESA 切片列表及下载链接
+    获取研究区对应的 ESA 切片列表及下载链接 (兼容旧接口, 按研究区名)
 
     参数:
         area_name: 研究区名称
@@ -610,15 +610,28 @@ def get_tile_list_for_area(area_name: str, study_areas: dict) -> List[Dict]:
     area = study_areas.get(area_name)
     if not area:
         return []
+    return get_tile_list_for_bbox(area["bbox"])
 
-    bbox = area["bbox"]
+
+def get_tile_list_for_bbox(bbox: List[float]) -> List[Dict]:
+    """
+    获取覆盖 bbox 的 ESA 切片列表及下载链接 (支持自定义 AOI)
+
+    参数:
+        bbox: [min_lon, min_lat, max_lon, max_lat]
+
+    返回:
+        list[dict]: 每个切片的名称、URL、边界
+    """
+    import re
+
     tiles = _esa_tiles_for_bbox(bbox)
 
     tile_info = []
     for tile_name in tiles:
         url = _esa_tile_url(tile_name)
         # 计算切片边界
-        match = __import__("re").match(r"([NS])(\d{2})([EW])(\d{3})", tile_name)
+        match = re.match(r"([NS])(\d{2})([EW])(\d{3})", tile_name)
         if match:
             hem_lat, deg_lat, hem_lon, deg_lon = match.groups()
             lat_sw = int(deg_lat) * (1 if hem_lat == "N" else -1)

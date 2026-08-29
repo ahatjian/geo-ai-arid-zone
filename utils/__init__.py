@@ -100,6 +100,9 @@ from .transition import (
     find_major_transitions, plot_transition_heatmap,
     plot_net_change_bar, analyze_transition,
 )
+from .aoi import (
+    parse_geojson_bbox, validate_bbox, render_aoi_selector,
+)
 from .cryosphere import (
     SNOW_COVER_CLASSES, GLACIER_CLASSES, CryosphereResult,
     calc_ndsi, calc_ndsi_nir, calc_snow_cover,
