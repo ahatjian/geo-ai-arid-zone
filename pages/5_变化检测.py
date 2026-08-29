@@ -618,16 +618,13 @@ def _run_change_analysis(t1_path, t2_path, idx_cfg, method, threshold, pixel_siz
 def _run_landcover_cross(change_class, bbox):
     """土地覆盖交叉分析"""
     try:
-        from utils.landcover import download_esa_landcover
+        from utils.landcover import get_esa_landcover
 
-        esa_path = download_esa_landcover(bbox)
-        if esa_path is None:
+        # get_esa_landcover 直接返回 (class_array, meta)，无需下载到本地文件
+        esa_data, _meta = get_esa_landcover(bbox)
+        if esa_data is None or esa_data.size == 0:
             st.session_state["cd_landcover_cross"] = None
             return
-
-        import rasterio
-        with rasterio.open(esa_path) as src:
-            esa_data = src.read(1)
 
         # 对齐 ESA 和 change_class
         h_min = min(change_class.shape[0], esa_data.shape[0])
