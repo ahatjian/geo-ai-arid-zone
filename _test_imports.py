@@ -12,6 +12,8 @@ modules = [
     'utils.landcover',
     'utils.visualization',
     'utils.error_handler',
+    'utils.onnx_engine',
+    'utils.drought',
 ]
 
 for mod in modules:
