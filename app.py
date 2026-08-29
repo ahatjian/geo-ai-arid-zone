@@ -168,7 +168,7 @@ with st.sidebar:
     cols3 = st.columns(2)
     with cols3[0]:
         st.markdown(
-            '<div class="stats-box"><div class="stats-number">18</div><div class="stats-label">分析模块</div></div>',
+            '<div class="stats-box"><div class="stats-number">19</div><div class="stats-label">分析模块</div></div>',
             unsafe_allow_html=True,
         )
     with cols3[1]:
@@ -310,6 +310,12 @@ with tab_intro:
             "desc": "自定义样本训练\nRF/SVM/KNN/MLP",
             "page": "18_监督分类",
         },
+        {
+            "icon": "🗺️",
+            "label": "矢量导出",
+            "desc": "分类结果矢量化\nGeoJSON/Shapefile/KML",
+            "page": "19_矢量导出",
+        },
     ]
 
     # 第一行: 4 cards
@@ -359,15 +365,16 @@ with tab_intro:
             if st.button(f"进入 {item['label']}", key=f"nav_{8 + k}"):
                 st.switch_page(f"pages/{item['page']}.py")
 
-    # 第四行: 剩余 cards (第 13 个模块起)
+    # 第四行起: 剩余 cards (第 13 个模块起), 每 4 个一行
     remaining = nav_items[12:]
-    if remaining:
+    for row_start in range(0, len(remaining), 4):
+        row_items = remaining[row_start:row_start + 4]
         cols4 = st.columns(4)
         for m, col in enumerate(cols4):
-            if m >= len(remaining):
+            if m >= len(row_items):
                 break
             with col:
-                item = remaining[m]
+                item = row_items[m]
                 st.markdown(
                     f"""<div class="nav-card">
                     <div class="nav-icon">{item['icon']}</div>
@@ -376,7 +383,7 @@ with tab_intro:
                     </div>""",
                     unsafe_allow_html=True,
                 )
-                if st.button(f"进入 {item['label']}", key=f"nav_{12 + m}"):
+                if st.button(f"进入 {item['label']}", key=f"nav_{12 + row_start + m}"):
                     st.switch_page(f"pages/{item['page']}.py")
 
     st.divider()

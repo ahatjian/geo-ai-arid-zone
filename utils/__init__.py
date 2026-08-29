@@ -118,6 +118,12 @@ from .supervised import (
     train_classifier, predict_image, predict_image_proba,
     evaluate_classification, assess_supervised_classification,
 )
+from .vector import (
+    VECTOR_FORMATS, DEFAULT_AREA_CRS,
+    raster_to_gdf, gdf_to_geojson, gdf_to_shapefile, gdf_to_kml,
+    raster_to_vector, raster_to_vector_from_file,
+    compute_class_areas, summarize_vector,
+)
 from .cryosphere import (
     SNOW_COVER_CLASSES, GLACIER_CLASSES, CryosphereResult,
     calc_ndsi, calc_ndsi_nir, calc_snow_cover,

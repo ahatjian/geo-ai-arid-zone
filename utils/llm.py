@@ -75,6 +75,9 @@ MODULE_DEFINITIONS = [
     {"name": "监督分类", "page": "18_监督分类", "icon": "🎯",
      "keywords": ["监督分类", "训练", "分类器", "随机森林", "svm", "样本", "机器学习", "训练样本"],
      "desc": "自定义样本训练分类模型 (RF/SVM/KNN/MLP)"},
+    {"name": "矢量导出", "page": "19_矢量导出", "icon": "🗺️",
+     "keywords": ["矢量", "导出", "shapefile", "geojson", "kml", "矢量化", "面要素", "多边形", "arcgis", "qgis", "边界"],
+     "desc": "分类结果矢量化导出 (GeoJSON/Shapefile/KML)"},
 ]
 
 STUDY_AREA_NAMES = [
