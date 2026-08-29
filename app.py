@@ -168,7 +168,7 @@ with st.sidebar:
     cols3 = st.columns(2)
     with cols3[0]:
         st.markdown(
-            '<div class="stats-box"><div class="stats-number">13</div><div class="stats-label">分析模块</div></div>',
+            '<div class="stats-box"><div class="stats-number">16</div><div class="stats-label">分析模块</div></div>',
             unsafe_allow_html=True,
         )
     with cols3[1]:
@@ -279,6 +279,24 @@ with tab_intro:
             "label": "土壤盐渍化",
             "desc": "SI/NDSI 盐分指数\n5级盐渍化评估",
             "page": "13_土壤盐渍化",
+        },
+        {
+            "icon": "🌡️",
+            "label": "地表温度 LST",
+            "desc": "Landsat 热红外反演\n5级热环境分级",
+            "page": "14_LST",
+        },
+        {
+            "icon": "🧮",
+            "label": "指数计算器",
+            "desc": "预设指数 + 自定义\n波段运算 (Band Math)",
+            "page": "15_指数计算器",
+        },
+        {
+            "icon": "🔀",
+            "label": "土地转移矩阵",
+            "desc": "双时相土地覆盖对比\n转移方向与净变化",
+            "page": "16_土地转移",
         },
     ]
 

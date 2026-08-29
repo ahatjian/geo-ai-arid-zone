@@ -84,6 +84,22 @@ from .salinity import (
     classify_salinity, compute_salinity_stats,
     get_salinity_colormap, assess_salinity, assess_salinity_cached,
 )
+from .lst import (
+    THERMAL_LEVELS, LSTResult, DEFAULT_THERMAL_THRESHOLDS,
+    read_lst_array, kelvin_to_celsius, classify_thermal,
+    compute_lst_stats, get_thermal_colormap,
+    compute_lst_ndvi_relation, assess_thermal, assess_thermal_cached,
+)
+from .spectral import (
+    BAND_NAMES, PRESET_INDICES, PRESET_INDEX_NAMES, ALLOWED_NUMPY_FUNCS,
+    get_band_arrays, evaluate_band_math,
+    get_preset_index, compute_index_stats,
+)
+from .transition import (
+    compute_transition_matrix, net_change,
+    find_major_transitions, plot_transition_heatmap,
+    plot_net_change_bar, analyze_transition,
+)
 from .cryosphere import (
     SNOW_COVER_CLASSES, GLACIER_CLASSES, CryosphereResult,
     calc_ndsi, calc_ndsi_nir, calc_snow_cover,

@@ -10,7 +10,7 @@ import os
 # ============================================
 APP_TITLE = "西北干旱区 Geo AI 智能分析平台"
 APP_ICON = "🛰️"
-APP_VERSION = "v1.8"
+APP_VERSION = "v1.9"
 APP_DESCRIPTION = "免费卫星数据 + AI 自动分析 = 不写代码做科研级遥感分析"
 
 # ============================================
@@ -134,6 +134,20 @@ COLLECTIONS = {
         "temporal_range": "1982-2013",
     },
 }
+
+# ============================================
+# Landsat 地表温度 (ST) 产品配置
+# ============================================
+# USGS Collection 2 Level-2 地表温度产品资产名 (L8/9 为 ST_B10, L4/5/7 为 ST_B6)
+LANDSAT_ST_ASSET = {
+    "Landsat-8": "ST_B10",
+    "Landsat-9": "ST_B10",
+    "Landsat-7": "ST_B6",
+    "Landsat-4-5": "ST_B6",
+}
+# ST 产品辐射定标: LST_Kelvin = DN * scale + offset
+LANDSAT_ST_SCALE = 0.00341802
+LANDSAT_ST_OFFSET = 149.0  # Kelvin
 
 # ============================================================
 # Landsat 长时序说明
