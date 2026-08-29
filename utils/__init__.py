@@ -77,6 +77,13 @@ from .desertification import (
     assess_desertification, assess_desertification_cached,
     analyze_desertification_trend, get_desertification_colormap,
 )
+from .salinity import (
+    SALINITY_LEVELS, SalinityResult, DEFAULT_NDSI_THRESHOLDS,
+    calc_si, calc_si1, calc_si2,
+    calc_ndsi_salinity, calc_bi, calc_ndvi_mask,
+    classify_salinity, compute_salinity_stats,
+    get_salinity_colormap, assess_salinity, assess_salinity_cached,
+)
 from .cryosphere import (
     SNOW_COVER_CLASSES, GLACIER_CLASSES, CryosphereResult,
     calc_ndsi, calc_ndsi_nir, calc_snow_cover,

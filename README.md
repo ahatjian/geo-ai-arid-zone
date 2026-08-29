@@ -1,6 +1,6 @@
 # 🌍 西北干旱区遥感智能分析平台
 
-> v1.7 | Phase 1-6 全部完成 | 12 分析模块 + DeepSeek AI 智能查询
+> v1.8 | Phase 1-6 全部完成 | 13 分析模块 + DeepSeek AI 智能查询
 
 基于 **Microsoft Planetary Computer (STAC API)** + **Streamlit** + **DeepSeek AI** 的 Web 端干旱区遥感智能分析应用。面向中国西北干旱半干旱地区，提供卫星数据检索、遥感指数计算、AI地物分类、干旱预测、沙漠化评估、冰冻圈分析、农业干旱监测、时序动画及智能工作流全链路功能。
 
@@ -12,11 +12,12 @@
 - 🌿 **植被分析** — NDVI/EVI 时序监测 + Sen+MK 趋势分析（Theil-Sen + Mann-Kendall）
 - 🤖 **AI 分类** — ESA WorldCover / ESRI Land Cover 公开产品 + 深度学习推理 (PyTorch ↔ ONNX 双模式)
 
-### 🔬 专业分析 (4 模块)
+### 🔬 专业分析 (5 模块)
 - 🏜️ **干旱监测** — 8 种干旱指数 (VCI/NDDI/SPI/SPEI/TVDI/CDI) + SARIMA/LSTM/Holt-Winters 预测 + Albedo-NDVI 沙漠化 5 级评估
 - ❄️ **冰冻圈分析** — NDSI 积雪 4 级分类 + NIR/SWIR 冰川边界提取（积累区/消融区）+ 冻土活动层分析
 - 🌾 **农业干旱** — CWSI 作物水分胁迫 + SMI 土壤水分 + MPDI 垂直干旱指数 + 灌溉需求评估
 - 🔄 **变化检测** — 双时相 7 级变化分类 + 统计报告
+- 🧂 **土壤盐渍化** — SI/SI1/SI2/NDSI/BI 盐分指数 + 5 级盐渍化评估（植被/水体掩膜综合分级）
 
 ### ✨ 智能化 (4 模块)
 - 📄 **报告导出** — 一键生成多页 HTML 综合分析报告
@@ -54,7 +55,7 @@ streamlit run app.py
 
 ```
 web-geo-ai/
-├── app.py                        # 首页入口 + 12模块导航 (4×3 布局)
+├── app.py                        # 首页入口 + 13模块导航
 ├── pages/
 │   ├── 1_数据浏览.py              # STAC搜索 + RGB/NDVI/MNDWI预览
 │   ├── 2_水体监测.py              # MNDWI/AWEIsh + AI水体分割(含ONNX)
@@ -67,13 +68,15 @@ web-geo-ai/
 │   ├── 9_农业干旱.py              # CWSI + 土壤水分 + 灌溉
 │   ├── 10_时序动画.py             # NDVI/水体/雪盖 GIF动画
 │   ├── 11_生态评估.py             # PSR 生态安全评价
-│   └── 12_工作流.py               # AI智能查询 + 一键分析
-├── utils/                        # 工具函数库 (17 模块)
+│   ├── 12_工作流.py               # AI智能查询 + 一键分析
+│   └── 13_土壤盐渍化.py            # SI/NDSI/BI + 5级盐渍化评估
+├── utils/                        # 工具函数库 (18 模块)
 │   ├── pc_data.py                # Planetary Computer STAC 数据获取
 │   ├── indices.py                # NDVI/MNDWI/EVI/AWEIsh 指数计算
 │   ├── drought.py                # SPI/SPEI/VCI/TCI/VHI/NDDI/TVDI/CDI
 │   ├── forecast.py               # SARIMA/LSTM/Holt-Winters 预测
 │   ├── desertification.py        # Albedo/TGSI/NDMI/DDI 沙漠化评估
+│   ├── salinity.py               # SI/SI1/SI2/NDSI/BI 盐渍化评估
 │   ├── cryosphere.py             # NDSI/冰川/雪线/冻土
 │   ├── agri_drought.py           # CWSI/SMI/MPDI/灌溉需求
 │   ├── ecology.py                # PSR 生态安全模型
@@ -87,7 +90,8 @@ web-geo-ai/
 │   ├── onnx_engine.py            # ONNX Runtime 推理加速
 │   └── error_handler.py          # 统一错误处理
 ├── tests/                        # 单元测试
-│   └── test_core_modules.py      # 22 测试用例 (drought/desert/forecast...)
+│   ├── test_core_modules.py      # 核心模块测试 (drought/desert/forecast...)
+│   └── test_salinity.py          # 盐渍化模块测试
 ├── config.py                     # 全局配置 + 研究区BBOX
 ├── models/                       # AI模型存储
 ├── .streamlit/
@@ -125,8 +129,8 @@ docker build -t geo-ai-app . && docker run -p 8501:8501 geo-ai-app
 
 ## 状态
 
-- **版本**: v1.7 | **页面**: 12 | **工具模块**: 17
-- **测试**: 22 用例全部通过 | **部署**: Streamlit Cloud ✅
+- **版本**: v1.8 | **页面**: 13 | **工具模块**: 18
+- **测试**: 49 用例全部通过 | **部署**: Streamlit Cloud ✅
 - **Python**: 3.11 | **PyTorch**: 2.11.0+cpu
 
 ## License

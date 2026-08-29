@@ -9,7 +9,7 @@ import os
 
 sys.path.insert(0, os.path.dirname(__file__))
 
-from config import APP_TITLE, APP_ICON, STUDY_AREAS
+from config import APP_TITLE, APP_ICON, APP_VERSION, STUDY_AREAS
 from utils.error_handler import StreamlitErrorBoundary
 
 # ============================================
@@ -149,7 +149,7 @@ with st.sidebar:
         )
     with cols[1]:
         st.markdown(
-            '<div class="stats-box"><div class="stats-number">3</div><div class="stats-label">卫星数据源</div></div>',
+            '<div class="stats-box"><div class="stats-number">5</div><div class="stats-label">卫星数据源</div></div>',
             unsafe_allow_html=True,
         )
 
@@ -168,7 +168,7 @@ with st.sidebar:
     cols3 = st.columns(2)
     with cols3[0]:
         st.markdown(
-            '<div class="stats-box"><div class="stats-number">12</div><div class="stats-label">分析模块</div></div>',
+            '<div class="stats-box"><div class="stats-number">13</div><div class="stats-label">分析模块</div></div>',
             unsafe_allow_html=True,
         )
     with cols3[1]:
@@ -274,6 +274,12 @@ with tab_intro:
             "desc": "自然语言查询\n一键分析 + 报告",
             "page": "12_工作流",
         },
+        {
+            "icon": "🧂",
+            "label": "土壤盐渍化",
+            "desc": "SI/NDSI 盐分指数\n5级盐渍化评估",
+            "page": "13_土壤盐渍化",
+        },
     ]
 
     # 第一行: 4 cards
@@ -322,6 +328,26 @@ with tab_intro:
             )
             if st.button(f"进入 {item['label']}", key=f"nav_{8 + k}"):
                 st.switch_page(f"pages/{item['page']}.py")
+
+    # 第四行: 剩余 cards (第 13 个模块起)
+    remaining = nav_items[12:]
+    if remaining:
+        cols4 = st.columns(4)
+        for m, col in enumerate(cols4):
+            if m >= len(remaining):
+                break
+            with col:
+                item = remaining[m]
+                st.markdown(
+                    f"""<div class="nav-card">
+                    <div class="nav-icon">{item['icon']}</div>
+                    <div class="nav-label">{item['label']}</div>
+                    <div class="nav-desc">{item['desc'].replace(chr(10),'<br>')}</div>
+                    </div>""",
+                    unsafe_allow_html=True,
+                )
+                if st.button(f"进入 {item['label']}", key=f"nav_{12 + m}"):
+                    st.switch_page(f"pages/{item['page']}.py")
 
     st.divider()
 
@@ -451,9 +477,9 @@ with tab_about:
 
     st.divider()
 
-    st.markdown("""
+    st.markdown(f"""
     <div style='text-align: center; color: gray; font-size: 0.85rem;'>
-        <p>Geo AI 干旱区遥感分析平台 v1.7 | Powered by Microsoft Planetary Computer</p>
+        <p>Geo AI 干旱区遥感分析平台 {APP_VERSION} | Powered by Microsoft Planetary Computer</p>
         <p>🛰️ Sentinel-2 (10m) | Landsat 4-9 (30m, 1982-至今) | 完全免费</p>
     </div>
     """, unsafe_allow_html=True)
