@@ -1,6 +1,6 @@
 # 🌍 西北干旱区遥感智能分析平台
 
-> v1.9 | Phase 1-6 全部完成 | 16 分析模块 + DeepSeek AI 智能查询
+> v1.10 | Phase 1-6 全部完成 | 16 分析模块 + DeepSeek AI 智能查询 + 自定义 AOI
 
 基于 **Microsoft Planetary Computer (STAC API)** + **Streamlit** + **DeepSeek AI** 的 Web 端干旱区遥感智能分析应用。面向中国西北干旱半干旱地区，提供卫星数据检索、遥感指数计算、AI地物分类、干旱预测、沙漠化评估、冰冻圈分析、农业干旱监测、时序动画及智能工作流全链路功能。
 
@@ -97,13 +97,15 @@ web-geo-ai/
 │   ├── visualization.py          # 影像可视化
 │   ├── export.py                 # GeoTIFF/CSV 导出
 │   ├── onnx_engine.py            # ONNX Runtime 推理加速
+│   ├── aoi.py                    # 自定义研究区 (AOI) 选择组件 + GeoJSON 解析
 │   └── error_handler.py          # 统一错误处理
 ├── tests/                        # 单元测试
 │   ├── test_core_modules.py      # 核心模块测试 (drought/desert/forecast...)
 │   ├── test_salinity.py          # 盐渍化模块测试
 │   ├── test_lst.py               # 地表温度模块测试
 │   ├── test_spectral.py          # 波段运算/指数计算器测试
-│   └── test_transition.py        # 土地转移矩阵测试
+│   ├── test_transition.py        # 土地转移矩阵测试
+│   └── test_aoi.py               # 自定义 AOI 组件测试
 ├── config.py                     # 全局配置 + 研究区BBOX
 ├── models/                       # AI模型存储
 ├── .streamlit/
@@ -115,7 +117,9 @@ web-geo-ai/
 └── runtime.txt                   # Python 3.11
 ```
 
-## 研究区域 (6 个预设)
+## 研究区域 (6 个预设 + 自定义 AOI)
+
+### 预设研究区
 
 | 研究区 | BBOX [lon_min, lat_min, lon_max, lat_max] | 推荐分析 |
 |--------|------|------|
@@ -125,6 +129,14 @@ web-geo-ai/
 | 吐鲁番盆地 | [88, 42, 90, 43.5] | 🏜️ 极端干旱 + 🌡️ 高温 |
 | 天山北坡 | [82, 43, 90, 45] | ❄️ 冰川融水 + 🌾 灌溉农业 |
 | 准噶尔盆地 | [82, 44, 92, 48] | 🌿 荒漠草原 + 🏜️ 干旱 |
+
+### 自定义 AOI (v1.10+)
+
+所有分析页面支持**任意研究区**，不再局限于 6 个预设：
+
+- 📍 **手动输入 bbox** — 直接输入经纬度范围
+- 🗺️ **GeoJSON 上传** — 上传矢量边界文件，自动解析外接矩形 (支持 FeatureCollection / Feature / Geometry)
+- 统一写入 session_state，跨页面共享
 
 ## 部署
 
@@ -141,8 +153,8 @@ docker build -t geo-ai-app . && docker run -p 8501:8501 geo-ai-app
 
 ## 状态
 
-- **版本**: v1.9 | **页面**: 16 | **工具模块**: 21
-- **测试**: 67 用例全部通过 | **部署**: Streamlit Cloud ✅
+- **版本**: v1.10 | **页面**: 16 | **工具模块**: 22
+- **测试**: 75 用例全部通过 | **部署**: Streamlit Cloud ✅
 - **Python**: 3.11 | **PyTorch**: 2.11.0+cpu
 
 ## License

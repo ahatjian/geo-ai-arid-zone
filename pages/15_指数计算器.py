@@ -16,6 +16,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from config import STUDY_AREAS, COLLECTIONS
 from utils.error_handler import StreamlitErrorBoundary
+from utils.aoi import render_aoi_selector
 from utils.pc_data import search_images, get_rgb_preview_cached, download_multiband
 from utils.spectral import (
     BAND_NAMES, PRESET_INDICES, PRESET_INDEX_NAMES,
@@ -32,18 +33,12 @@ with st.sidebar:
     st.title("🧮 指数计算器设置")
 
     st.subheader("研究区")
-    default_area = st.session_state.get("selected_area", "塔里木盆地")
-    if default_area not in STUDY_AREAS:
-        default_area = "塔里木盆地"
-    area_name = st.selectbox(
-        "选择研究区",
-        list(STUDY_AREAS.keys()),
-        index=list(STUDY_AREAS.keys()).index(default_area),
+    area_name, bbox, center, source, area_info = render_aoi_selector(
+        default_area="塔里木盆地",
+        key_prefix="idx",
     )
-    area_info = STUDY_AREAS[area_name]
-    st.session_state["selected_area"] = area_name
-    st.session_state["selected_bbox"] = area_info["bbox"]
-    st.caption(f"📌 {area_info['description']}")
+    if bbox is None:
+        st.stop()
 
     st.divider()
 
@@ -83,7 +78,7 @@ st.markdown(
 )
 
 if search_clicked:
-    bbox = area_info["bbox"]
+    # bbox 已由研究区/AOI 选择组件提供 (支持预设 + 自定义 AOI)
 
     # ---- Step 1: 搜索影像 ----
     with st.spinner("🔍 正在搜索影像..."):

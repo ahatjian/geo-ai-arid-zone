@@ -14,6 +14,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from config import STUDY_AREAS, AI_MODELS, MODELS_DIR, ONNX_MODELS, ONNX_CONFIG
 from utils.error_handler import StreamlitErrorBoundary, safe_execute
+from utils.aoi import render_aoi_selector
 
 st.set_page_config(page_title="AI 分类", page_icon="🤖", layout="wide")
 
@@ -39,14 +40,12 @@ with st.sidebar:
     # ---- 研究区 ----
     if "公开" in run_mode:
         st.subheader("研究区")
-        area_name = st.selectbox(
-            "选择研究区",
-            list(STUDY_AREAS.keys()),
-            index=1,  # 默认柴达木盆地
+        area_name, bbox, center, source, area_info = render_aoi_selector(
+            default_area="柴达木盆地",
+            key_prefix="lc",
         )
-        area_info = STUDY_AREAS[area_name]
-        bbox = area_info["bbox"]
-        st.caption(f"范围: {bbox} | {area_info['description']}")
+        if bbox is None:
+            st.stop()
 
         st.divider()
 
@@ -199,8 +198,8 @@ if "公开" in run_mode:
     # ---- 切片信息 ----
     with st.expander("📐 覆盖的 ESA 切片", expanded=False):
         with StreamlitErrorBoundary("ESA 切片查询", st=st, show_traceback=False):
-            from utils.landcover import get_tile_list_for_area
-            tiles = get_tile_list_for_area(area_name, STUDY_AREAS)
+            from utils.landcover import get_tile_list_for_bbox
+            tiles = get_tile_list_for_bbox(bbox)
             if tiles:
                 tile_df = pd.DataFrame([
                     {"切片": t["name"], "边界": f"[{t['bbox'][0]}, {t['bbox'][1]}, {t['bbox'][2]}, {t['bbox'][3]}]"}

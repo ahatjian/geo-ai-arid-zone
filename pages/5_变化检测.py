@@ -19,6 +19,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from config import STUDY_AREAS, COLORMAPS, INDEX_THRESHOLDS, COLLECTIONS
 from utils.error_handler import StreamlitErrorBoundary
+from utils.aoi import parse_geojson_bbox
 
 st.set_page_config(page_title="变化检测", page_icon="🔄", layout="wide")
 
@@ -163,8 +164,29 @@ if data_mode == "🛰️ STAC 自动下载":
     st.sidebar.subheader("📍 研究区")
 
     area_names = list(STUDY_AREAS.keys())
-    selected_area = st.sidebar.selectbox("选择研究区", area_names)
-    bbox = STUDY_AREAS[selected_area]["bbox"]
+    use_custom = st.sidebar.checkbox("自定义 bbox / GeoJSON", value=False)
+    if use_custom:
+        col1, col2 = st.sidebar.columns(2)
+        with col1:
+            lon_min = st.number_input("西经", value=80.0, format="%.2f", key="cd_lon_min")
+            lat_min = st.number_input("南纬", value=38.0, format="%.2f", key="cd_lat_min")
+        with col2:
+            lon_max = st.number_input("东经", value=90.0, format="%.2f", key="cd_lon_max")
+            lat_max = st.number_input("北纬", value=44.0, format="%.2f", key="cd_lat_max")
+        bbox = [lon_min, lat_min, lon_max, lat_max]
+        selected_area = "自定义AOI"
+        geojson_file = st.sidebar.file_uploader(
+            "上传 GeoJSON (可选，覆盖上方 bbox)", type=["geojson", "json"], key="cd_geojson"
+        )
+        if geojson_file is not None:
+            try:
+                bbox, _ = parse_geojson_bbox(geojson_file.getvalue())
+                st.sidebar.success("✅ 已解析 GeoJSON 边界")
+            except Exception as e:
+                st.sidebar.error(f"GeoJSON 解析失败: {e}")
+    else:
+        selected_area = st.sidebar.selectbox("选择研究区", area_names)
+        bbox = STUDY_AREAS[selected_area]["bbox"]
     st.sidebar.caption(f"BBOX: {bbox}")
 
     st.sidebar.subheader("🛰️ 卫星源")

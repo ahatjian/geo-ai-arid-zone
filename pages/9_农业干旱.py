@@ -18,6 +18,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from config import STUDY_AREAS, COLLECTIONS, COLORMAPS, CACHE_CONFIG
 from utils.error_handler import StreamlitErrorBoundary
+from utils.aoi import render_aoi_selector
 from utils.pc_data import (
     search_images, get_rgb_preview_cached, download_multiband,
 )
@@ -44,17 +45,13 @@ with st.sidebar:
     st.title("🌾 农业干旱设置")
 
     st.subheader("研究区")
-    default_area = st.session_state.get("selected_area", "河西走廊")
-    if default_area not in STUDY_AREAS:
-        default_area = "河西走廊"
-    area_name = st.selectbox(
-        "选择研究区", list(STUDY_AREAS.keys()),
-        index=list(STUDY_AREAS.keys()).index(default_area),
-        help="推荐河西走廊/天山北坡 (绿洲农业区)",
+    area_name, bbox, center, source, area_info = render_aoi_selector(
+        default_area="河西走廊",
+        help_text="推荐河西走廊/天山北坡 (绿洲农业区)",
+        key_prefix="agri",
     )
-    area_info = STUDY_AREAS[area_name]
-    st.session_state["selected_area"] = area_name
-    st.caption(f"📌 {area_info['description']}")
+    if bbox is None:
+        st.stop()
 
     st.divider()
 
@@ -104,7 +101,7 @@ st.title("🌾 农业干旱遥感分析")
 st.markdown(f"**研究区: {area_name}** | {satellite} | {start_date} → {end_date}")
 
 if search_clicked:
-    bbox = area_info["bbox"]
+    # bbox 已由研究区/AOI 选择组件提供
 
     with st.spinner("🔍 搜索影像..."):
         try:

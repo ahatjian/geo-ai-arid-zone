@@ -14,6 +14,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from config import STUDY_AREAS
 from utils.error_handler import StreamlitErrorBoundary
+from utils.aoi import render_aoi_selector
 from utils.landcover import get_esa_landcover, esa_to_arid6, ARID6_CLASSES, ESA_CLASSES
 from utils.transition import (
     analyze_transition, plot_transition_heatmap, plot_net_change_bar,
@@ -28,19 +29,13 @@ with st.sidebar:
     st.title("🔀 转移矩阵设置")
 
     st.subheader("研究区")
-    default_area = st.session_state.get("selected_area", "河西走廊")
-    if default_area not in STUDY_AREAS:
-        default_area = "河西走廊"
-    area_name = st.selectbox(
-        "选择研究区",
-        list(STUDY_AREAS.keys()),
-        index=list(STUDY_AREAS.keys()).index(default_area),
-        help="推荐河西走廊/塔里木盆地 (绿洲农业变化显著)",
+    area_name, bbox, center, source, area_info = render_aoi_selector(
+        default_area="河西走廊",
+        help_text="推荐河西走廊/塔里木盆地 (绿洲农业变化显著)",
+        key_prefix="trans",
     )
-    area_info = STUDY_AREAS[area_name]
-    st.session_state["selected_area"] = area_name
-    st.session_state["selected_bbox"] = area_info["bbox"]
-    st.caption(f"📌 {area_info['description']}")
+    if bbox is None:
+        st.stop()
 
     st.divider()
 
@@ -78,7 +73,7 @@ st.markdown(
 )
 
 if analyze_clicked:
-    bbox = area_info["bbox"]
+    # bbox 已由研究区/AOI 选择组件提供 (支持预设 + 自定义 AOI)
 
     # ---- Step 1: 获取两个时相土地覆盖 ----
     with st.spinner("⬇️ 获取 2020 年土地覆盖数据..."):

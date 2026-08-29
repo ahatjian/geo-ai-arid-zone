@@ -13,6 +13,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from config import STUDY_AREAS, COLLECTIONS
 from utils.error_handler import StreamlitErrorBoundary, safe_execute
+from utils.aoi import render_aoi_selector
 
 st.set_page_config(page_title="数据浏览", page_icon="🗺️", layout="wide")
 
@@ -22,37 +23,17 @@ st.set_page_config(page_title="数据浏览", page_icon="🗺️", layout="wide"
 with st.sidebar:
     st.title("🔍 影像搜索")
 
-    # 研究区选择 (尝试从 session 恢复)
-    default_area = st.session_state.get("selected_area", "柴达木盆地")
-    if default_area not in STUDY_AREAS:
-        default_area = "柴达木盆地"
-
-    area_name = st.selectbox("研究区", list(STUDY_AREAS.keys()), index=list(STUDY_AREAS.keys()).index(default_area))
-    area_info = STUDY_AREAS[area_name]
-
-    # 保存到 session
-    st.session_state["selected_area"] = area_name
-    st.session_state["selected_bbox"] = area_info["bbox"]
-    st.session_state["selected_center"] = area_info["center"]
-
-    st.caption(f"📌 {area_info['description']}")
+    # 研究区 / AOI 选择 (预设 + 自定义 bbox + GeoJSON 上传)
+    area_name, bbox, center, source, area_info = render_aoi_selector(
+        default_area="柴达木盆地",
+        help_text="选择预设研究区或自定义 AOI (手动 bbox / GeoJSON)",
+        key_prefix="data",
+    )
+    if bbox is None:
+        st.stop()
+    bbox_custom = bbox
 
     st.divider()
-
-    # 自定义边界
-    use_custom_bbox = st.checkbox("自定义边界范围", value=False)
-    if use_custom_bbox:
-        bbox = area_info["bbox"]
-        col1, col2 = st.columns(2)
-        with col1:
-            min_lon = st.number_input("西经", value=float(bbox[0]), format="%.1f")
-            min_lat = st.number_input("南纬", value=float(bbox[1]), format="%.1f")
-        with col2:
-            max_lon = st.number_input("东经", value=float(bbox[2]), format="%.1f")
-            max_lat = st.number_input("北纬", value=float(bbox[3]), format="%.1f")
-        bbox_custom = [min_lon, min_lat, max_lon, max_lat]
-    else:
-        bbox_custom = area_info["bbox"]
 
     # 卫星选择
     satellite = st.selectbox(

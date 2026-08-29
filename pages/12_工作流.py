@@ -139,14 +139,35 @@ with tab_wizard:
 
     col_a1, col_a2 = st.columns(2)
     with col_a1:
-        default_area = st.session_state.get("selected_area", "塔里木盆地")
-        if default_area not in STUDY_AREAS:
-            default_area = "塔里木盆地"
-        wiz_area = st.selectbox("研究区", list(STUDY_AREAS.keys()),
-                               index=list(STUDY_AREAS.keys()).index(default_area))
-        st.session_state["selected_area"] = wiz_area
-        wiz_info = STUDY_AREAS[wiz_area]
-        st.caption(f"📌 {wiz_info['description']}")
+        use_custom = st.checkbox("自定义 AOI (bbox/GeoJSON)", value=False, key="wf_custom")
+        if use_custom:
+            from utils.aoi import parse_geojson_bbox
+            col_b1, col_b2 = st.columns(2)
+            with col_b1:
+                lon_min = st.number_input("西经", value=80.0, format="%.2f", key="wf_lon_min")
+                lat_min = st.number_input("南纬", value=38.0, format="%.2f", key="wf_lat_min")
+            with col_b2:
+                lon_max = st.number_input("东经", value=90.0, format="%.2f", key="wf_lon_max")
+                lat_max = st.number_input("北纬", value=44.0, format="%.2f", key="wf_lat_max")
+            wiz_bbox = [lon_min, lat_min, lon_max, lat_max]
+            wiz_area = "自定义AOI"
+            geojson_file = st.file_uploader("或上传 GeoJSON", type=["geojson", "json"], key="wf_geojson")
+            if geojson_file is not None:
+                try:
+                    wiz_bbox, _ = parse_geojson_bbox(geojson_file.getvalue())
+                    st.success("✅ 已解析 GeoJSON 边界")
+                except Exception as e:
+                    st.error(f"GeoJSON 解析失败: {e}")
+        else:
+            default_area = st.session_state.get("selected_area", "塔里木盆地")
+            if default_area not in STUDY_AREAS:
+                default_area = "塔里木盆地"
+            wiz_area = st.selectbox("研究区", list(STUDY_AREAS.keys()),
+                                   index=list(STUDY_AREAS.keys()).index(default_area))
+            st.session_state["selected_area"] = wiz_area
+            wiz_info = STUDY_AREAS[wiz_area]
+            wiz_bbox = wiz_info["bbox"]
+            st.caption(f"📌 {wiz_info['description']}")
     with col_a2:
         wiz_sat = st.selectbox("数据源", list(COLLECTIONS.keys()),
                               format_func=lambda x: f"{x} ({COLLECTIONS[x]['resolution']}m)")
@@ -194,7 +215,7 @@ with tab_wizard:
         run_wiz = st.button("🚀 一键执行分析", type="primary")
 
         if run_wiz:
-            bbox = wiz_info["bbox"]
+            bbox = wiz_bbox
             results_summary = {}
 
             # 搜索影像
