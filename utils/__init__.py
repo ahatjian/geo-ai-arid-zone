@@ -111,6 +111,13 @@ from .evapotranspiration import (
     classify_et, compute_et_stats, get_et_colormap,
     assess_et, assess_et_cached,
 )
+from .supervised import (
+    CLASSIFIERS, FEATURE_BANDS, INDEX_FEATURES, SupervisedResult,
+    build_feature_stack, sample_from_reference,
+    sample_from_geojson, sample_from_csv, coords_to_indices,
+    train_classifier, predict_image, predict_image_proba,
+    evaluate_classification, assess_supervised_classification,
+)
 from .cryosphere import (
     SNOW_COVER_CLASSES, GLACIER_CLASSES, CryosphereResult,
     calc_ndsi, calc_ndsi_nir, calc_snow_cover,

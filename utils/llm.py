@@ -72,6 +72,9 @@ MODULE_DEFINITIONS = [
     {"name": "蒸散发", "page": "17_蒸散发", "icon": "💨",
      "keywords": ["蒸散发", "蒸发", "蒸腾", "et", "耗水", "水资源", "能量平衡", "sebal"],
      "desc": "SEBAL 能量平衡蒸散发估算"},
+    {"name": "监督分类", "page": "18_监督分类", "icon": "🎯",
+     "keywords": ["监督分类", "训练", "分类器", "随机森林", "svm", "样本", "机器学习", "训练样本"],
+     "desc": "自定义样本训练分类模型 (RF/SVM/KNN/MLP)"},
 ]
 
 STUDY_AREA_NAMES = [
