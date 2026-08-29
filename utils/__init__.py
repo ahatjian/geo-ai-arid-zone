@@ -103,6 +103,14 @@ from .transition import (
 from .aoi import (
     parse_geojson_bbox, validate_bbox, render_aoi_selector,
 )
+from .evapotranspiration import (
+    ET_LEVELS, ETResult, DEFAULT_ET_THRESHOLDS,
+    calc_fvc, calc_emissivity, calc_atmospheric_emissivity,
+    calc_net_radiation, calc_soil_heat_flux, calc_sensible_heat,
+    calc_latent_heat, calc_et_daily,
+    classify_et, compute_et_stats, get_et_colormap,
+    assess_et, assess_et_cached,
+)
 from .cryosphere import (
     SNOW_COVER_CLASSES, GLACIER_CLASSES, CryosphereResult,
     calc_ndsi, calc_ndsi_nir, calc_snow_cover,

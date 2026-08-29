@@ -168,7 +168,7 @@ with st.sidebar:
     cols3 = st.columns(2)
     with cols3[0]:
         st.markdown(
-            '<div class="stats-box"><div class="stats-number">16</div><div class="stats-label">分析模块</div></div>',
+            '<div class="stats-box"><div class="stats-number">17</div><div class="stats-label">分析模块</div></div>',
             unsafe_allow_html=True,
         )
     with cols3[1]:
@@ -297,6 +297,12 @@ with tab_intro:
             "label": "土地转移矩阵",
             "desc": "双时相土地覆盖对比\n转移方向与净变化",
             "page": "16_土地转移",
+        },
+        {
+            "icon": "💨",
+            "label": "蒸散发估算",
+            "desc": "SEBAL 能量平衡\n地表蒸散发 ET",
+            "page": "17_蒸散发",
         },
     ]
 
