@@ -124,6 +124,12 @@ from .vector import (
     raster_to_vector, raster_to_vector_from_file,
     compute_class_areas, summarize_vector,
 )
+from .results_store import (
+    KIND_EXT, TEXT_KINDS, BINARY_KINDS,
+    save_result, save_result_file, list_results,
+    get_result, get_result_path, load_result,
+    delete_result, clear_results, package_results, get_store_info,
+)
 from .cryosphere import (
     SNOW_COVER_CLASSES, GLACIER_CLASSES, CryosphereResult,
     calc_ndsi, calc_ndsi_nir, calc_snow_cover,

@@ -1,6 +1,6 @@
 # 🌍 西北干旱区遥感智能分析平台
 
-> v1.13 | Phase 1-6 全部完成 | 19 分析模块 + DeepSeek AI 智能查询 + 自定义 AOI + 矢量导出
+> v1.14 | Phase 1-6 全部完成 | 20 分析模块 + DeepSeek AI 智能查询 + 自定义 AOI + 矢量导出 + 数据下载中心
 
 基于 **Microsoft Planetary Computer (STAC API)** + **Streamlit** + **DeepSeek AI** 的 Web 端干旱区遥感智能分析应用。面向中国西北干旱半干旱地区，提供卫星数据检索、遥感指数计算、AI地物分类、干旱预测、沙漠化评估、冰冻圈分析、农业干旱监测、时序动画及智能工作流全链路功能。
 
@@ -24,12 +24,13 @@
 - 🧮 **指数计算器** — 12 种预设指数 + 自定义波段运算 (Band Math) 表达式
 - 🔀 **土地转移矩阵** — 双时相 ESA WorldCover 对比 + 转移矩阵/净变化/主要转移方向
 
-### ✨ 智能化 (5 模块)
+### ✨ 智能化 (6 模块)
 - 📄 **报告导出** — 一键生成多页 HTML 综合分析报告
 - 🎬 **时序动画** — NDVI/水体/雪盖 GIF 动画生成 (单指数/多指数对比/趋势曲线 3 种模式)
 - 🌍 **生态评估** — PSR 压力-状态-响应 生态安全指数 (ESI) + 可调权重 + 5 级安全分级
 - ⚡ **智能工作流** — DeepSeek AI 自然语言查询 + 一键分步分析 + 综合报告自动生成
 - 🗺️ **矢量导出** — 分类/分级/掩膜结果矢量化，导出 GeoJSON / Shapefile (zip) / KML，衔接 ArcGIS/QGIS/Google Earth
+- 📦 **数据下载中心** — 结果持久化 (跨会话) + 统一下载 / 批量打包 (zip) / 预览 / 删除
 
 ## 技术栈
 
@@ -81,8 +82,9 @@ web-geo-ai/
 │   ├── 16_土地转移.py              # 双时相土地覆盖转移矩阵
 │   ├── 17_蒸散发.py               # SEBAL 能量平衡蒸散发估算
 │   ├── 18_监督分类.py              # 自定义样本训练模型 (RF/SVM/KNN/MLP)
-│   └── 19_矢量导出.py              # 分类结果矢量化 (GeoJSON/Shapefile/KML)
-├── utils/                        # 工具函数库 (25 模块)
+│   ├── 19_矢量导出.py              # 分类结果矢量化 (GeoJSON/Shapefile/KML)
+│   └── 20_数据下载中心.py           # 结果持久化 + 统一下载/打包/删除
+├── utils/                        # 工具函数库 (26 模块)
 │   ├── pc_data.py                # Planetary Computer STAC 数据获取
 │   ├── indices.py                # NDVI/MNDWI/EVI/AWEIsh 指数计算
 │   ├── drought.py                # SPI/SPEI/VCI/TCI/VHI/NDDI/TVDI/CDI
@@ -95,6 +97,7 @@ web-geo-ai/
 │   ├── evapotranspiration.py     # SEBAL 蒸散发估算 (能量平衡)
 │   ├── supervised.py             # 监督分类训练 (sklearn 分类器)
 │   ├── vector.py                 # 矢量导出 (栅格→GeoJSON/Shapefile/KML)
+│   ├── results_store.py          # 结果持久化 (统一存储/检索/打包/删除)
 │   ├── cryosphere.py             # NDSI/冰川/雪线/冻土
 │   ├── agri_drought.py           # CWSI/SMI/MPDI/灌溉需求
 │   ├── ecology.py                # PSR 生态安全模型
@@ -117,7 +120,8 @@ web-geo-ai/
 │   ├── test_aoi.py               # 自定义 AOI 组件测试
 │   ├── test_evapotranspiration.py # 蒸散发估算测试
 │   ├── test_supervised.py        # 监督分类训练测试
-│   └── test_vector.py            # 矢量导出测试
+│   ├── test_vector.py            # 矢量导出测试
+│   └── test_results_store.py     # 结果持久化测试
 ├── config.py                     # 全局配置 + 研究区BBOX
 ├── models/                       # AI模型存储
 ├── .streamlit/
@@ -165,8 +169,8 @@ docker build -t geo-ai-app . && docker run -p 8501:8501 geo-ai-app
 
 ## 状态
 
-- **版本**: v1.13 | **页面**: 19 | **工具模块**: 25
-- **测试**: 111 用例全部通过 | **部署**: Streamlit Cloud ✅
+- **版本**: v1.14 | **页面**: 20 | **工具模块**: 26
+- **测试**: 124 用例全部通过 | **部署**: Streamlit Cloud ✅
 - **Python**: 3.11 | **PyTorch**: 2.11.0+cpu
 
 ## License

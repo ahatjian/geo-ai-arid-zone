@@ -78,6 +78,9 @@ MODULE_DEFINITIONS = [
     {"name": "矢量导出", "page": "19_矢量导出", "icon": "🗺️",
      "keywords": ["矢量", "导出", "shapefile", "geojson", "kml", "矢量化", "面要素", "多边形", "arcgis", "qgis", "边界"],
      "desc": "分类结果矢量化导出 (GeoJSON/Shapefile/KML)"},
+    {"name": "数据下载中心", "page": "20_数据下载中心", "icon": "📦",
+     "keywords": ["下载中心", "下载", "结果管理", "持久化", "打包", "结果库", "保存结果", "批量下载"],
+     "desc": "结果持久化 + 统一下载/打包/删除"},
 ]
 
 STUDY_AREA_NAMES = [
