@@ -19,8 +19,11 @@ LLM 智能查询模块 — DeepSeek API 集成
 import os
 import re
 import json
+import logging
 from typing import Optional, Dict, List
 from datetime import datetime
+
+logger = logging.getLogger(__name__)
 
 # ---- 模块定义 (与 pages/12 共用) ----
 MODULE_DEFINITIONS = [
@@ -57,6 +60,9 @@ MODULE_DEFINITIONS = [
     {"name": "生态评估", "page": "11_生态评估", "icon": "🌍",
      "keywords": ["生态", "安全", "psr", "评估", "环境", "脆弱", "保护"],
      "desc": "PSR 生态安全评价"},
+    {"name": "智能工作流", "page": "12_工作流", "icon": "⚡",
+     "keywords": ["工作流", "智能", "一键", "流程", "向导", "自动分析"],
+     "desc": "自然语言查询 + 分步向导 + 综合报告"},
     {"name": "土壤盐渍化", "page": "13_土壤盐渍化", "icon": "🧂",
      "keywords": ["盐渍化", "盐分", "盐碱", "盐渍", "盐霜", "盐壳", "salinity", "次生盐化"],
      "desc": "SI/NDSI 盐分指数 + 5级盐渍化评估"},
@@ -88,21 +94,36 @@ STUDY_AREA_NAMES = [
     "吐鲁番盆地", "天山北坡", "准噶尔盆地",
 ]
 
-SYSTEM_PROMPT = """你是一个西北干旱区遥感分析助手。用户用中文描述分析需求，你要解析并返回 JSON。
+def build_system_prompt() -> str:
+    """由 MODULE_DEFINITIONS 自动生成系统提示词, 保证与平台模块同步。"""
+    module_lines = "\n".join(
+        f'  "{m["name"]}" — {m["desc"]}'
+        for m in MODULE_DEFINITIONS
+    )
+    areas = "、".join(STUDY_AREA_NAMES)
+    return f"""你是一个西北干旱区遥感分析助手。用户用中文描述分析需求，你要解析并返回 JSON。
 
 任务：
-1. 识别用户想分析的研究区 (study_area)
+1. 识别用户想分析的研究区 (study_area)，可选: {areas}
 2. 识别时间范围 (year_start, year_end)
-3. 推荐分析模块 (modules)，从以下列表中选择：
-   [数据浏览, 水体监测, 植被分析, AI分类, 变化检测, 报告导出, 
-    干旱监测, 冰冻圈分析, 农业干旱, 时序动画, 生态评估]
+3. 从以下平台模块中推荐 1-4 个最相关的 (modules)，必须使用列出的模块名:
+{module_lines}
 4. 生成简短解释 (explanation)
 
 只返回 JSON，不要其他文字。格式：
-{"study_area": "塔里木盆地", "year_start": 2024, "year_end": 2025, 
- "modules": ["植被分析", "干旱监测"], "explanation": "帮你分析..."}
+{{"study_area": "塔里木盆地", "year_start": 2024, "year_end": 2025,
+ "modules": ["植被分析", "干旱监测"], "explanation": "帮你分析..."}}
 
 如果没有明确研究区，默认"塔里木盆地"。如果没有明确年份，默认今年。"""
+
+
+SYSTEM_PROMPT = build_system_prompt()
+
+# DeepSeek 请求配置
+DEEPSEEK_MODEL = os.environ.get("DEEPSEEK_MODEL", "deepseek-chat")
+DEEPSEEK_TEMPERATURE = float(os.environ.get("DEEPSEEK_TEMPERATURE", "0.3"))
+DEEPSEEK_TIMEOUT = 30
+DEEPSEEK_MAX_RETRIES = 2
 
 
 def _get_api_key() -> str:
@@ -115,8 +136,7 @@ def _get_api_key() -> str:
         if key:
             return key
     except Exception as e:
-        import logging
-        logging.debug(f"LLM st.secrets/query error: {e}")
+        logger.debug(f"LLM st.secrets/query error: {e}")
     # 3. 环境变量
     return os.environ.get("DEEPSEEK_API_KEY", "")
 
@@ -139,37 +159,46 @@ def query_deepseek(prompt: str, api_key: Optional[str] = None) -> Dict:
         # 无 API Key → 降级到模板匹配
         return fallback_parse(prompt)
 
-    try:
-        import requests
-        resp = requests.post(
-            "https://api.deepseek.com/v1/chat/completions",
-            headers={
-                "Authorization": f"Bearer {api_key}",
-                "Content-Type": "application/json",
-            },
-            json={
-                "model": "deepseek-chat",
-                "messages": [
-                    {"role": "system", "content": SYSTEM_PROMPT},
-                    {"role": "user", "content": prompt},
-                ],
-                "temperature": 0.3,
-                "max_tokens": 300,
-            },
-            timeout=15,
-        )
-        data = resp.json()
-        content = data["choices"][0]["message"]["content"]
+    import requests
+    last_error: Optional[Exception] = None
+    for attempt in range(DEEPSEEK_MAX_RETRIES + 1):
+        try:
+            resp = requests.post(
+                "https://api.deepseek.com/v1/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {api_key}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "model": DEEPSEEK_MODEL,
+                    "messages": [
+                        {"role": "system", "content": SYSTEM_PROMPT},
+                        {"role": "user", "content": prompt},
+                    ],
+                    "temperature": DEEPSEEK_TEMPERATURE,
+                    "max_tokens": 300,
+                },
+                timeout=DEEPSEEK_TIMEOUT,
+            )
+            if resp.status_code != 200:
+                raise RuntimeError(f"DeepSeek API 状态码 {resp.status_code}: {resp.text[:200]}")
+            data = resp.json()
+            content = data["choices"][0]["message"]["content"]
 
-        # 提取 JSON
-        json_match = re.search(r'\{[^{}]+\}', content, re.DOTALL)
-        if json_match:
-            parsed = json.loads(json_match.group())
-            return _validate_result(parsed)
-    except Exception as e:
-        import logging
-        logging.debug(f"LLM st.secrets/query error: {e}")
+            # 提取 JSON
+            json_match = re.search(r'\{[^{}]+\}', content, re.DOTALL)
+            if json_match:
+                parsed = json.loads(json_match.group())
+                return _validate_result(parsed)
+            raise ValueError(f"无法从响应解析 JSON: {content[:200]}")
+        except Exception as e:
+            last_error = e
+            logger.warning(f"DeepSeek 请求失败 (第 {attempt + 1} 次): {e}")
+            if attempt < DEEPSEEK_MAX_RETRIES:
+                import time
+                time.sleep(1.5 * (attempt + 1))
 
+    logger.debug(f"DeepSeek 请求全部失败, 降级到模板匹配: {last_error}")
     return fallback_parse(prompt)
 
 
@@ -200,6 +229,14 @@ def fallback_parse(prompt: str) -> Dict:
             modules.append({"name": mod["name"], "page": mod["page"],
                            "icon": mod["icon"], "desc": mod["desc"], "score": score})
     modules.sort(key=lambda x: x["score"], reverse=True)
+
+    # 无匹配时兜底推荐"数据浏览" (页面据此给出下一步引导)
+    if not modules:
+        browse = next(
+            (m for m in MODULE_DEFINITIONS if m["name"] == "数据浏览"), None
+        )
+        if browse:
+            modules.append({**browse, "score": 1})
 
     # 生成解释
     if modules:

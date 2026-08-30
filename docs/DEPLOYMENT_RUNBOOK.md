@@ -1,6 +1,6 @@
 # 西北干旱区 Geo AI 平台 — 精简部署 Runbook
 
-> 版本: v1.7 | 最后更新: 2026-04-21 | 维护: Geo AI Team
+> 版本: v1.15 | 最后更新: 2026-08-30 | 维护: Geo AI Team
 
 ---
 
@@ -244,6 +244,9 @@ streamlit run app.py --server.headless=true --browser.gatherUsageStats=false
 | `STREAMLIT_SERVER_PORT` | 8501 | 服务端口 |
 | `STREAMLIT_SERVER_ADDRESS` | 0.0.0.0 | 绑定地址 |
 | `PYTHONUNBUFFERED` | 1 | 日志实时输出 |
+| `DEEPSEEK_API_KEY` | (无) | DeepSeek AI Key, 缺失时自动降级为模板匹配 |
+| `DEEPSEEK_MODEL` | deepseek-chat | DeepSeek 模型名 (可选) |
+| `DEEPSEEK_TEMPERATURE` | 0.3 | LLM 采样温度 (可选) |
 
 ### 端口 (防火墙规则)
 
@@ -314,3 +317,4 @@ echo "=== 检查完成 ==="
 
 **维护日志**:
 - 2026-04-21: 初始版本 (v1.7), 覆盖 12 页应用全部模块
+- 2026-08-30: 升级至 v1.15, 覆盖 20 页应用全部模块, DeepSeek AI 智能查询与解读

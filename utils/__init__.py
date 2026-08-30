@@ -130,6 +130,11 @@ from .results_store import (
     get_result, get_result_path, load_result,
     delete_result, clear_results, package_results, get_store_info,
 )
+from .ai_insight import (
+    generate_ai_insight, explain_metrics,
+    summarize_insight, get_insight_history,
+    is_ai_available,
+)
 from .cryosphere import (
     SNOW_COVER_CLASSES, GLACIER_CLASSES, CryosphereResult,
     calc_ndsi, calc_ndsi_nir, calc_snow_cover,

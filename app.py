@@ -1,6 +1,6 @@
 """
 Geo AI 干旱区遥感智能分析平台 — 首页入口
-版本 v1.7 — 12模块完整链路: 从数据浏览到智能工作流
+版本 v1.15 — 20 模块完整链路: 从数据浏览到智能工作流 + AI 解读
 """
 
 import streamlit as st
@@ -156,12 +156,12 @@ with st.sidebar:
     cols2 = st.columns(2)
     with cols2[0]:
         st.markdown(
-            '<div class="stats-box"><div class="stats-number">7+</div><div class="stats-label">遥感指数</div></div>',
+            '<div class="stats-box"><div class="stats-number">12+</div><div class="stats-label">遥感指数</div></div>',
             unsafe_allow_html=True,
         )
     with cols2[1]:
         st.markdown(
-            '<div class="stats-box"><div class="stats-number">AI</div><div class="stats-label">深度学习</div></div>',
+            '<div class="stats-box"><div class="stats-number">AI</div><div class="stats-label">DeepSeek + 深度学习</div></div>',
             unsafe_allow_html=True,
         )
 
@@ -188,7 +188,7 @@ with st.sidebar:
 
     st.divider()
     st.caption("📡 数据源: Microsoft Planetary Computer")
-    st.caption("🧠 AI 引擎: PyTorch + geoai-py")
+    st.caption("🧠 AI 引擎: DeepSeek AI + PyTorch")
     st.caption("🚀 部署: Streamlit Cloud (免费)")
 
 # ============================================
@@ -397,7 +397,7 @@ with tab_intro:
     st.subheader("🔄 工作流程")
     st.markdown("""
     ```
-    ① 选择研究区 → ② 搜索卫星影像 → ③ 计算遥感指数 → ④ AI/统计分析 → ⑤ 导出结果
+    ① 选择研究区 → ② 搜索卫星影像 → ③ 计算遥感指数 → ④ AI/统计分析 → ⑤ AI 解读 + 导出结果
     ```
     """)
 
@@ -522,7 +522,7 @@ with tab_about:
 
     st.markdown(f"""
     <div style='text-align: center; color: gray; font-size: 0.85rem;'>
-        <p>Geo AI 干旱区遥感分析平台 {APP_VERSION} | Powered by Microsoft Planetary Computer</p>
+        <p>Geo AI 干旱区遥感分析平台 {APP_VERSION} | Powered by Microsoft Planetary Computer + DeepSeek AI</p>
         <p>🛰️ Sentinel-2 (10m) | Landsat 4-9 (30m, 1982-至今) | 完全免费</p>
     </div>
     """, unsafe_allow_html=True)

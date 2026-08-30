@@ -301,6 +301,27 @@ with tab_wizard:
             with col_r4:
                 st.metric("分析时相", results_summary["date"])
 
+            # AI 智能解读
+            from utils.ai_insight import generate_ai_insight, is_ai_available as _ai_ok
+            with st.spinner("🧠 DeepSeek AI 解读中..."):
+                ai_text = generate_ai_insight(
+                    analysis_type="植被+水体综合分析",
+                    metrics={
+                        "NDVI均值": results_summary["ndvi_mean"],
+                        "植被覆盖率": results_summary["vegetation_ratio"],
+                        "水体覆盖率": results_summary["water_ratio"],
+                    },
+                    study_area=results_summary["study_area"],
+                    time_range=results_summary["date"],
+                )
+            st.markdown(
+                f"<div style='background:#f0f8f4;border-left:4px solid #27ae60;"
+                f"padding:14px 18px;border-radius:6px;line-height:1.9;font-size:14px;'>"
+                f"🧠 **AI 解读**（{'DeepSeek AI' if _ai_ok() else '规则模板'}）：{ai_text}</div>",
+                unsafe_allow_html=True,
+            )
+            st.session_state["workflow_ai_insight"] = ai_text
+
             # 各模块跳转
             st.divider()
             st.subheader("🔗 进入详细分析")
@@ -332,6 +353,9 @@ with tab_report:
         st.info("💡 请先在「分步向导」中执行分析，结果将自动汇总到此。")
     else:
         st.success(f"✅ 报告数据来源: {wf_results['study_area']} ({wf_results['date']})")
+
+        # 合并 AI 解读 (如分步向导已生成)
+        wf_results["ai_insight"] = st.session_state.get("workflow_ai_insight", "")
 
         # 生成 HTML 报告
         report_html = f"""
@@ -376,8 +400,13 @@ with tab_report:
         <p>💡 使用平台各专业分析模块获取详细图表和统计数据。</p>
         </div>
 
+        <div class="card" style="background:#f0f8f4;border-left:4px solid #27ae60;">
+        <h3>🤖 AI 智能解读</h3>
+        <p>{wf_results.get('ai_insight', '')}</p>
+        </div>
+
         <div class="footer">
-        <p>Geo AI 干旱区遥感智能分析平台 v1.7 | 自动生成</p>
+        <p>Geo AI 干旱区遥感智能分析平台 v1.15 | 自动生成</p>
         </div>
         </body></html>
         """

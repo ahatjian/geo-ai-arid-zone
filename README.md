@@ -1,6 +1,6 @@
 # 🌍 西北干旱区遥感智能分析平台
 
-> v1.14 | Phase 1-6 全部完成 | 20 分析模块 + DeepSeek AI 智能查询 + 自定义 AOI + 矢量导出 + 数据下载中心
+> v1.15 | Phase 1-6 全部完成 | 20 分析模块 + DeepSeek AI 智能查询与解读 + 自定义 AOI + 矢量导出 + 数据下载中心
 
 基于 **Microsoft Planetary Computer (STAC API)** + **Streamlit** + **DeepSeek AI** 的 Web 端干旱区遥感智能分析应用。面向中国西北干旱半干旱地区，提供卫星数据检索、遥感指数计算、AI地物分类、干旱预测、沙漠化评估、冰冻圈分析、农业干旱监测、时序动画及智能工作流全链路功能。
 
@@ -28,7 +28,8 @@
 - 📄 **报告导出** — 一键生成多页 HTML 综合分析报告
 - 🎬 **时序动画** — NDVI/水体/雪盖 GIF 动画生成 (单指数/多指数对比/趋势曲线 3 种模式)
 - 🌍 **生态评估** — PSR 压力-状态-响应 生态安全指数 (ESI) + 可调权重 + 5 级安全分级
-- ⚡ **智能工作流** — DeepSeek AI 自然语言查询 + 一键分步分析 + 综合报告自动生成
+- ⚡ **智能工作流** — DeepSeek AI 自然语言查询 + 一键分步分析 + 综合报告自动生成 + AI 智能解读
+- 🤖 **AI 智能解读** — 基于各模块分析指标，DeepSeek 自动生成专业生态/环境解读，嵌入 HTML 报告（无 API Key 时自动降级为规则模板）
 - 🗺️ **矢量导出** — 分类/分级/掩膜结果矢量化，导出 GeoJSON / Shapefile (zip) / KML，衔接 ArcGIS/QGIS/Google Earth
 - 📦 **数据下载中心** — 结果持久化 (跨会话) + 统一下载 / 批量打包 (zip) / 预览 / 删除
 
@@ -36,7 +37,7 @@
 
 | 层级 | 技术 |
 |------|------|
-| 前端 | Streamlit (12 页面应用) |
+| 前端 | Streamlit (20 页面应用) |
 | 地图 | leafmap + Folium |
 | 数据源 | **Microsoft Planetary Computer** (STAC API, 免费, 国内可访问) |
 | 卫星 | Sentinel-2 (10m, 2015-) + Landsat 4-9 (30m, 1982-, 43年长时序) |
@@ -58,11 +59,31 @@ streamlit run app.py
 # 访问 http://localhost:8501
 ```
 
+## DeepSeek AI 配置
+
+平台 AI 能力（自然语言查询 + 智能解读）默认启用，配置 API Key 后自动激活：
+
+```bash
+# 1. 注册 DeepSeek 开放平台: https://platform.deepseek.com/
+# 2. 创建 API Key, 然后配置 (三选一):
+
+# 方式 A: Streamlit secrets (推荐)
+cp .streamlit/secrets.toml.template .streamlit/secrets.toml
+# 编辑 secrets.toml, 填入 DEEPSEEK_API_KEY = "sk-xxx"
+
+# 方式 B: 环境变量
+export DEEPSEEK_API_KEY=sk-xxx
+
+# 方式 C: Streamlit Cloud 部署时在 App Settings → Secrets 中设置
+```
+
+未配置 Key 时平台自动降级为关键词模板匹配/规则解读，功能不受影响。
+
 ## 项目结构
 
 ```
 web-geo-ai/
-├── app.py                        # 首页入口 + 16模块导航
+├── app.py                        # 首页入口 + 20模块导航
 ├── pages/
 │   ├── 1_数据浏览.py              # STAC搜索 + RGB/NDVI/MNDWI预览
 │   ├── 2_水体监测.py              # MNDWI/AWEIsh + AI水体分割(含ONNX)
@@ -84,7 +105,7 @@ web-geo-ai/
 │   ├── 18_监督分类.py              # 自定义样本训练模型 (RF/SVM/KNN/MLP)
 │   ├── 19_矢量导出.py              # 分类结果矢量化 (GeoJSON/Shapefile/KML)
 │   └── 20_数据下载中心.py           # 结果持久化 + 统一下载/打包/删除
-├── utils/                        # 工具函数库 (26 模块)
+├── utils/                        # 工具函数库 (27 模块)
 │   ├── pc_data.py                # Planetary Computer STAC 数据获取
 │   ├── indices.py                # NDVI/MNDWI/EVI/AWEIsh 指数计算
 │   ├── drought.py                # SPI/SPEI/VCI/TCI/VHI/NDDI/TVDI/CDI
@@ -103,6 +124,7 @@ web-geo-ai/
 │   ├── ecology.py                # PSR 生态安全模型
 │   ├── animation.py              # GIF 时序动画合成
 │   ├── llm.py                    # DeepSeek AI 智能查询
+│   ├── ai_insight.py             # DeepSeek AI 智能解读引擎 (含规则降级)
 │   ├── ai_engine.py              # geoai-py AI推理引擎
 │   ├── landcover.py              # ESA/ESRI 土地覆盖
 │   ├── trend.py                  # Sen+MK 趋势分析
@@ -169,8 +191,8 @@ docker build -t geo-ai-app . && docker run -p 8501:8501 geo-ai-app
 
 ## 状态
 
-- **版本**: v1.14 | **页面**: 20 | **工具模块**: 26
-- **测试**: 124 用例全部通过 | **部署**: Streamlit Cloud ✅
+- **版本**: v1.15 | **页面**: 20 | **工具模块**: 27
+- **测试**: 156 用例全部通过 | **部署**: Streamlit Cloud ✅
 - **Python**: 3.11 | **PyTorch**: 2.11.0+cpu
 
 ## License

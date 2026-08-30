@@ -15,6 +15,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from config import STUDY_AREAS
 from utils.error_handler import StreamlitErrorBoundary
+from utils.ai_insight import generate_ai_insight, is_ai_available
 
 st.set_page_config(page_title="报告导出", page_icon="📄", layout="wide")
 
@@ -172,6 +173,18 @@ with st.sidebar:
             st.warning("⚠️ 未检测到分析数据，请先在对应页面执行分析")
 
     st.divider()
+
+    # ---- AI 智能解读 ----
+    st.subheader("🤖 AI 智能解读")
+    if is_ai_available():
+        st.caption("🧠 DeepSeek AI 已连接，可生成专业解读")
+    else:
+        st.caption("未检测到 API Key，将使用规则模板解读")
+    ai_insight_enabled = st.toggle(
+        "生成 AI 智能解读",
+        value=True,
+        help="基于各模块分析指标，调用 DeepSeek 生成专业生态/环境解读，并嵌入报告",
+    )
 
     # ---- 元数据 ----
     # 自动填充研究区
@@ -697,6 +710,53 @@ def build_report_html():
         sec += f'<p style="line-height:1.8;">{section_content.replace(chr(10), "<br>")}</p>\n'
         sections.append(sec)
 
+    # ---- AI 智能解读章节 ----
+    ai_section_html = ""
+    if ai_insight_enabled and sections:
+        # 收集各模块指标, 生成 AI 解读
+        ai_metrics = {}
+        if has_water and water_area > 0:
+            ai_metrics.update({
+                "水体覆盖率": round(water_pct / 100.0, 4),
+                "水体面积(km²)": round(water_area, 2),
+            })
+        if has_veg and veg_mean != 0:
+            ai_metrics.update({
+                "NDVI均值": round(veg_mean, 4),
+                "植被覆盖率": round(veg_coverage / 100.0, 4),
+            })
+        if has_change and (change_increase + change_decrease) > 0:
+            total_c = change_increase + change_decrease + change_stable
+            if total_c > 0:
+                ai_metrics.update({
+                    "变化净增占比": round((change_increase - change_decrease) / total_c, 4),
+                })
+
+        if ai_metrics:
+            analysis_type = []
+            if has_water and water_area > 0:
+                analysis_type.append("水体监测")
+            if has_veg and veg_mean != 0:
+                analysis_type.append("植被分析")
+            if has_change and (change_increase + change_decrease) > 0:
+                analysis_type.append("变化检测")
+            type_str = "+".join(analysis_type) if analysis_type else "综合分析"
+
+            insight = generate_ai_insight(
+                analysis_type=type_str,
+                metrics=ai_metrics,
+                study_area=report_area,
+                time_range=report_date,
+            )
+            ai_section_html = (
+                f'<h2>🤖 AI 智能解读</h2>\n'
+                f'<div class="ai-insight" style="background:#f0f8f4;border-left:4px solid #27ae60;'
+                f'padding:16px 20px;border-radius:6px;line-height:1.9;font-size:14px;">'
+                f'{insight.replace(chr(10), "<br>")}</div>\n'
+                f'<p style="color:#999;font-size:12px;">本解读由 DeepSeek AI 基于上述分析指标自动生成'
+                f'（{"DeepSeek AI" if is_ai_available() else "规则模板"}）</p>\n'
+            )
+
     # 组装完整报告
     report_date = analysis_date.strftime("%Y年%m月%d日") if hasattr(analysis_date, "strftime") else str(analysis_date)
     author_line = f'<span>作者: {author}</span>' if author else ""
@@ -722,6 +782,8 @@ def build_report_html():
 
 {body_sections}
 
+{ai_section_html}
+
 <div class="footer">
     <p>本报告由 Geo AI 干旱区遥感智能分析平台自动生成</p>
     <p>生成时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} | 数据来源: Sentinel-2 / Landsat</p>
@@ -730,7 +792,7 @@ def build_report_html():
 </body>
 </html>"""
 
-    return html
+    return html, ai_section_html
 
 
 # ============================================
@@ -738,7 +800,7 @@ def build_report_html():
 # ============================================
 if preview or generate:
     with StreamlitErrorBoundary("报告生成", st=st, show_traceback=False):
-        report_html = build_report_html()
+        report_html, ai_section_html = build_report_html()
 
         if preview:
             st.subheader("👁️ 报告预览")
@@ -755,6 +817,18 @@ if preview or generate:
                 use_container_width=True,
             )
             st.success(f"✅ 报告已生成 — 点击上方按钮下载")
+
+            # AI 解读展示
+            if ai_section_html and "AI 智能解读" in ai_section_html:
+                st.divider()
+                st.subheader("🤖 AI 智能解读")
+                st.markdown("🧠 **DeepSeek AI** 基于本次分析指标自动生成：")
+                st.markdown(
+                    f"<div style='background:#f0f8f4;border-left:4px solid #27ae60;"
+                    f"padding:16px 20px;border-radius:6px;line-height:1.9;font-size:14px;'>"
+                    f"{ai_section_html.split('<h2>🤖 AI 智能解读</h2>')[1].split('</div>')[0]}</div>",
+                    unsafe_allow_html=True,
+                )
 
             with st.expander("📄 查看 HTML 源码"):
                 st.code(report_html[:5000], language="html")
