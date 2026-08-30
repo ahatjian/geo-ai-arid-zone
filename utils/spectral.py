@@ -12,6 +12,8 @@
 """
 
 import numpy as np
+import ast
+import operator
 import warnings
 from typing import Dict, List, Optional, Tuple
 
@@ -102,8 +104,120 @@ PRESET_INDEX_NAMES = [p["name"] for p in PRESET_INDICES]
 
 
 # ============================================================
-# 波段运算求值器
+# 波段运算求值器 (AST 白名单, 无 eval)
 # ============================================================
+
+# 二元运算映射 (仅允许算术运算符)
+_BIN_OPS = {
+    ast.Add: operator.add,
+    ast.Sub: operator.sub,
+    ast.Mult: operator.mul,
+    ast.Div: operator.truediv,
+    ast.Pow: operator.pow,
+    ast.Mod: operator.mod,
+    ast.FloorDiv: operator.floordiv,
+}
+
+# 一元运算映射
+_UNARY_OPS = {
+    ast.UAdd: operator.pos,
+    ast.USub: operator.neg,
+}
+
+# 比较运算映射 (允许阈值比较, 配合 where 使用)
+_CMP_OPS = {
+    ast.Gt: operator.gt,
+    ast.Lt: operator.lt,
+    ast.GtE: operator.ge,
+    ast.LtE: operator.le,
+    ast.Eq: operator.eq,
+    ast.NotEq: operator.ne,
+}
+
+
+class _BandMathEvaluator(ast.NodeVisitor):
+    """AST 白名单求值器: 仅允许常量/波段名/算术运算/白名单函数/比较。"""
+
+    def __init__(self, namespace: Dict, allowed_funcs: List[str]):
+        self._ns = namespace
+        self._allowed = allowed_funcs
+        self._max_nodes = 500  # 防表达式过深 (DoS)
+
+    def generic_visit(self, node):
+        raise ValueError(f"不允许的表达式元素: {type(node).__name__}")
+
+    def visit_Expression(self, node):
+        return self.visit(node.body)
+
+    def visit_Constant(self, node):
+        if isinstance(node.value, (int, float)):
+            return node.value
+        raise ValueError(f"不允许的常量类型: {type(node.value).__name__}")
+
+    def visit_Name(self, node):
+        if node.id not in self._ns:
+            raise ValueError(f"未知标识符: {node.id} (允许: B/G/R/NIR/SWIR1/SWIR2 + 数学函数)")
+        return self._ns[node.id]
+
+    def visit_BinOp(self, node):
+        if type(node.op) not in _BIN_OPS:
+            raise ValueError(f"不允许的运算符: {type(node.op).__name__}")
+        left = self.visit(node.left)
+        right = self.visit(node.right)
+        return _BIN_OPS[type(node.op)](left, right)
+
+    def visit_UnaryOp(self, node):
+        if type(node.op) not in _UNARY_OPS:
+            raise ValueError(f"不允许的一元运算符: {type(node.op).__name__}")
+        return _UNARY_OPS[type(node.op)](self.visit(node.operand))
+
+    def visit_Call(self, node):
+        if not isinstance(node.func, ast.Name):
+            raise ValueError("仅允许调用白名单数学函数")
+        if node.func.id not in self._allowed:
+            raise ValueError(f"不允许的函数: {node.func.id}")
+        func = getattr(np, node.func.id)
+        args = [self.visit(a) for a in node.args]
+        return func(*args)
+
+    def visit_Compare(self, node):
+        if len(node.ops) != 1 or len(node.comparators) != 1:
+            raise ValueError("仅支持单个比较")
+        if type(node.ops[0]) not in _CMP_OPS:
+            raise ValueError("不允许的比较运算符")
+        left = self.visit(node.left)
+        right = self.visit(node.comparators[0])
+        return _CMP_OPS[type(node.ops[0])](left, right)
+
+    def visit_BoolOp(self, node):
+        values = [self.visit(v) for v in node.values]
+        if isinstance(node.op, ast.And):
+            result = values[0]
+            for v in values[1:]:
+                result = np.logical_and(result, v)
+            return result
+        if isinstance(node.op, ast.Or):
+            result = values[0]
+            for v in values[1:]:
+                result = np.logical_or(result, v)
+            return result
+        raise ValueError("不允许的逻辑运算符")
+
+    def visit_Subscript(self, node):
+        raise ValueError("不允许下标访问")
+
+    def visit_Attribute(self, node):
+        raise ValueError("不允许属性访问")
+
+
+def _safe_eval_band_math(expression: str, namespace: Dict) -> np.ndarray:
+    """AST 白名单求值, 替代 eval()。"""
+    if len(expression) > 2000:
+        raise ValueError("表达式过长")
+    tree = ast.parse(expression, mode="eval")
+    evaluator = _BandMathEvaluator(namespace, ALLOWED_NUMPY_FUNCS)
+    return evaluator.visit(tree)
+
 
 def get_band_arrays(bands_data: np.ndarray) -> Dict[str, np.ndarray]:
     """
@@ -138,7 +252,7 @@ def evaluate_band_math(
     bands: Dict[str, np.ndarray],
 ) -> np.ndarray:
     """
-    安全求值波段运算表达式
+    安全求值波段运算表达式 (AST 白名单, 不使用 eval)
 
     参数:
         expression: 波段运算表达式, 如 "(NIR - R) / (NIR + R)"
@@ -148,15 +262,16 @@ def evaluate_band_math(
     返回:
         result: 计算结果数组 (H, W)
 
-    ⚠️ 安全说明: 使用受限 eval (空 __builtins__ + numpy 函数白名单)，
-       仅支持算术运算和白名单内的数学函数，禁止任意代码执行。
+    ⚠️ 安全说明: 通过 ast.parse + 白名单 NodeVisitor 求值，
+       仅允许常量/波段名/算术运算符/白名单 numpy 函数，
+       禁止属性访问/下标/调用外部函数，杜绝 RCE。
     """
     # 构建命名空间: 波段名 + numpy 白名单函数
     namespace = {name: arr for name, arr in bands.items()}
     namespace.update({func: getattr(np, func) for func in ALLOWED_NUMPY_FUNCS})
 
     with np.errstate(divide="ignore", invalid="ignore"):
-        result = eval(expression, {"__builtins__": {}}, namespace)
+        result = _safe_eval_band_math(expression, namespace)
 
     result = np.asarray(result, dtype=np.float64)
 

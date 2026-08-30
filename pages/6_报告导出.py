@@ -7,6 +7,7 @@
 import streamlit as st
 import os
 import sys
+import html
 import base64
 from datetime import datetime
 from io import BytesIO
@@ -550,6 +551,20 @@ CSS_STYLE = """
 def build_report_html():
     """根据用户填写的表单数据构建完整 HTML 报告"""
 
+    # 所有用户输入视为不可信, 统一 HTML 转义 (防 XSS)
+    global report_title, report_area, author
+    global water_notes, veg_notes, change_notes, ai_notes
+    global section_title, section_content
+    report_title = html.escape(str(report_title or ""))
+    report_area = html.escape(str(report_area or ""))
+    author = html.escape(str(author or ""))
+    water_notes = html.escape(str(water_notes or ""))
+    veg_notes = html.escape(str(veg_notes or ""))
+    change_notes = html.escape(str(change_notes or ""))
+    ai_notes = html.escape(str(ai_notes or ""))
+    section_title = html.escape(str(section_title or ""))
+    section_content = html.escape(str(section_content or ""))
+
     # 收集所有图片
     all_images = []
     for key, label in [
@@ -748,11 +763,13 @@ def build_report_html():
                 study_area=report_area,
                 time_range=report_date,
             )
+            # LLM 输出视为不可信: 转义后再嵌入 HTML, 防止 XSS
+            insight_escaped = html.escape(insight or "")
             ai_section_html = (
                 f'<h2>🤖 AI 智能解读</h2>\n'
                 f'<div class="ai-insight" style="background:#f0f8f4;border-left:4px solid #27ae60;'
                 f'padding:16px 20px;border-radius:6px;line-height:1.9;font-size:14px;">'
-                f'{insight.replace(chr(10), "<br>")}</div>\n'
+                f'{insight_escaped.replace(chr(10), "<br>")}</div>\n'
                 f'<p style="color:#999;font-size:12px;">本解读由 DeepSeek AI 基于上述分析指标自动生成'
                 f'（{"DeepSeek AI" if is_ai_available() else "规则模板"}）</p>\n'
             )

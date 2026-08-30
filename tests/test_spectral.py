@@ -83,3 +83,58 @@ class TestPresetIndices:
         assert "mean" in stats
         assert "std" in stats
         assert stats["valid_ratio"] > 0.9
+
+
+class TestBandMathSecurity:
+    """AST 白名单求值器安全测试 (RCE 防护)"""
+
+    MALICIOUS_EXPRESSIONS = [
+        "__import__('os').system('id')",
+        "().__class__.__bases__",
+        "(NIR).__class__.__mro__",
+        "open('C:/Windows/win.ini').read()",
+        "[x for x in ()]",
+        "globals()",
+        "locals()",
+        "getattr(__builtins__, 'eval')",
+    ]
+
+    def test_malicious_expressions_rejected(self, mock_bands_dict):
+        from utils.spectral import evaluate_band_math
+        for expr in self.MALICIOUS_EXPRESSIONS:
+            with pytest.raises((ValueError, SyntaxError, TypeError)):
+                evaluate_band_math(expr, mock_bands_dict)
+
+    def test_attribute_access_rejected(self, mock_bands_dict):
+        from utils.spectral import evaluate_band_math
+        with pytest.raises(ValueError):
+            evaluate_band_math("(NIR).shape", mock_bands_dict)
+
+    def test_unknown_function_rejected(self, mock_bands_dict):
+        from utils.spectral import evaluate_band_math
+        with pytest.raises(ValueError):
+            evaluate_band_math("exec('pass')", mock_bands_dict)
+
+    def test_unknown_identifier_rejected(self, mock_bands_dict):
+        from utils.spectral import evaluate_band_math
+        with pytest.raises((ValueError, NameError)):
+            evaluate_band_math("X + 1", mock_bands_dict)
+
+    def test_legit_expressions_still_work(self, mock_bands_dict):
+        """安全表达式不应被误杀"""
+        from utils.spectral import evaluate_band_math
+        for expr in [
+            "(NIR - R) / (NIR + R)",
+            "sqrt((NIR - R) / (NIR + R + 0.5))",
+            "where(NIR > R, 1, 0)",
+            "clip((NIR - R) * 100, -1, 1)",
+            "1.5 * (NIR - R) / (NIR + R + 0.5)",
+            "NIR / (R + SWIR1)",
+        ]:
+            result = evaluate_band_math(expr, mock_bands_dict)
+            assert result.shape == (40, 40)
+
+    def test_overlong_expression_rejected(self, mock_bands_dict):
+        from utils.spectral import evaluate_band_math
+        with pytest.raises(ValueError):
+            evaluate_band_math("R + R + R + R" * 1000, mock_bands_dict)

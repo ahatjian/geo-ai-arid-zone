@@ -68,10 +68,9 @@ def _ensure_dir() -> str:
 
 
 def _new_result_id() -> str:
-    """生成唯一结果 id (时间戳 + 随机后缀)"""
-    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-    suffix = np.random.randint(1000, 9999)
-    return f"{ts}_{suffix}"
+    """生成唯一结果 id (uuid4 短 ID, 碰撞概率可忽略)"""
+    import uuid
+    return f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:8]}"
 
 
 def _human_size(num_bytes: int) -> str:
@@ -116,7 +115,11 @@ def save_result(
 
     result_id = _new_result_id()
     result_dir = os.path.join(RESULTS_DIR, result_id)
-    os.makedirs(result_dir, exist_ok=True)
+    # 极罕见碰撞时重新生成 ID, 绝不复用已有目录 (防覆盖)
+    while os.path.exists(result_dir):
+        result_id = _new_result_id()
+        result_dir = os.path.join(RESULTS_DIR, result_id)
+    os.makedirs(result_dir, exist_ok=False)
 
     ext = KIND_EXT[kind]
     data_path = os.path.join(result_dir, f"data.{ext}")
@@ -194,7 +197,11 @@ def save_result_file(
 
     result_id = _new_result_id()
     result_dir = os.path.join(_ensure_dir(), result_id)
-    os.makedirs(result_dir, exist_ok=True)
+    # 极罕见碰撞时重新生成 ID, 绝不复用已有目录 (防覆盖)
+    while os.path.exists(result_dir):
+        result_id = _new_result_id()
+        result_dir = os.path.join(_ensure_dir(), result_id)
+    os.makedirs(result_dir, exist_ok=False)
 
     # 保留原始文件名
     safe_name = "".join(c for c in filename if c not in '\\/:*?"<>|') or f"data.{ext}"
