@@ -182,7 +182,14 @@ with st.sidebar:
     st.subheader("当前研究区")
     if "selected_area" in st.session_state:
         area = st.session_state["selected_area"]
-        st.info(f"📍 **{area}**\n\n{STUDY_AREAS[area]['description']}")
+        if area in STUDY_AREAS:
+            st.info(f"📍 **{area}**\n\n{STUDY_AREAS[area]['description']}")
+        else:
+            bbox = st.session_state.get("selected_bbox", None)
+            if bbox:
+                st.info(f"📍 **{area}**\n\nbbox: [{bbox[0]:.2f}, {bbox[1]:.2f}, {bbox[2]:.2f}, {bbox[3]:.2f}]")
+            else:
+                st.info(f"📍 **{area}**")
     else:
         st.info("👈 请在下方选择研究区")
 

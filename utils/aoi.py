@@ -184,6 +184,7 @@ def render_aoi_selector(
         st.session_state["custom_bbox"] = bbox
         st.session_state["selected_bbox"] = bbox
         st.session_state["selected_center"] = center
+        st.session_state["selected_area"] = name  # 自定义 AOI 也同步 (首页侧边栏显示)
 
         info = {"bbox": bbox, "center": center, "description": desc, "keywords": []}
         st.caption(f"📌 {desc} — 中心 [{center[0]:.2f}, {center[1]:.2f}]")
