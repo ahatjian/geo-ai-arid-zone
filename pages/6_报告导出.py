@@ -41,6 +41,7 @@ def _auto_collect_data():
         "water": False, "veg": False, "change": False, "ai": False,
         "salinity": False, "lst": False, "et": False,
         "supervised": False, "transition": False,
+        "bfast": False, "kmeans": False,
         "sources": {},
     }
 
@@ -196,6 +197,35 @@ def _auto_collect_data():
         except Exception:
             pass
 
+    # ---- BFAST 断点检测 (来自 3_植被分析.py) ----
+    bf = _safe_get("bfast_result")
+    if bf and isinstance(bf, dict):
+        try:
+            collected["sources"]["bfast_n"] = bf.get("n_breaks", 0)
+            collected["sources"]["bfast_neg"] = bf.get("n_negative", 0)
+            collected["sources"]["bfast_pos"] = bf.get("n_positive", 0)
+            collected["sources"]["bfast_dates"] = bf.get("break_dates", [])
+            collected["sources"]["bfast_magnitudes"] = bf.get("magnitudes", [])
+            collected["sources"]["bfast_directions"] = bf.get("directions", [])
+            collected["bfast"] = True
+        except Exception:
+            pass
+
+    # ---- KMeans 非监督分类 (来自 4_AI分类.py) ----
+    km = _safe_get("km_class_result")
+    if km is not None:
+        try:
+            import numpy as np
+            km_arr = np.asarray(km)
+            km_names = _safe_get("km_class_names", None)
+            n_classes = int(km_arr.max()) + 1 if km_arr.size > 0 else 0
+            collected["sources"]["km_classes"] = n_classes
+            collected["sources"]["km_names"] = km_names
+            collected["sources"]["km_pixels"] = int(km_arr.size)
+            collected["kmeans"] = True
+        except Exception:
+            pass
+
     return collected
 
 
@@ -227,11 +257,13 @@ with st.sidebar:
     # 自动采集状态栏
     if auto_collect:
         collected = _auto_collect_data()
-        mod_keys = ["water", "veg", "change", "ai", "salinity", "lst", "et", "supervised", "transition"]
+        mod_keys = ["water", "veg", "change", "ai", "salinity", "lst", "et",
+                    "supervised", "transition", "bfast", "kmeans"]
         mod_icons = {
             "water": "💧 水体", "veg": "🌿 植被", "change": "🔄 变化",
             "ai": "🤖 AI分类", "salinity": "🧂 盐渍化", "lst": "🌡️ LST",
             "et": "💨 蒸散发", "supervised": "🎯 监督分类", "transition": "🔀 土地转移",
+            "bfast": "⚡ BFAST", "kmeans": "🎯 KMeans",
         }
         available_count = sum(1 for k in mod_keys if collected.get(k))
         if available_count > 0:
@@ -868,6 +900,40 @@ def build_report_html():
         sec += f'<p style="color:#888;">研究区: {trs["trans_area"]}</p>\n'
         sections.append(sec)
 
+    # ---- BFAST 断点检测章节 (自动采集) ----
+    if auto_collect and collected["bfast"]:
+        bf = collected["sources"]
+        sec = '<h2>⚡ BFAST 时序断点检测</h2>\n'
+        sec += f'<p style="color:#27ae60;font-size:13px;">🤖 数据自动采集自「植被分析」页面</p>\n'
+        sec += f'<div class="kpi-grid">\n'
+        sec += f'<div class="kpi-card"><div class="label">突变事件数</div><div class="value">{bf["bfast_n"]}</div></div>\n'
+        sec += f'<div class="kpi-card"><div class="label">负向突变 (退化)</div><div class="value" style="color:#e74c3c;">{bf["bfast_neg"]}</div></div>\n'
+        sec += f'<div class="kpi-card"><div class="label">正向突变 (恢复)</div><div class="value" style="color:#27ae60;">{bf["bfast_pos"]}</div></div>\n'
+        sec += '</div>\n'
+        if bf.get("bfast_dates"):
+            sec += '<h3>突变事件明细</h3>\n<table><tr><th>时间</th><th>方向</th><th>幅度</th></tr>\n'
+            for i, d in enumerate(bf["bfast_dates"]):
+                mag = bf["bfast_magnitudes"][i] if i < len(bf["bfast_magnitudes"]) else None
+                direction = bf["bfast_directions"][i] if i < len(bf["bfast_directions"]) else ""
+                mag_str = f"{mag:+.4f}" if isinstance(mag, (int, float)) else "—"
+                sec += f'<tr><td>{d}</td><td>{direction}</td><td>{mag_str}</td></tr>\n'
+            sec += '</table>\n'
+        sections.append(sec)
+
+    # ---- KMeans 非监督分类章节 (自动采集) ----
+    if auto_collect and collected["kmeans"]:
+        km = collected["sources"]
+        sec = '<h2>🎯 KMeans 非监督分类</h2>\n'
+        sec += f'<p style="color:#27ae60;font-size:13px;">🤖 数据自动采集自「AI 分类」页面</p>\n'
+        sec += f'<div class="kpi-grid">\n'
+        sec += f'<div class="kpi-card"><div class="label">聚类数 K</div><div class="value">{km["km_classes"]}</div></div>\n'
+        sec += f'<div class="kpi-card"><div class="label">分析像元数</div><div class="value">{km["km_pixels"]:,}</div></div>\n'
+        sec += '</div>\n'
+        if km.get("km_names"):
+            names_html = "、".join(str(n) for n in km["km_names"])
+            sec += f'<p style="color:#888;">推断地物类型: {names_html}</p>\n'
+        sections.append(sec)
+
     # ---- 自定义章节 ----
     if add_section and section_content_esc:
         sec = f'<h2>📝 {section_title_esc}</h2>\n'
@@ -1066,6 +1132,29 @@ if preview or generate:
                     pdf_sections.append({
                         "heading": "土地覆盖转移矩阵",
                         "content": trans_text,
+                    })
+                if auto_collect and collected["bfast"]:
+                    bf = collected["sources"]
+                    bfast_text = (
+                        f"BFAST 检测到 {bf['bfast_n']} 次突变事件: "
+                        f"{bf['bfast_neg']} 次负向(退化), {bf['bfast_pos']} 次正向(恢复)。"
+                    )
+                    if bf.get("bfast_dates"):
+                        details = "；".join(
+                            f"{d}({bf['bfast_directions'][i] if i < len(bf['bfast_directions']) else ''})"
+                            for i, d in enumerate(bf["bfast_dates"][:3])
+                        )
+                        bfast_text += f" 主要事件: {details}。"
+                    pdf_sections.append({
+                        "heading": "BFAST 断点检测",
+                        "content": bfast_text,
+                    })
+                if auto_collect and collected["kmeans"]:
+                    km = collected["sources"]
+                    pdf_sections.append({
+                        "heading": "KMeans 非监督分类",
+                        "content": f"聚类数 K={km['km_classes']}，分析 {km['km_pixels']:,} 像元"
+                                   + (f"，推断类型: {'、'.join(str(n) for n in km['km_names'])}" if km.get("km_names") else ""),
                     })
                 if ai_section_html and "AI 智能解读" in ai_section_html:
                     ai_pdf_text = ai_section_html.split("</h2>")[1].split("</div>")[0]

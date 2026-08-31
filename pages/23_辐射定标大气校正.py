@@ -165,6 +165,23 @@ if geotiff_path:
             st.session_state["dos_corrected_bands"] = corrected
             st.session_state["dos_dark_values"] = result["dark_values"]
 
+            # 一键保存到数据下载中心 (持久化闭环)
+            st.divider()
+            st.subheader("💾 保存到数据下载中心")
+            from utils.save_ui import render_save_button
+            render_save_button(
+                default_name=f"DOS大气校正结果_{len(corrected)}波段",
+                data=corrected,
+                kind="npy",
+                meta={
+                    "模块": "辐射定标与大气校正",
+                    "暗像元百分位": dark_pct,
+                    "大气路径辐射": [round(float(v), 4) for v in result["dark_values"]],
+                    "说明": "DOS 暗像元法校正后的反射率 (0-1)",
+                },
+                key_suffix="dos_result",
+            )
+
     # ============================================
     # Tab 2: 辐射定标
     # ============================================

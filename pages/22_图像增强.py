@@ -136,6 +136,10 @@ if geotiff_path:
                 with st.spinner("计算主成分..."):
                     pca = pca_transform(bands, n_components=n_comp)
 
+                # 存 session 供其他页面使用 (PCA 降维后波段可用于分类)
+                st.session_state["pca_bands"] = pca["pca"]
+                st.session_state["pca_contribution"] = pca["explained_variance_ratio"]
+
                 # 贡献率
                 ratios = pca["explained_variance_ratio"]
                 cum = np.cumsum(ratios)

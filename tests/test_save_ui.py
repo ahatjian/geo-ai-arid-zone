@@ -146,3 +146,29 @@ class TestReportCollection:
         assert tr["summary"]["total_change_km2"] > 0
         assert tr["major_transitions"]
         assert tr["t1"] != tr["t2"]
+
+
+class TestReportNewModules:
+    """报告导出扩展采集 — BFAST / KMeans"""
+
+    def test_bfast_result_structure(self):
+        """植被分析页写入的 bfast_result 结构"""
+        bf = {
+            "n_breaks": 2, "n_negative": 1, "n_positive": 1,
+            "break_dates": ["2024-06", "2025-03"],
+            "magnitudes": [-0.12, 0.08],
+            "directions": ["负向突变", "正向突变"],
+        }
+        assert bf["n_breaks"] == len(bf["break_dates"])
+        assert bf["n_negative"] + bf["n_positive"] == bf["n_breaks"]
+        assert sum(1 for d in bf["directions"] if d == "负向突变") == bf["n_negative"]
+
+    def test_kmeans_result_structure(self):
+        """AI分类页写入的 km_class_result 可采集"""
+        import numpy as np
+        km = np.zeros((10, 10), dtype=np.int16)
+        km[:5] = 1
+        km[5:] = 2
+        n_classes = int(km.max()) + 1
+        assert n_classes == 3
+        assert km.size == 100

@@ -48,6 +48,8 @@ with st.sidebar:
         available.append("植被指数 NDVI (植被分析页)")
     if "dos_corrected_bands" in st.session_state:
         available.append("大气校正波段 (预处理页)")
+    if "pca_bands" in st.session_state:
+        available.append("PCA 主成分 (图像增强页)")
 
     src_option = "📤 上传 GeoTIFF"
     if available:
@@ -72,6 +74,8 @@ with st.sidebar:
             st.session_state["spatial_value"] = st.session_state["veg_index"]
         elif "大气" in src_option:
             st.session_state["spatial_value"] = st.session_state["dos_corrected_bands"][2]  # R 波段
+        elif "PCA" in src_option:
+            st.session_state["spatial_value"] = st.session_state["pca_bands"][0]  # 第一主成分
 
     st.divider()
     st.caption("💡 提示: 先在其他页面完成分析，结果会自动出现在数据源列表")

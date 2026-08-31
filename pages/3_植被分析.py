@@ -476,6 +476,16 @@ elif "多景" in data_mode and len(uploaded_files_list) >= 2:
                     from utils.bfast import detect_breaks, summarize_breaks
                     bfast_result = detect_breaks(y, seasonal_period=12)
 
+                    # 存入 session 供报告导出页采集
+                    st.session_state["bfast_result"] = {
+                        "n_breaks": len(bfast_result["break_indices"]),
+                        "n_negative": sum(1 for d in bfast_result["directions"] if d == "负向突变"),
+                        "n_positive": sum(1 for d in bfast_result["directions"] if d == "正向突变"),
+                        "break_dates": bfast_result["break_dates"],
+                        "magnitudes": bfast_result["magnitudes"],
+                        "directions": bfast_result["directions"],
+                    }
+
                     if bfast_result["break_indices"]:
                         # 断点汇总表
                         st.subheader("📋 检测到的突变事件")
