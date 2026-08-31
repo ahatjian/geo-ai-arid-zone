@@ -206,10 +206,8 @@ if "search_results" in st.session_state and st.session_state["search_results"]:
             format_func=lambda i: f"{i+1}. {results[i]['datetime']}",
         )
 
-        preview_type = st.radio(
-            "预览模式",
-            ["RGB 真彩色", "NDVI 植被指数", "MNDWI 水体指数"],
-        )
+        compare_all = st.toggle("三模式对比显示", value=True,
+                                help="同时显示 RGB / NDVI / MNDWI 三张图")
 
     with col2:
         if selected_idx is not None:
@@ -225,30 +223,74 @@ if "search_results" in st.session_state and st.session_state["search_results"]:
                         get_thumbnail,
                     )
 
-                    if preview_type == "RGB 真彩色":
-                        img = get_rgb_preview_cached(item.id, collection=satellite_used, width=800)
-                        if img:
-                            st.image(img, caption=f"{results[selected_idx]['datetime']} RGB 真彩色 ({satellite_used})")
-                        else:
-                            thumb = get_thumbnail(item)
-                            if thumb:
-                                st.image(thumb, caption="缩略图 (回退)")
+                    date_label = results[selected_idx]["datetime"]
 
-                    elif preview_type == "NDVI 植被指数":
-                        img = get_ndvi_preview_cached(item.id, collection=satellite_used, width=800)
-                        if img:
-                            st.image(img, caption=f"{results[selected_idx]['datetime']} NDVI")
-                            st.caption("🟢 绿色=植被茂密 | 🟡 黄色=稀疏 | 🔴 红色=裸地/水体")
-                        else:
-                            st.error("NDVI 预览加载失败")
+                    # ============================================
+                    # 三模式对比显示 (默认): RGB + NDVI + MNDWI 并列
+                    # ============================================
+                    if compare_all:
+                        rgb_img = get_rgb_preview_cached(item.id, collection=satellite_used, width=800)
+                        ndvi_img = get_ndvi_preview_cached(item.id, collection=satellite_used, width=800)
+                        mndwi_img = get_mndwi_preview_cached(item.id, collection=satellite_used, width=800)
 
-                    elif preview_type == "MNDWI 水体指数":
-                        img = get_mndwi_preview_cached(item.id, collection=satellite_used, width=800)
-                        if img:
-                            st.image(img, caption=f"{results[selected_idx]['datetime']} MNDWI")
-                            st.caption("🔵 蓝色=水体 | ⚪ 白色=非水体")
-                        else:
-                            st.error("MNDWI 预览加载失败")
+                        # 第一行: RGB 大图
+                        st.markdown(f"**📷 RGB 真彩色** — {date_label}")
+                        if rgb_img:
+                            st.image(rgb_img, width="stretch")
+                        elif get_thumbnail(item):
+                            st.image(get_thumbnail(item), caption="缩略图 (回退)")
+
+                        # 第二行: NDVI + MNDWI 双图并列
+                        st.markdown(f"**🧮 指数对比** — {date_label}")
+                        comp_cols = st.columns(2)
+                        with comp_cols[0]:
+                            if ndvi_img:
+                                st.image(ndvi_img, caption="NDVI 植被指数",
+                                         width="stretch")
+                                st.caption("🟢 绿色=植被茂密 | 🔴 红色=裸地/水体")
+                            else:
+                                st.error("NDVI 预览加载失败")
+                        with comp_cols[1]:
+                            if mndwi_img:
+                                st.image(mndwi_img, caption="MNDWI 水体指数",
+                                         width="stretch")
+                                st.caption("🔵 蓝色=水体 | ⚪ 白色=非水体")
+                            else:
+                                st.error("MNDWI 预览加载失败")
+
+                    else:
+                        # ============================================
+                        # 单选模式 (兼容原逻辑)
+                        # ============================================
+                        preview_type = st.radio(
+                            "预览模式",
+                            ["RGB 真彩色", "NDVI 植被指数", "MNDWI 水体指数"],
+                            key="preview_mode_single",
+                        )
+                        if preview_type == "RGB 真彩色":
+                            img = get_rgb_preview_cached(item.id, collection=satellite_used, width=800)
+                            if img:
+                                st.image(img, caption=f"{date_label} RGB 真彩色 ({satellite_used})")
+                            else:
+                                thumb = get_thumbnail(item)
+                                if thumb:
+                                    st.image(thumb, caption="缩略图 (回退)")
+
+                        elif preview_type == "NDVI 植被指数":
+                            img = get_ndvi_preview_cached(item.id, collection=satellite_used, width=800)
+                            if img:
+                                st.image(img, caption=f"{date_label} NDVI")
+                                st.caption("🟢 绿色=植被茂密 | 🟡 黄色=稀疏 | 🔴 红色=裸地/水体")
+                            else:
+                                st.error("NDVI 预览加载失败")
+
+                        elif preview_type == "MNDWI 水体指数":
+                            img = get_mndwi_preview_cached(item.id, collection=satellite_used, width=800)
+                            if img:
+                                st.image(img, caption=f"{date_label} MNDWI")
+                                st.caption("🔵 蓝色=水体 | ⚪ 白色=非水体")
+                            else:
+                                st.error("MNDWI 预览加载失败")
 
     # ============================================
     # 数据下载
