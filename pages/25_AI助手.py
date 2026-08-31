@@ -34,11 +34,19 @@ MAX_RASTER_PIXELS = 50_000_000
 
 
 def load_bands(path: str) -> np.ndarray:
+    """读取多波段栅格 (尺寸限制含波段数, 防多波段绕过)。"""
     import rasterio
     with rasterio.open(path) as src:
-        if src.width * src.height > MAX_RASTER_PIXELS:
-            raise ValueError(f"栅格过大 (上限 {MAX_RASTER_PIXELS/1e6:.0f} MP)")
-        return src.read().astype(np.float64)
+        # 总像元 = 波段数 × 宽 × 高 (防恶意多波段文件)
+        total_pixels = src.count * src.width * src.height
+        if total_pixels > MAX_RASTER_PIXELS:
+            raise ValueError(
+                f"栅格过大 ({src.count}波段×{src.width}×{src.height} = "
+                f"{total_pixels/1e6:.0f} MP, 上限 {MAX_RASTER_PIXELS/1e6:.0f} MP)"
+            )
+        # 只读前 6 个波段 (平台标准波段数, 限制分配)
+        n_read = min(src.count, 6)
+        return src.read(list(range(1, n_read + 1))).astype(np.float64)
 
 
 def save_upload_tmp(uploaded) -> str:
@@ -133,6 +141,12 @@ with tab_auto:
         except Exception as e:
             st.error(f"❌ 读取失败: {e}")
             bands = None
+        finally:
+            # 读取后清理临时文件 (防泄漏)
+            try:
+                os.remove(auto_path)
+            except OSError:
+                pass
 
         if bands is not None:
             if st.button("🪄 开始 AI 自动分析", type="primary"):
@@ -206,6 +220,11 @@ with tab_anom:
                 anom_name = os.path.basename(anom_file.name)
             except Exception as e:
                 st.error(f"❌ 读取失败: {e}")
+            finally:
+                try:
+                    os.remove(anom_path)
+                except OSError:
+                    pass
     elif "植被" in anom_source and "veg_index" in st.session_state:
         anom_band = st.session_state["veg_index"]
         anom_name = "NDVI"
