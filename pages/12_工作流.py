@@ -488,7 +488,7 @@ with tab_report:
         </div>
 
         <div class="footer">
-        <p>Geo AI 干旱区遥感智能分析平台 v1.17 | 自动生成</p>
+        <p>Geo AI 干旱区遥感智能分析平台 v1.18 | 自动生成</p>
         </div>
         </body></html>
         """

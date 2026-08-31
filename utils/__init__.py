@@ -158,6 +158,11 @@ from .image_processing import (
 from .unsupervised import (
     kmeans_classify, kmeans_feature_stack, auto_describe_classes,
 )
+from .atmospheric import (
+    dos_correction, estimate_dark_pixel, dos_quality_report,
+    radiometric_calibration, toa_reflectance, relative_normalization,
+    preprocess_pipeline,
+)
 from .cryosphere import (
     SNOW_COVER_CLASSES, GLACIER_CLASSES, CryosphereResult,
     calc_ndsi, calc_ndsi_nir, calc_snow_cover,
