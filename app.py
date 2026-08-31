@@ -204,6 +204,26 @@ with st.sidebar:
 tab_intro, tab_areas, tab_about = st.tabs(["🚀 快速开始", "🌏 研究区选择", "📖 关于平台"])
 
 with tab_intro:
+    # ============================================
+    # AI 快速对话入口 (首页即 AI)
+    # ============================================
+    st.markdown("### 🤖 问我任何遥感问题")
+    ai_q_col1, ai_q_col2 = st.columns([4, 1])
+    with ai_q_col1:
+        ai_quick_q = st.text_input(
+            "向 AI 提问",
+            placeholder='例如: "什么是 NDVI？" / "如何分析塔里木盆地盐渍化？" / "帮我解读分析结果"',
+            label_visibility="collapsed",
+            key="home_ai_question",
+        )
+    with ai_q_col2:
+        ai_quick_go = st.button("🚀 去问 AI", type="primary", width="stretch")
+    if ai_quick_go and ai_quick_q.strip():
+        st.session_state["pending_ai_question"] = ai_quick_q.strip()
+        st.switch_page("pages/25_AI助手.py")
+    st.caption("AI 助手可回答遥感知识、引导平台操作、解读你的分析结果")
+    st.divider()
+
     st.subheader("选择功能模块开始分析")
 
     col1, col2, col3, col4 = st.columns(4)

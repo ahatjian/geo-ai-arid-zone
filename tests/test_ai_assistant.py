@@ -189,3 +189,44 @@ class TestKnowledgeRAG:
         stats = knowledge_stats()
         assert stats["entries"] >= 30
         assert stats["index_formulas"] >= 10
+
+
+class TestPlatformContextExtended:
+    """上下文感知扩展测试 (变化检测/土地转移/KMeans)"""
+
+    def test_context_includes_change_detection(self):
+        import streamlit as st
+        st.session_state.clear()
+        st.session_state["cd_stats"] = {"idx_t1_mean": 0.3, "idx_t2_mean": 0.35, "method": "差值法"}
+        from utils.ai_assistant import build_platform_context
+        ctx = build_platform_context()
+        assert "变化检测" in ctx
+        assert "0.3000" in ctx
+
+    def test_context_includes_transition(self):
+        import streamlit as st
+        st.session_state.clear()
+        st.session_state["transition_stats"] = {
+            "summary": {"total_change_km2": 125.3},
+            "major_transitions": [{"from": "草地", "to": "裸地"}],
+        }
+        from utils.ai_assistant import build_platform_context
+        ctx = build_platform_context()
+        assert "土地转移" in ctx
+        assert "125.3" in ctx
+
+    def test_context_includes_kmeans(self):
+        import numpy as np
+        import streamlit as st
+        st.session_state.clear()
+        st.session_state["km_class_result"] = np.zeros((10, 10), dtype=np.int16)
+        st.session_state["km_class_names"] = ["裸地", "植被", "水体"]
+        from utils.ai_assistant import build_platform_context
+        ctx = build_platform_context()
+        assert "KMeans" in ctx
+
+    def test_context_empty_after_clear(self):
+        import streamlit as st
+        st.session_state.clear()
+        from utils.ai_assistant import build_platform_context
+        assert "尚未完成" in build_platform_context()

@@ -104,11 +104,18 @@ def build_platform_context() -> str:
                                                    f"Kappa {v['accuracy'].get('kappa', 0):.3f}"),
         ("BFAST断点", "bfast_result", lambda v: f"检测到 {v.get('n_breaks', 0)} 次突变 "
                                                 f"({v.get('n_negative', 0)} 负向/ {v.get('n_positive', 0)} 正向)"),
+        ("变化检测", "cd_stats", lambda v: f"T1指数均值 {v.get('idx_t1_mean', 0):.4f} → "
+                                           f"T2 {v.get('idx_t2_mean', 0):.4f}, "
+                                           f"方法 {v.get('method', '')}"),
+        ("土地转移", "transition_stats", lambda v: f"总变化面积 {v['summary'].get('total_change_km2', 0):.2f} km², "
+                                                   f"主要转移 {len(v.get('major_transitions', []))} 条"),
+        ("KMeans聚类", "km_class_result", lambda v: f"{int(np.max(v)) + 1 if np.size(v) else 0} 类, "
+                                                    f"推断 {', '.join(map(str, st.session_state.get('km_class_names', [])[:3]))}"),
     ]
 
     for label, key, fmt in ctx_sources:
         data = st.session_state.get(key)
-        if data:
+        if data is not None:
             try:
                 context_parts.append(f"【{label}】{fmt(data)}")
             except Exception:

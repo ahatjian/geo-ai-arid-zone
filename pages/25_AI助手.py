@@ -86,6 +86,21 @@ with tab_chat:
     if "chat_history" not in st.session_state:
         st.session_state["chat_history"] = []
 
+    # 首页带来的待回答问题 → 自动发起对话
+    pending_q = st.session_state.pop("pending_ai_question", None)
+    if pending_q:
+        st.session_state["chat_history"].append({"role": "user", "content": pending_q})
+        # 自动生成 AI 回复 (隐私保护: 仅明确要求解读分析时注入上下文)
+        wants_context = any(k in pending_q for k in
+                            ["解读我的分析", "我的分析", "分析结果说明", "我刚才"])
+        resp = chat_with_assistant(
+            st.session_state["chat_history"],
+            include_context=wants_context,
+        )
+        st.session_state["chat_history"].append(
+            {"role": "assistant", "content": resp["reply"]}
+        )
+
     # AI 感知状态: 显示当前已完成的分析
     from utils.ai_assistant import build_platform_context
     platform_ctx = build_platform_context()
