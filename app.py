@@ -210,6 +210,12 @@ with tab_intro:
 
     nav_items = [
         {
+            "icon": "🤖",
+            "label": "AI 智能助手",
+            "desc": "AI 对话\n一键分析/异常检测",
+            "page": "25_AI助手",
+        },
+        {
             "icon": "🗺️",
             "label": "数据浏览",
             "desc": "搜索卫星影像\n预览与下载",
@@ -352,12 +358,6 @@ with tab_intro:
             "label": "空间邻域分析",
             "desc": "AI 智能缓冲区\n叠加分析",
             "page": "24_空间邻域分析",
-        },
-        {
-            "icon": "🤖",
-            "label": "AI 智能助手",
-            "desc": "AI 对话\n一键分析/异常检测",
-            "page": "25_AI助手",
         },
     ]
 

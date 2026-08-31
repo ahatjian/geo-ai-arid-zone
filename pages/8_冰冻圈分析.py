@@ -270,6 +270,22 @@ if search_clicked:
     with col4:
         st.metric("冻土状态 🧊", s["frozen_ground"]["state"])
 
+    # AI 智能解读 (统一组件)
+    from utils.ai_insight import render_ai_insight_block
+    render_ai_insight_block(
+        analysis_type="冰冻圈分析 (积雪/冰川/冻土)",
+        metrics={
+            "积雪覆盖率": total_snow,
+            "NDSI均值": s["ndsi_mean"],
+            "主导雪盖类型": s["dominant_snow_class"],
+            "冻土状态": s["frozen_ground"]["state"],
+        },
+        study_area=area_name,
+        time_range=main_date if "main_date" in dir() else "",
+        key_suffix="cryo_ai",
+        show_button=True,
+    )
+
     st.divider()
 
     # ---- 分析标签页 ----

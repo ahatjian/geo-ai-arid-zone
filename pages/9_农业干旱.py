@@ -346,6 +346,17 @@ if search_clicked:
                     st.metric(f"{stat['name']}", f"{stat['ratio']*100:.1f}%")
                     st.caption(stat["irrigation"])
 
+            # AI 智能解读 (统一组件)
+            from utils.ai_insight import render_ai_insight_block
+            ai_metrics = {f"{s['name']}占比": s["ratio"] for s in stats}
+            render_ai_insight_block(
+                analysis_type="农业干旱与灌溉需求分析",
+                metrics=ai_metrics,
+                study_area=area_name,
+                key_suffix="agri_ai",
+                show_button=True,
+            )
+
             # 灌溉建议详情
             with st.expander("💧 灌溉详细建议"):
                 st.markdown(f"""

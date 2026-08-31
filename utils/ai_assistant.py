@@ -72,11 +72,60 @@ ASSISTANT_SYSTEM_PROMPT = """你是「Geo AI 西北干旱区遥感智能分析�
 - 用中文回答"""
 
 
+def build_platform_context() -> str:
+    """
+    构建平台当前分析上下文 (注入对话, 让 AI 感知用户已完成的分析)。
+
+    从 session_state 汇总用户当前的分析结果摘要, 使 AI 能回答
+    "我刚才的分析说明了什么?" 之类的问题。
+
+    返回:
+        str: 上下文文本 (无结果时返回空提示)
+    """
+    context_parts = []
+    try:
+        import streamlit as st
+    except ImportError:
+        return ""
+
+    # 各模块的分析结果摘要
+    ctx_sources = [
+        ("植被分析", "veg_stats", lambda v: f"NDVI均值 {v.get('mean', 0):.3f}, "
+                                            f"密植被占比 {v.get('dense_veg_ratio', 0)*100:.1f}%, "
+                                            f"裸地占比 {v.get('bare_ratio', 0)*100:.1f}%"),
+        ("水体监测", "water_stats", lambda v: f"水体面积 {v.get('water_area_km2', 0):.2f} km², "
+                                              f"水体占比 {v.get('water_ratio', 0)*100:.1f}%"),
+        ("土壤盐渍化", "salinity_stats", lambda v: f"盐渍化总面积占比 {v['summary'].get('total_ratio', 0)*100:.1f}%, "
+                                                   f"主导等级 {v['summary'].get('dominant_level', '')}"),
+        ("地表温度LST", "lst_stats", lambda v: f"平均温度 {v['summary'].get('mean_lst_c', 0):.1f}°C, "
+                                               f"高温区占比 {v['summary'].get('hot_ratio', 0)*100:.1f}%"),
+        ("蒸散发ET", "et_stats", lambda v: f"平均蒸散发 {v['summary'].get('mean_et', 0):.2f} mm/day"),
+        ("监督分类", "supervised_stats", lambda v: f"OA {v['accuracy'].get('oa', 0)*100:.1f}%, "
+                                                   f"Kappa {v['accuracy'].get('kappa', 0):.3f}"),
+        ("BFAST断点", "bfast_result", lambda v: f"检测到 {v.get('n_breaks', 0)} 次突变 "
+                                                f"({v.get('n_negative', 0)} 负向/ {v.get('n_positive', 0)} 正向)"),
+    ]
+
+    for label, key, fmt in ctx_sources:
+        data = st.session_state.get(key)
+        if data:
+            try:
+                context_parts.append(f"【{label}】{fmt(data)}")
+            except Exception:
+                pass
+
+    if not context_parts:
+        return "（用户尚未完成任何分析）"
+
+    return "用户当前已完成的分析结果摘要:\n" + "\n".join(context_parts)
+
+
 def chat_with_assistant(
     messages: List[Dict],
     api_key: Optional[str] = None,
     temperature: float = 0.5,
     max_tokens: int = 1000,
+    include_context: bool = True,
 ) -> Dict:
     """
     多轮对话 (DeepSeek)。
@@ -87,6 +136,7 @@ def chat_with_assistant(
         api_key: DeepSeek Key (None=自动获取)
         temperature: 采样温度
         max_tokens: 最大输出长度
+        include_context: 是否注入平台当前分析上下文 (AI 感知用户已完成的分析)
 
     返回:
         dict: {"reply": 助手回复, "success": bool, "error": str|None,
@@ -107,6 +157,13 @@ def chat_with_assistant(
 
     # 确保系统提示存在
     full_messages = [{"role": "system", "content": ASSISTANT_SYSTEM_PROMPT}]
+
+    # 注入平台当前分析上下文 (AI 感知用户已完成的分析)
+    if include_context:
+        platform_ctx = build_platform_context()
+        if platform_ctx:
+            full_messages.append({"role": "system", "content": platform_ctx})
+
     for m in messages:
         if m.get("role") != "system":
             full_messages.append({"role": m["role"], "content": str(m.get("content", ""))})

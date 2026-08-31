@@ -393,6 +393,18 @@ if geotiff_path:
                     with cols[3]:
                         st.metric("水体面积", f"{stats['water_area_km2']:.2f} km²")
 
+                    # AI 智能解读 (统一组件)
+                    from utils.ai_insight import render_ai_insight_block
+                    render_ai_insight_block(
+                        analysis_type="水体监测分析",
+                        metrics={
+                            "水体占比": stats["water_ratio"],
+                            "水体面积(km²)": stats["water_area_km2"],
+                        },
+                        key_suffix="water_ai",
+                        show_button=True,
+                    )
+
                     st.divider()
                     st.subheader("🗺️ 水体指数 / 掩膜可视化")
                     viz_col1, viz_col2 = st.columns(2)

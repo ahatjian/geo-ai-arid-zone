@@ -151,6 +151,24 @@ if analyze_clicked:
         top_trans = result["major_transitions"][0] if result["major_transitions"] else None
         st.metric("最大转移", top_trans["from"] + "→" + top_trans["to"] if top_trans else "无")
 
+    # AI 智能解读 (统一组件)
+    from utils.ai_insight import render_ai_insight_block
+    major_desc = "；".join(
+        f"{t['from']}→{t['to']}({t['area_km2']:.1f}km²)"
+        for t in result["major_transitions"][:3]
+    ) if result["major_transitions"] else "无显著转移"
+    render_ai_insight_block(
+        analysis_type="土地覆盖转移分析",
+        metrics={
+            "总变化面积(km²)": total_change,
+            "变化率": change_rate / 100.0,
+            "主要转移方向": major_desc,
+        },
+        study_area=area_name,
+        key_suffix="trans_ai",
+        show_button=True,
+    )
+
     st.divider()
 
     # ---- 标签页 ----

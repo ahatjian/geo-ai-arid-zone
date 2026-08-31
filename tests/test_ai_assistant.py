@@ -110,3 +110,37 @@ class TestChatAssistant:
         # 无法真实调用, 但无 key 时不应崩溃
         resp = chat_with_assistant([], api_key="")
         assert resp["error"] is not None
+
+
+class TestPlatformContext:
+    """平台上下文注入测试"""
+
+    def test_build_context_empty(self):
+        """无分析结果时返回空提示"""
+        import streamlit as st
+        st.session_state.clear()
+        from utils.ai_assistant import build_platform_context
+        ctx = build_platform_context()
+        assert "尚未完成" in ctx
+
+    def test_build_context_with_results(self):
+        """有分析结果时应汇总关键指标"""
+        import streamlit as st
+        st.session_state.clear()
+        st.session_state["veg_stats"] = {"mean": 0.35, "dense_veg_ratio": 0.4, "bare_ratio": 0.1}
+        st.session_state["salinity_stats"] = {
+            "summary": {"total_ratio": 0.25, "dominant_level": "中度盐渍化"}}
+        from utils.ai_assistant import build_platform_context
+        ctx = build_platform_context()
+        assert "植被分析" in ctx
+        assert "土壤盐渍化" in ctx
+        assert "0.350" in ctx  # NDVI 均值
+
+    def test_build_context_tolerates_bad_data(self):
+        """异常数据结构不应崩溃"""
+        import streamlit as st
+        st.session_state.clear()
+        st.session_state["veg_stats"] = "not a dict"  # 坏数据
+        from utils.ai_assistant import build_platform_context
+        ctx = build_platform_context()
+        assert isinstance(ctx, str)

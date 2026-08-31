@@ -84,6 +84,14 @@ with tab_chat:
     if "chat_history" not in st.session_state:
         st.session_state["chat_history"] = []
 
+    # AI 感知状态: 显示当前已完成的分析
+    from utils.ai_assistant import build_platform_context
+    platform_ctx = build_platform_context()
+    if "尚未完成" not in platform_ctx:
+        with st.expander("🧠 AI 已感知你的分析状态", expanded=False):
+            st.caption(platform_ctx.replace("\n", "  \n"))
+            st.caption("💡 现在可以问 AI：'我刚才的分析说明了什么？'")
+
     # 快捷问题
     st.markdown("**📌 快捷提问**")
     q_cols = st.columns(3)
@@ -92,6 +100,9 @@ with tab_chat:
         "如何分析塔里木盆地的盐渍化？",
         "帮我解读：NDVI 均值 0.18 说明什么？",
     ]
+    # 有分析结果时加入解读快捷问题
+    if "尚未完成" not in platform_ctx:
+        quick_questions[2] = "我刚才的分析结果说明了什么？"
     for i, q in enumerate(quick_questions):
         with q_cols[i]:
             if st.button(q, key=f"quick_q_{i}", width="stretch"):

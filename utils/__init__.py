@@ -178,7 +178,7 @@ from .spatial import (
 )
 from .ai_assistant import (
     chat_with_assistant, auto_analyze, detect_anomalies,
-    anomaly_insight, is_ai_available,
+    anomaly_insight, is_ai_available, build_platform_context,
 )
 from .cryosphere import (
     SNOW_COVER_CLASSES, GLACIER_CLASSES, CryosphereResult,
