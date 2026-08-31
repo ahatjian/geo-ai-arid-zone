@@ -45,6 +45,9 @@ data/processed/
 *.gpkg
 *.geojson
 
+# 用户结果库 (数据下载中心持久化)
+results/
+
 # Models
 models/*.pth
 models/*.pt

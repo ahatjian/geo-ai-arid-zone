@@ -192,7 +192,7 @@ docker build -t geo-ai-app . && docker run -p 8501:8501 geo-ai-app
 ## 状态
 
 - **版本**: v1.15 | **页面**: 20 | **工具模块**: 27
-- **测试**: 156 用例全部通过 | **部署**: Streamlit Cloud ✅
+- **测试**: 201 用例全部通过 | **部署**: Streamlit Cloud ✅
 - **Python**: 3.11 | **PyTorch**: 2.11.0+cpu
 
 ## License
