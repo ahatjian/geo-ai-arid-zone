@@ -425,6 +425,46 @@ elif "多景" in data_mode and len(uploaded_files_list) >= 2:
                 )
                 st.plotly_chart(fig2)
 
+                # ===== STL 时序分解 (趋势/季节/残差) =====
+                st.divider()
+                st.subheader("📊 STL 时序分解 (趋势 + 季节 + 残差)")
+                st.caption("STL (Seasonal-Trend decomposition using Loess) 将时序分离为长期趋势、季节波动和残差噪声")
+                if len(y) >= 25:
+                    from utils.trend import stl_decompose
+                    stl_result = stl_decompose(y, seasonal_period=12)
+                    import plotly.graph_objects as go
+                    from plotly.subplots import make_subplots
+
+                    fig_stl = make_subplots(
+                        rows=3, cols=1, shared_xaxes=True,
+                        subplot_titles=("趋势分量", "季节分量", "残差"),
+                        vertical_spacing=0.08,
+                    )
+                    fig_stl.add_trace(go.Scatter(x=composite_dates, y=stl_result["trend"],
+                                                 mode="lines+markers", name="趋势",
+                                                 line=dict(color="#1f77b4", width=2)), row=1, col=1)
+                    fig_stl.add_trace(go.Scatter(x=composite_dates, y=stl_result["seasonal"],
+                                                 mode="lines+markers", name="季节",
+                                                 line=dict(color="#2ca02c", width=2)), row=2, col=1)
+                    fig_stl.add_trace(go.Scatter(x=composite_dates, y=stl_result["resid"],
+                                                 mode="lines+markers", name="残差",
+                                                 line=dict(color="#999999", width=1)), row=3, col=1)
+                    fig_stl.update_layout(height=520, showlegend=False,
+                                          title_text=f"STL 分解 — 趋势强度 {stl_result['trend_strength']} | "
+                                                     f"季节强度 {stl_result['seasonal_strength']}")
+                    st.plotly_chart(fig_stl)
+
+                    # 强度解读
+                    ts_, ss_ = stl_result["trend_strength"], stl_result["seasonal_strength"]
+                    if ss_ > 0.5:
+                        st.info(f"🌿 **季节强度 {ss_:.2f}** — 植被存在明显的季节性周期波动（绿洲植被生长季特征）")
+                    if ts_ > 0.5:
+                        st.info(f"📈 **趋势强度 {ts_:.2f}** — 植被存在显著的长期趋势变化（{trend_label.get(trend, trend)}）")
+                    if ss_ <= 0.5 and ts_ <= 0.5:
+                        st.info("➖ 趋势与季节强度均较低 — 植被时序以随机波动为主，需更多时序数据确认")
+                else:
+                    st.info("💡 时序长度 ≥ 25 期时自动启用 STL 分解（当前不足）")
+
                 # 导出
                 st.divider()
                 st.subheader("💾 结果导出")

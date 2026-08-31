@@ -353,3 +353,96 @@ def smooth_ndvi_stack(
         savgol_smooth(row, window=window, polyorder=polyorder) for row in flat
     ])
     return smoothed.reshape(H, W, T)
+
+
+# ============================================================
+# STL 时序分解 (趋势/季节/残差)
+# ============================================================
+
+def stl_decompose(
+    values: np.ndarray,
+    seasonal_period: int = 12,
+    robust: bool = True,
+) -> Dict[str, np.ndarray]:
+    """
+    STL (Seasonal-Trend decomposition using Loess) 时序分解。
+
+    将 NDVI 时序分解为: 趋势 + 季节 + 残差 三部分。
+    这是时间序列分析的经典方法 (Cleveland et al. 1990),
+    可分离长期趋势与季节性波动。
+
+    参数:
+        values: 一维时序 (T,), 允许 NaN
+        seasonal_period: 季节周期 (月度数据=12, 半月=24, 周=52)
+        robust: 是否用稳健迭代 (抗离群)
+
+    返回:
+        dict: {
+            "trend": (T,) 长期趋势,
+            "seasonal": (T,) 季节分量,
+            "resid": (T,) 残差,
+            "seasonal_strength": float 季节强度 (0-1),
+            "trend_strength": float 趋势强度 (0-1)
+        }
+    """
+    values = np.asarray(values, dtype=np.float64)
+    n = len(values)
+
+    if n < seasonal_period * 2 + 1:
+        # 数据太短无法分解: 返回全趋势
+        return {
+            "trend": values.copy(),
+            "seasonal": np.zeros_like(values),
+            "resid": np.zeros_like(values),
+            "seasonal_strength": 0.0,
+            "trend_strength": 0.0,
+        }
+
+    # 缺失值插值
+    work = values.copy()
+    nan_mask = ~np.isfinite(work)
+    if nan_mask.any():
+        idx = np.arange(n)
+        valid_idx = idx[~nan_mask]
+        if len(valid_idx) >= 2:
+            work = np.interp(idx, valid_idx, work[valid_idx])
+        else:
+            work = np.nan_to_num(work, nan=np.nanmean(work))
+
+    try:
+        from statsmodels.tsa.seasonal import STL
+        result = STL(work, period=seasonal_period, robust=robust).fit()
+        trend = result.trend
+        seasonal = result.seasonal
+        resid = result.resid
+    except Exception:
+        # statsmodels 不可用/失败 → 移动平均分解
+        trend = pd_rolling_mean(work, window=seasonal_period)
+        seasonal = work - trend
+        resid = np.zeros_like(work)
+
+    # 分量强度 (Wang et al. 2006)
+    var_resid = np.nanvar(resid) if np.isfinite(resid).any() else 0.0
+    var_seasonal = np.nanvar(seasonal) if np.isfinite(seasonal).any() else 0.0
+    var_trend = np.nanvar(trend) if np.isfinite(trend).any() else 0.0
+    total = var_trend + var_seasonal + var_resid
+    seasonal_strength = max(0.0, min(1.0, var_seasonal / max(total, 1e-12)))
+    trend_strength = max(0.0, min(1.0, var_trend / max(total, 1e-12)))
+
+    return {
+        "trend": trend,
+        "seasonal": seasonal,
+        "resid": resid,
+        "seasonal_strength": round(float(seasonal_strength), 4),
+        "trend_strength": round(float(trend_strength), 4),
+    }
+
+
+def pd_rolling_mean(values: np.ndarray, window: int) -> np.ndarray:
+    """移动平均 (无 pandas 依赖的轻量实现)。"""
+    values = np.asarray(values, dtype=np.float64)
+    window = min(window, len(values))
+    if window % 2 == 0:
+        window += 1
+    kernel = np.ones(window) / window
+    return np.convolve(values, kernel, mode="same")

@@ -32,8 +32,11 @@ with st.sidebar:
         [
             "🌍 公开土地覆盖产品 (ESA/ESRI)",
             "🧠 AI 深度学习推理 (模型+影像)",
+            "🎯 非监督分类 (KMeans 聚类)",
         ],
-        help="公开产品：ESA WorldCover / ESRI Land Cover 即开即用\nAI 推理：上传预训练模型 + Sentinel-2 影像",
+        help="公开产品：ESA WorldCover / ESRI Land Cover 即开即用\n"
+             "AI 推理：上传预训练模型 + Sentinel-2 影像\n"
+             "非监督分类：无需样本自动聚类",
     )
 
     st.divider()
@@ -383,6 +386,119 @@ if "公开" in run_mode:
             )
 
 # ============================================
+# 模式 B: AI 深度学习推理
+# ============================================
+elif "非监督" in run_mode:
+    st.markdown("---")
+    st.subheader("🎯 非监督分类 (KMeans 聚类)")
+
+    col_km1, col_km2, col_km3 = st.columns(3)
+    with col_km1:
+        n_clusters = st.slider("聚类数 K", 2, 12, 6,
+                               help="自动聚为 K 类 (可用肘部法则确定)")
+    with col_km2:
+        use_indices = st.checkbox("加入光谱指数 (NDVI/MNDWI/NDBI)", value=True,
+                                  help="增加指数可显著提升植被/水体/建筑可分性")
+    with col_km3:
+        km_sample = st.slider("采样比例", 0.05, 1.0, 0.2, 0.05,
+                              help="大影像用子集加速聚类")
+
+    # 数据来源: 上传 GeoTIFF
+    km_file = st.file_uploader("上传多波段 GeoTIFF (6波段: B,G,R,NIR,SWIR1,SWIR2)",
+                               type=["tif", "tiff"], key="km_upload")
+
+    if km_file:
+        km_tmp = os.path.join(tempfile.gettempdir(), f"km_{km_file.name}")
+        with open(km_tmp, "wb") as f:
+            f.write(km_file.getvalue())
+        import rasterio
+        with rasterio.open(km_tmp) as src:
+            km_bands = src.read().astype(np.float64)
+            km_transform = src.transform
+            km_crs = src.crs
+        st.success(f"✅ 已加载 {km_bands.shape[0]} 波段 ({km_bands.shape[1]}×{km_bands.shape[2]})")
+
+        if st.button("🎯 执行 KMeans 聚类", type="primary"):
+            with st.spinner("聚类中..."):
+                with StreamlitErrorBoundary("非监督分类", st=st, show_traceback=True):
+                    from utils.unsupervised import (
+                        kmeans_classify, kmeans_feature_stack, auto_describe_classes,
+                    )
+
+                    if use_indices:
+                        feat = kmeans_feature_stack(km_bands)
+                    else:
+                        feat = km_bands
+
+                    result = kmeans_classify(
+                        feat, n_classes=n_clusters,
+                        sample_ratio=km_sample,
+                    )
+                    classification = result["classification"]
+                    centers = result["centers"]
+                    # 注意: 用了特征栈时 center 维度包含指数, 自动命名用前6波段
+                    names = auto_describe_classes(centers[:, :6] if use_indices else centers)
+
+            # ---- 结果展示 ----
+            st.divider()
+            st.subheader("📊 聚类结果")
+
+            # 分类图 (matplotlib 渲染)
+            from utils.visualization import render_classification
+            colors = plt_cmap = None
+            fig_img = render_classification(classification, cmap="tab20")
+            st.image(fig_img, caption=f"KMeans 聚类结果 (K={n_clusters})")
+
+            # 类别统计
+            st.subheader("📋 类别统计")
+            stats_rows = []
+            for k in range(n_clusters):
+                count = int((classification == k).sum())
+                ratio = count / max(classification.size, 1)
+                area_km2 = count * (abs(km_transform.a) ** 2) / 1e6
+                stats_rows.append({
+                    "类别": k + 1,
+                    "推断地物": names[k] if k < len(names) else f"类别{k+1}",
+                    "像元数": count,
+                    "占比": f"{ratio*100:.2f}%",
+                    "面积 (km²)": f"{area_km2:.2f}",
+                })
+            st.dataframe(stats_rows, width="stretch", hide_index=True)
+
+            # 导出
+            st.divider()
+            st.subheader("💾 结果导出")
+            exp_c1, exp_c2 = st.columns(2)
+            with exp_c1:
+                # 保存分类 GeoTIFF
+                out_tif = os.path.join(tempfile.gettempdir(), f"kmeans_{n_clusters}类.tif")
+                import rasterio
+                from rasterio.transform import from_origin
+                with rasterio.open(out_tif, 'w', driver='GTiff',
+                                   height=classification.shape[0], width=classification.shape[1],
+                                   count=1, dtype='uint8', crs=km_crs, transform=km_transform) as dst:
+                    dst.write(classification.astype(np.uint8), 1)
+                with open(out_tif, "rb") as f:
+                    st.download_button("⬇️ 分类结果 GeoTIFF", f,
+                                       file_name=f"kmeans_{n_clusters}类.tif", mime="image/tiff",
+                                       width="stretch")
+            with exp_c2:
+                import pandas as pd
+                from io import BytesIO
+                df = pd.DataFrame(stats_rows)
+                buf = BytesIO()
+                df.to_csv(buf, index=False, encoding="utf-8-sig")
+                st.download_button("⬇️ 类别统计 CSV", buf.getvalue(),
+                                   file_name=f"kmeans_{n_clusters}类统计.csv", mime="text/csv",
+                                   width="stretch")
+
+            # 存入 session 供报告采集
+            st.session_state["km_class_result"] = classification
+            st.session_state["km_class_names"] = names
+
+    else:
+        st.info("👆 请上传多波段 GeoTIFF 进行非监督聚类")
+
 # 模式 B: AI 深度学习推理
 # ============================================
 else:

@@ -1,6 +1,6 @@
 """
 Geo AI 干旱区遥感智能分析平台 — 首页入口
-版本 v1.16 — 20 模块完整链路: 从数据浏览到智能工作流 + AI 解读
+版本 v1.17 — 22 模块完整链路: 从数据浏览到智能工作流 + AI 解读
 """
 
 import streamlit as st
@@ -168,7 +168,7 @@ with st.sidebar:
     cols3 = st.columns(2)
     with cols3[0]:
         st.markdown(
-            '<div class="stats-box"><div class="stats-number">21</div><div class="stats-label">分析模块</div></div>',
+            '<div class="stats-box"><div class="stats-number">22</div><div class="stats-label">分析模块</div></div>',
             unsafe_allow_html=True,
         )
     with cols3[1]:
@@ -334,6 +334,12 @@ with tab_intro:
             "label": "系统状态",
             "desc": "缓存管理\n环境健康检查",
             "page": "21_系统状态",
+        },
+        {
+            "icon": "🎨",
+            "label": "图像增强",
+            "desc": "PCA/滤波/增强\nIHS 融合",
+            "page": "22_图像增强",
         },
     ]
 

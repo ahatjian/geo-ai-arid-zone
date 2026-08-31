@@ -24,6 +24,7 @@ from .trend import (
     calc_sen_mk_trend, calc_sen_mk_trend_pixelwise,
     calc_mean_timeseries_trend, theil_sen_slope,
     savgol_smooth, smooth_ndvi_stack,
+    stl_decompose,
 )
 from .forecast import (
     ForecastResult,
@@ -149,6 +150,13 @@ from .pdf_report import (
 )
 from .composite import (
     composite_ndvi_monthly, composite_series_by_month, merge_ndvi_max,
+)
+from .image_processing import (
+    pca_transform, pca_rgb_composite,
+    spatial_filter, contrast_enhance, ihs_fusion, enhance_report,
+)
+from .unsupervised import (
+    kmeans_classify, kmeans_feature_stack, auto_describe_classes,
 )
 from .cryosphere import (
     SNOW_COVER_CLASSES, GLACIER_CLASSES, CryosphereResult,
