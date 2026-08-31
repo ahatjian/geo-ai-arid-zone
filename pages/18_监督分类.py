@@ -263,6 +263,22 @@ if train_clicked:
 
     st.success("✅ 训练完成")
 
+    # 写入 session_state 供报告导出页自动采集
+    st.session_state["supervised_stats"] = {
+        "area": area_name,
+        "classifier": s["classifier"],
+        "accuracy": {
+            "oa": float(acc["overall_accuracy"]),
+            "kappa": float(acc["kappa"]),
+            "f1_macro": float(acc["f1_macro"]),
+        },
+        "summary": {
+            "n_train": s["n_train_samples"],
+            "n_test": s["n_test_samples"],
+            "n_features": s["n_features"],
+        },
+    }
+
     # ---- 汇总卡片 ----
     st.subheader("📊 分类结果汇总")
     s = result.summary

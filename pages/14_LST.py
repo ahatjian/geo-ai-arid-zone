@@ -257,6 +257,21 @@ if search_clicked:
         with StreamlitErrorBoundary("热环境评估", st=st, show_traceback=False):
             result = assess_thermal(lst_main, pixel_size_m=pixel_size, thresholds=thresholds)
 
+    # 写入 session_state 供报告导出页自动采集
+    st.session_state["lst_stats"] = {
+        "area": area_name,
+        "date": main_date,
+        "satellite": satellite,
+        "summary": {
+            "mean_lst_c": float(result.summary["mean_lst_c"]),
+            "max_lst_c": float(result.summary["max_lst_c"]),
+            "min_lst_c": float(result.summary["min_lst_c"]),
+            "hot_ratio": float(result.summary["hot_ratio"]),
+            "dominant_level": result.summary["dominant_level"],
+        },
+        "stats": result.stats,
+    }
+
     # ---- 汇总卡片 ----
     st.subheader("📊 热环境评估汇总")
     s = result.summary

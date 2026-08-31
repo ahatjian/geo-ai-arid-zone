@@ -39,6 +39,8 @@ def _auto_collect_data():
     """
     collected = {
         "water": False, "veg": False, "change": False, "ai": False,
+        "salinity": False, "lst": False, "et": False,
+        "supervised": False, "transition": False,
         "sources": {},
     }
 
@@ -126,6 +128,74 @@ def _auto_collect_data():
         except Exception:
             pass
 
+    # ---- 土壤盐渍化 (来自 13_土壤盐渍化.py) ----
+    ss = _safe_get("salinity_stats")
+    if ss and isinstance(ss, dict):
+        try:
+            collected["sources"]["salinity_area"] = ss.get("area", "")
+            collected["sources"]["salinity_date"] = ss.get("date", "")
+            collected["sources"]["salinity_total_ratio"] = ss["summary"].get("total_ratio", 0.0)
+            collected["sources"]["salinity_severe_ratio"] = ss["summary"].get("severe_ratio", 0.0)
+            collected["sources"]["salinity_dominant"] = ss["summary"].get("dominant_level", "")
+            collected["sources"]["salinity_ndsi"] = ss["summary"].get("ndsi_mean", 0.0)
+            collected["salinity"] = True
+        except Exception:
+            pass
+
+    # ---- 地表温度 LST (来自 14_LST.py) ----
+    ls = _safe_get("lst_stats")
+    if ls and isinstance(ls, dict):
+        try:
+            collected["sources"]["lst_area"] = ls.get("area", "")
+            collected["sources"]["lst_date"] = ls.get("date", "")
+            collected["sources"]["lst_mean"] = ls["summary"].get("mean_lst_c", 0.0)
+            collected["sources"]["lst_max"] = ls["summary"].get("max_lst_c", 0.0)
+            collected["sources"]["lst_hot_ratio"] = ls["summary"].get("hot_ratio", 0.0)
+            collected["sources"]["lst_dominant"] = ls["summary"].get("dominant_level", "")
+            collected["lst"] = True
+        except Exception:
+            pass
+
+    # ---- 蒸散发 ET (来自 17_蒸散发.py) ----
+    es = _safe_get("et_stats")
+    if es and isinstance(es, dict):
+        try:
+            collected["sources"]["et_area"] = es.get("area", "")
+            collected["sources"]["et_date"] = es.get("date", "")
+            collected["sources"]["et_mean"] = es["summary"].get("mean_et", 0.0)
+            collected["sources"]["et_rn"] = es["summary"].get("mean_rn", 0.0)
+            collected["sources"]["et_le"] = es["summary"].get("mean_le", 0.0)
+            collected["sources"]["et_dominant"] = es["summary"].get("dominant_level", "")
+            collected["et"] = True
+        except Exception:
+            pass
+
+    # ---- 监督分类 (来自 18_监督分类.py) ----
+    sp = _safe_get("supervised_stats")
+    if sp and isinstance(sp, dict):
+        try:
+            collected["sources"]["sup_classifier"] = sp.get("classifier", "")
+            collected["sources"]["sup_oa"] = sp["accuracy"].get("oa", 0.0)
+            collected["sources"]["sup_kappa"] = sp["accuracy"].get("kappa", 0.0)
+            collected["sources"]["sup_f1"] = sp["accuracy"].get("f1_macro", 0.0)
+            collected["sources"]["sup_n_train"] = sp["summary"].get("n_train", 0)
+            collected["supervised"] = True
+        except Exception:
+            pass
+
+    # ---- 土地转移矩阵 (来自 16_土地转移.py) ----
+    tr = _safe_get("transition_stats")
+    if tr and isinstance(tr, dict):
+        try:
+            collected["sources"]["trans_area"] = tr.get("area", "")
+            collected["sources"]["trans_t1"] = tr.get("t1", "")
+            collected["sources"]["trans_t2"] = tr.get("t2", "")
+            collected["sources"]["trans_change"] = tr["summary"].get("total_change_km2", 0.0)
+            collected["sources"]["trans_major"] = tr.get("major_transitions", [])
+            collected["transition"] = True
+        except Exception:
+            pass
+
     return collected
 
 
@@ -157,18 +227,16 @@ with st.sidebar:
     # 自动采集状态栏
     if auto_collect:
         collected = _auto_collect_data()
-        available_count = sum([collected["water"], collected["veg"], collected["change"], collected["ai"]])
+        mod_keys = ["water", "veg", "change", "ai", "salinity", "lst", "et", "supervised", "transition"]
+        mod_icons = {
+            "water": "💧 水体", "veg": "🌿 植被", "change": "🔄 变化",
+            "ai": "🤖 AI分类", "salinity": "🧂 盐渍化", "lst": "🌡️ LST",
+            "et": "💨 蒸散发", "supervised": "🎯 监督分类", "transition": "🔀 土地转移",
+        }
+        available_count = sum(1 for k in mod_keys if collected.get(k))
         if available_count > 0:
-            st.success(f"✅ 已采集 {available_count}/4 个模块的数据")
-            details = []
-            if collected["water"]:
-                details.append("💧 水体")
-            if collected["veg"]:
-                details.append("🌿 植被")
-            if collected["change"]:
-                details.append("🔄 变化")
-            if collected["ai"]:
-                details.append("🤖 AI")
+            st.success(f"✅ 已采集 {available_count}/{len(mod_keys)} 个模块的数据")
+            details = [mod_icons[k] for k in mod_keys if collected.get(k)]
             st.caption(" | ".join(details))
         else:
             st.warning("⚠️ 未检测到分析数据，请先在对应页面执行分析")
@@ -506,6 +574,9 @@ st.subheader("📝 附加内容")
 
 add_section = st.checkbox("添加自定义章节")
 
+# 始终定义 (未勾选时为默认空值, 避免 build_report_html 引用未定义变量)
+section_title = ""
+section_content = ""
 if add_section:
     section_title = st.text_input("章节标题", placeholder="如：讨论与结论")
     section_content = st.text_area("章节内容", placeholder="撰写分析讨论、结论建议等...", height=150)
@@ -717,6 +788,79 @@ def build_report_html():
                     sec += f'<img src="{img_src}" alt="{f.name}">\n'
         sections.append(sec)
 
+    # ---- 土壤盐渍化章节 (自动采集) ----
+    if auto_collect and collected["salinity"]:
+        sal = collected["sources"]
+        sec = '<h2>🧂 土壤盐渍化监测</h2>\n'
+        sec += f'<p style="color:#27ae60;font-size:13px;">🤖 数据自动采集自「土壤盐渍化」页面</p>\n'
+        sec += f'<div class="kpi-grid">\n'
+        sec += f'<div class="kpi-card"><div class="label">盐渍化总面积占比</div><div class="value">{sal["salinity_total_ratio"]*100:.1f}%</div></div>\n'
+        sec += f'<div class="kpi-card"><div class="label">重度及以上占比</div><div class="value" style="color:#e74c3c;">{sal["salinity_severe_ratio"]*100:.1f}%</div></div>\n'
+        sec += f'<div class="kpi-card"><div class="label">主导等级</div><div class="value">{sal["salinity_dominant"]}</div></div>\n'
+        sec += f'<div class="kpi-card"><div class="label">NDSI 均值</div><div class="value">{sal["salinity_ndsi"]:.4f}</div></div>\n'
+        sec += '</div>\n'
+        sec += f'<p style="color:#888;">研究区: {sal["salinity_area"]} | 影像日期: {sal["salinity_date"]}</p>\n'
+        sections.append(sec)
+
+    # ---- 地表温度章节 (自动采集) ----
+    if auto_collect and collected["lst"]:
+        lst = collected["sources"]
+        sec = '<h2>🌡️ 地表温度 LST</h2>\n'
+        sec += f'<p style="color:#27ae60;font-size:13px;">🤖 数据自动采集自「地表温度」页面</p>\n'
+        sec += f'<div class="kpi-grid">\n'
+        sec += f'<div class="kpi-card"><div class="label">平均地表温度</div><div class="value">{lst["lst_mean"]:.1f}°C</div></div>\n'
+        sec += f'<div class="kpi-card"><div class="label">最高温度</div><div class="value" style="color:#e74c3c;">{lst["lst_max"]:.1f}°C</div></div>\n'
+        sec += f'<div class="kpi-card"><div class="label">高温区占比</div><div class="value">{lst["lst_hot_ratio"]*100:.1f}%</div></div>\n'
+        sec += f'<div class="kpi-card"><div class="label">主导温区</div><div class="value">{lst["lst_dominant"]}</div></div>\n'
+        sec += '</div>\n'
+        sec += f'<p style="color:#888;">研究区: {lst["lst_area"]} | 影像日期: {lst["lst_date"]}</p>\n'
+        sections.append(sec)
+
+    # ---- 蒸散发章节 (自动采集) ----
+    if auto_collect and collected["et"]:
+        ets = collected["sources"]
+        sec = '<h2>💨 蒸散发 ET 估算</h2>\n'
+        sec += f'<p style="color:#27ae60;font-size:13px;">🤖 数据自动采集自「蒸散发」页面</p>\n'
+        sec += f'<div class="kpi-grid">\n'
+        sec += f'<div class="kpi-card"><div class="label">平均蒸散发</div><div class="value">{ets["et_mean"]:.2f} mm/day</div></div>\n'
+        sec += f'<div class="kpi-card"><div class="label">平均净辐射</div><div class="value">{ets["et_rn"]:.0f} W/m²</div></div>\n'
+        sec += f'<div class="kpi-card"><div class="label">潜热通量</div><div class="value">{ets["et_le"]:.0f} W/m²</div></div>\n'
+        sec += f'<div class="kpi-card"><div class="label">主导等级</div><div class="value">{ets["et_dominant"]}</div></div>\n'
+        sec += '</div>\n'
+        sec += f'<p style="color:#888;">研究区: {ets["et_area"]} | 影像日期: {ets["et_date"]}</p>\n'
+        sections.append(sec)
+
+    # ---- 监督分类章节 (自动采集) ----
+    if auto_collect and collected["supervised"]:
+        sup = collected["sources"]
+        sec = '<h2>🎯 监督分类训练</h2>\n'
+        sec += f'<p style="color:#27ae60;font-size:13px;">🤖 数据自动采集自「监督分类」页面</p>\n'
+        sec += f'<div class="kpi-grid">\n'
+        sec += f'<div class="kpi-card"><div class="label">分类器</div><div class="value" style="font-size:16px;">{sup["sup_classifier"]}</div></div>\n'
+        sec += f'<div class="kpi-card"><div class="label">总体精度 OA</div><div class="value">{sup["sup_oa"]*100:.2f}%</div></div>\n'
+        sec += f'<div class="kpi-card"><div class="label">Kappa</div><div class="value">{sup["sup_kappa"]:.3f}</div></div>\n'
+        sec += f'<div class="kpi-card"><div class="label">宏平均 F1</div><div class="value">{sup["sup_f1"]:.3f}</div></div>\n'
+        sec += '</div>\n'
+        sec += f'<p style="color:#888;">训练样本: {sup["sup_n_train"]} 个</p>\n'
+        sections.append(sec)
+
+    # ---- 土地转移矩阵章节 (自动采集) ----
+    if auto_collect and collected["transition"]:
+        trs = collected["sources"]
+        sec = '<h2>🔀 土地覆盖转移矩阵</h2>\n'
+        sec += f'<p style="color:#27ae60;font-size:13px;">🤖 数据自动采集自「土地转移」页面</p>\n'
+        sec += f'<div class="kpi-grid">\n'
+        sec += f'<div class="kpi-card"><div class="label">总变化面积</div><div class="value">{trs["trans_change"]:.2f} km²</div></div>\n'
+        sec += f'<div class="kpi-card"><div class="label">时相</div><div class="value" style="font-size:13px;">{trs["trans_t1"]} → {trs["trans_t2"]}</div></div>\n'
+        sec += '</div>\n'
+        if trs.get("trans_major"):
+            sec += '<h3>主要转移方向</h3>\n<table><tr><th>转移</th><th>面积 (km²)</th></tr>\n'
+            for t in trs["trans_major"][:5]:
+                sec += f'<tr><td>{t.get("transition", t.get("from", ""))}</td><td>{t.get("area_km2", t.get("area", 0)):.2f}</td></tr>\n'
+            sec += '</table>\n'
+        sec += f'<p style="color:#888;">研究区: {trs["trans_area"]}</p>\n'
+        sections.append(sec)
+
     # ---- 自定义章节 ----
     if add_section and section_content_esc:
         sec = f'<h2>📝 {section_title_esc}</h2>\n'
@@ -778,7 +922,7 @@ def build_report_html():
 
     body_sections = "\n".join(sections) if sections else "<p style='color:#999;text-align:center;padding:40px;'>请在左侧各 Tab 中填入分析数据后生成报告</p>"
 
-    html = f"""<!DOCTYPE html>
+    report_doc = f"""<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
@@ -807,7 +951,7 @@ def build_report_html():
 </body>
 </html>"""
 
-    return html, ai_section_html
+    return report_doc, ai_section_html
 
 
 # ============================================
@@ -819,7 +963,7 @@ if preview or generate:
 
         if preview:
             st.subheader("👁️ 报告预览")
-            st.html(report_html, height=800)
+            st.html(report_html, width="stretch")
 
         if generate:
             st.subheader("📥 下载报告")
@@ -863,6 +1007,48 @@ if preview or generate:
                     pdf_sections.append({
                         "heading": "AI 分类分析",
                         "content": f"模型: {ai_model} | 类别数: {ai_classes} | 各类面积: {area_lines}",
+                    })
+                # ---- 新模块章节 (自动采集) ----
+                if auto_collect and collected["salinity"]:
+                    sal = collected["sources"]
+                    pdf_sections.append({
+                        "heading": "土壤盐渍化监测",
+                        "content": f"盐渍化总面积占比: {sal['salinity_total_ratio']*100:.1f}% | "
+                                   f"重度及以上: {sal['salinity_severe_ratio']*100:.1f}% | "
+                                   f"主导等级: {sal['salinity_dominant']} | NDSI 均值: {sal['salinity_ndsi']:.4f}",
+                    })
+                if auto_collect and collected["lst"]:
+                    lst = collected["sources"]
+                    pdf_sections.append({
+                        "heading": "地表温度 LST",
+                        "content": f"平均: {lst['lst_mean']:.1f}°C | 最高: {lst['lst_max']:.1f}°C | "
+                                   f"高温区占比: {lst['lst_hot_ratio']*100:.1f}% | 主导温区: {lst['lst_dominant']}",
+                    })
+                if auto_collect and collected["et"]:
+                    ets = collected["sources"]
+                    pdf_sections.append({
+                        "heading": "蒸散发 ET",
+                        "content": f"平均蒸散发: {ets['et_mean']:.2f} mm/day | "
+                                   f"净辐射: {ets['et_rn']:.0f} W/m² | 潜热: {ets['et_le']:.0f} W/m²",
+                    })
+                if auto_collect and collected["supervised"]:
+                    sup = collected["sources"]
+                    pdf_sections.append({
+                        "heading": "监督分类",
+                        "content": f"分类器: {sup['sup_classifier']} | OA: {sup['sup_oa']*100:.2f}% | "
+                                   f"Kappa: {sup['sup_kappa']:.3f} | F1: {sup['sup_f1']:.3f}",
+                    })
+                if auto_collect and collected["transition"]:
+                    trs = collected["sources"]
+                    trans_text = f"总变化面积: {trs['trans_change']:.2f} km² | 时相: {trs['trans_t1']} → {trs['trans_t2']}"
+                    if trs.get("trans_major"):
+                        major = "；".join(
+                            f"{t.get('transition', '')}" for t in trs["trans_major"][:3]
+                        )
+                        trans_text += f" | 主要转移: {major}"
+                    pdf_sections.append({
+                        "heading": "土地覆盖转移矩阵",
+                        "content": trans_text,
                     })
                 if ai_section_html and "AI 智能解读" in ai_section_html:
                     ai_pdf_text = ai_section_html.split("</h2>")[1].split("</div>")[0]

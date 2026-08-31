@@ -249,6 +249,20 @@ if search_clicked:
                 veg_threshold=veg_threshold,
             )
 
+            # 写入 session_state 供报告导出页自动采集
+            st.session_state["salinity_stats"] = {
+                "area": area_name,
+                "date": main_date,
+                "satellite": satellite,
+                "summary": {
+                    "total_ratio": float(result.summary["total_salinization_ratio"]),
+                    "severe_ratio": float(result.summary["severe_salinization_ratio"]),
+                    "dominant_level": result.summary["dominant_level"],
+                    "ndsi_mean": float(result.summary["ndsi_salt_mean"]),
+                },
+                "stats": result.stats,
+            }
+
     # ---- 汇总卡片 ----
     st.subheader("📊 盐渍化评估汇总")
     s = result.summary

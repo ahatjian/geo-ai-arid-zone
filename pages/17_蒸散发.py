@@ -223,6 +223,20 @@ if search_clicked:
     result = all_et_results[0]
     main_date = image_labels[0]
 
+    # 写入 session_state 供报告导出页自动采集
+    st.session_state["et_stats"] = {
+        "area": area_name,
+        "date": main_date,
+        "satellite": satellite,
+        "summary": {
+            "mean_et": float(result.summary["mean_et"]),
+            "mean_rn": float(result.summary["mean_rn"]),
+            "mean_le": float(result.summary["mean_le"]),
+            "dominant_level": result.summary["dominant_level"],
+        },
+        "stats": result.stats,
+    }
+
     # ---- 汇总卡片 ----
     st.subheader("📊 蒸散发估算汇总")
     s = result.summary

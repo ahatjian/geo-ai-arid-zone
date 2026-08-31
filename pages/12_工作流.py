@@ -490,4 +490,4 @@ with tab_report:
 
         st.divider()
         st.subheader("📄 报告预览")
-        st.html(report_html, height=500)
+        st.html(report_html, width="stretch")

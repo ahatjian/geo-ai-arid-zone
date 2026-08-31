@@ -97,3 +97,52 @@ class TestSaveUiHelpers:
         stats = [{"name": "A", "ratio": 0.6}]
         df = pd.DataFrame(stats) if not isinstance(stats, pd.DataFrame) else stats
         assert df.shape == (1, 2)
+
+
+class TestReportCollection:
+    """报告导出自动采集测试 — 新模块 session_state 采集"""
+
+    def test_salinity_stats_structure(self):
+        """盐渍化页面写入的 session_state 结构应包含报告所需字段"""
+        ss = {
+            "area": "塔里木盆地", "date": "2025-06-01", "satellite": "S2",
+            "summary": {"total_ratio": 0.35, "severe_ratio": 0.12,
+                        "dominant_level": "中度盐渍化", "ndsi_mean": 0.28},
+            "stats": [{"name": "中度盐渍化", "ratio": 0.35}],
+        }
+        assert 0 <= ss["summary"]["total_ratio"] <= 1
+        assert ss["summary"]["dominant_level"]
+        assert ss["stats"]
+
+    def test_lst_stats_structure(self):
+        ls = {"area": "塔里木盆地", "date": "2025-06-01",
+              "summary": {"mean_lst_c": 32.5, "max_lst_c": 45.2,
+                          "hot_ratio": 0.3, "dominant_level": "高温"},
+              "stats": []}
+        assert ls["summary"]["mean_lst_c"] < ls["summary"]["max_lst_c"]
+        assert ls["summary"]["hot_ratio"] >= 0
+
+    def test_et_stats_structure(self):
+        es = {"area": "河西走廊", "date": "2025-06-01",
+              "summary": {"mean_et": 2.8, "mean_rn": 210.5,
+                          "mean_le": 80.2, "dominant_level": "中等蒸散发"},
+              "stats": []}
+        assert es["summary"]["mean_et"] > 0
+        assert es["summary"]["mean_rn"] > es["summary"]["mean_le"]
+
+    def test_supervised_stats_structure(self):
+        sp = {"area": "塔里木盆地", "classifier": "RandomForest",
+              "accuracy": {"oa": 0.873, "kappa": 0.812, "f1_macro": 0.855},
+              "summary": {"n_train": 500, "n_test": 200, "n_features": 9}}
+        assert 0 < sp["accuracy"]["oa"] <= 1
+        assert 0 <= sp["accuracy"]["kappa"] <= 1
+        assert sp["summary"]["n_train"] > sp["summary"]["n_test"]
+
+    def test_transition_stats_structure(self):
+        tr = {"area": "准噶尔盆地", "t1": "2020", "t2": "2021",
+              "summary": {"total_change_km2": 125.3, "total_area_km2": 5000.0,
+                          "n_major": 3},
+              "major_transitions": [{"transition": "草地→裸地", "area_km2": 45.2}]}
+        assert tr["summary"]["total_change_km2"] > 0
+        assert tr["major_transitions"]
+        assert tr["t1"] != tr["t2"]
