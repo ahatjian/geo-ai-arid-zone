@@ -105,7 +105,7 @@ with st.sidebar:
 
     st.divider()
     run_clicked = st.button(
-        "🗺️ 开始矢量化", type="primary", use_container_width=True
+        "🗺️ 开始矢量化", type="primary", width="stretch"
     )
 
 # ============================================================
@@ -310,7 +310,7 @@ with col3:
 
 area_df = pd.DataFrame(areas)
 area_df.columns = ["类别ID", "类别名称", "多边形数", "面积(公顷)", "面积(km²)"]
-st.dataframe(area_df, use_container_width=True)
+st.dataframe(area_df, width="stretch")
 
 st.divider()
 
@@ -362,7 +362,7 @@ with StreamlitErrorBoundary("导出", st=st, show_traceback=False):
                 data=gj_data,
                 file_name=make_download_label("vector", "geojson"),
                 mime=VECTOR_FORMATS["geojson"]["mime"],
-                use_container_width=True,
+                width="stretch",
             )
         except Exception as e:
             st.error(f"GeoJSON 导出失败: {e}")
@@ -381,7 +381,7 @@ with StreamlitErrorBoundary("导出", st=st, show_traceback=False):
                 data=shp_data,
                 file_name=make_download_label("vector", "zip"),
                 mime=VECTOR_FORMATS["shapefile"]["mime"],
-                use_container_width=True,
+                width="stretch",
             )
         except Exception as e:
             st.error(f"Shapefile 导出失败: {e}")
@@ -399,7 +399,7 @@ with StreamlitErrorBoundary("导出", st=st, show_traceback=False):
                 data=kml_data,
                 file_name=make_download_label("vector", "kml"),
                 mime=VECTOR_FORMATS["kml"]["mime"],
-                use_container_width=True,
+                width="stretch",
             )
         except Exception as e:
             st.error(f"KML 导出失败: {e}")

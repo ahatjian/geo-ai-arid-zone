@@ -112,7 +112,7 @@ with st.sidebar:
     st.divider()
 
     search_clicked = st.button(
-        "🔍 搜索影像 & 分析", type="primary", use_container_width=True
+        "🔍 搜索影像 & 分析", type="primary", width="stretch"
     )
 
     # 高级设置
@@ -490,7 +490,7 @@ if search_clicked:
                     })
                     st.dataframe(
                         df_cat[["等级名称", "像元数", "占比", "面积(km²)"]],
-                        use_container_width=True,
+                        width="stretch",
                         hide_index=True,
                     )
 
@@ -886,7 +886,7 @@ if search_clicked:
             data=csv,
             file_name=f"drought_stats_{area_name}_{start_date}_{end_date}.csv",
             mime="text/csv",
-            use_container_width=True,
+            width="stretch",
         )
 
     with col_dl2:

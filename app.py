@@ -443,7 +443,7 @@ with tab_areas:
                 if st.button(
                     f"选择 {name}",
                     key=f"area_{idx}",
-                    use_container_width=True,
+                    width="stretch",
                 ):
                     st.session_state["selected_area"] = name
                     st.session_state["selected_bbox"] = info["bbox"]

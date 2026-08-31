@@ -229,7 +229,7 @@ if "单景" in data_mode and geotiff_path:
                             f"⬇️ {index_name} GeoTIFF",
                             f, file_name=f"{index_name}.tif",
                             mime="image/tiff",
-                            use_container_width=True,
+                            width="stretch",
                         )
 
                 with exp_col2:
@@ -240,7 +240,7 @@ if "单景" in data_mode and geotiff_path:
                         "⬇️ 统计结果 CSV",
                         csv_buf, file_name=f"{index_name}_stats.csv",
                         mime="text/csv",
-                        use_container_width=True,
+                        width="stretch",
                     )
 
 # ============================================

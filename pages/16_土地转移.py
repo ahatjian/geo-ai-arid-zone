@@ -59,7 +59,7 @@ with st.sidebar:
     pixel_size = st.number_input("像元大小 (m)", value=10.0, min_value=1.0)
 
     analyze_clicked = st.button(
-        "🔀 计算转移矩阵", type="primary", use_container_width=True
+        "🔀 计算转移矩阵", type="primary", width="stretch"
     )
 
 # ============================================================
@@ -184,14 +184,14 @@ if analyze_clicked:
             columns=[f"{name} (T2)" for name in class_names],
         )
         df = df.round(2)
-        st.dataframe(df, use_container_width=True)
+        st.dataframe(df, width="stretch")
         st.caption("单位: km² | 行 = T1 (2020) 起始类型，列 = T2 (2021) 最终类型")
 
     with tab_major:
         if result["major_transitions"]:
             trans_df = pd.DataFrame(result["major_transitions"])
             trans_df.columns = ["起始类型", "转为类型", "面积(km²)"]
-            st.dataframe(trans_df, use_container_width=True, hide_index=True)
+            st.dataframe(trans_df, width="stretch", hide_index=True)
 
             # 主要转移方向条形图
             import matplotlib.pyplot as plt

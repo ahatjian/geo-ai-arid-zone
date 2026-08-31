@@ -78,7 +78,7 @@ def _render_preview(result: dict):
             if kind == "csv":
                 data = load_result(result["id"])
                 if data is not None:
-                    st.dataframe(data, use_container_width=True)
+                    st.dataframe(data, width="stretch")
                 return
 
             if kind == "npy":
@@ -94,7 +94,7 @@ def _render_preview(result: dict):
             if ext in IMAGE_EXTS:
                 path = get_result_path(result["id"])
                 if path:
-                    st.image(path, use_container_width=True)
+                    st.image(path, width="stretch")
                 return
 
             if ext in TEXT_EXTS:
@@ -209,7 +209,7 @@ df = pd.DataFrame(rows)
 edited = st.data_editor(
     df,
     hide_index=True,
-    use_container_width=True,
+    width="stretch",
     disabled=["ID", "名称", "类型", "大小", "时间"],
     key="dc_table",
 )
@@ -237,7 +237,7 @@ with col_dl:
                     data=raw,
                     file_name=_download_filename(res),
                     mime=_mime_for(res.get("ext", "bin")),
-                    use_container_width=True,
+                    width="stretch",
                 )
             except Exception as e:
                 st.error(f"下载失败: {e}")
@@ -255,7 +255,7 @@ with col_zip:
                 data=zip_binary,
                 file_name=f"geoai_results_{len(selected)}.zip",
                 mime="application/zip",
-                use_container_width=True,
+                width="stretch",
             )
         except Exception as e:
             st.error(f"打包失败: {e}")
@@ -264,7 +264,7 @@ with col_zip:
 
 with col_del:
     if selected:
-        if st.button("🗑️ 删除选中", use_container_width=True):
+        if st.button("🗑️ 删除选中", width="stretch"):
             for rid in selected:
                 delete_result(rid)
             st.success(f"✅ 已删除 {len(selected)} 个结果")
@@ -275,7 +275,7 @@ with col_del:
 with col_clear:
     with st.popover("⚠️ 清空全部"):
         st.warning("此操作将删除结果库中**全部**结果，且不可恢复！")
-        if st.button("确认清空", type="primary", use_container_width=True):
+        if st.button("确认清空", type="primary", width="stretch"):
             n = clear_results()
             st.success(f"✅ 已清空 {n} 个结果")
             st.rerun()

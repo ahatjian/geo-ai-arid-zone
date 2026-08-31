@@ -87,7 +87,7 @@ with st.sidebar:
     thresholds = [t1, t2, t3, t4]
 
     search_clicked = st.button(
-        "🔍 搜索影像 & 估算蒸散发", type="primary", use_container_width=True
+        "🔍 搜索影像 & 估算蒸散发", type="primary", width="stretch"
     )
 
 # ============================================================
@@ -315,7 +315,7 @@ if search_clicked:
             class_colors=class_colors,
             title=f"蒸散发分级 — {area_name} ({main_date})",
         )
-        st.image(fig_img, use_container_width=True)
+        st.image(fig_img, width="stretch")
 
     with tab_stats:
         st.caption("各蒸散发等级面积与占比")
@@ -330,7 +330,7 @@ if search_clicked:
             }
             for s_ in result.stats
         ])
-        st.dataframe(df, use_container_width=True, hide_index=True)
+        st.dataframe(df, width="stretch", hide_index=True)
 
         names = [s_["name"] for s_ in result.stats]
         ratios = [s_["ratio"] * 100 for s_ in result.stats]

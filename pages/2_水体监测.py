@@ -430,7 +430,7 @@ if geotiff_path:
                             st.download_button(
                                 f"⬇️ {index_name} GeoTIFF", f,
                                 file_name=f"{index_name}.tif",
-                                mime="image/tiff", use_container_width=True,
+                                mime="image/tiff", width="stretch",
                             )
                     with exp_col2:
                         mask_tif = os.path.join(tmp_dir, f"{index_name}_water_mask.tif")
@@ -439,7 +439,7 @@ if geotiff_path:
                             st.download_button(
                                 "⬇️ 水体掩膜 GeoTIFF", f,
                                 file_name=f"{index_name}_water_mask.tif",
-                                mime="image/tiff", use_container_width=True,
+                                mime="image/tiff", width="stretch",
                             )
                     with exp_col3:
                         csv_buf = BytesIO()
@@ -448,7 +448,7 @@ if geotiff_path:
                         st.download_button(
                             "⬇️ 统计结果 CSV", csv_buf,
                                 file_name=f"{index_name}_stats.csv",
-                                mime="text/csv", use_container_width=True,
+                                mime="text/csv", width="stretch",
                             )
 
     # ============================================
@@ -567,7 +567,7 @@ if geotiff_path:
                                     st.download_button(
                                         "⬇️ AI 水体掩膜 GeoTIFF", f,
                                         file_name="ai_water_mask.tif",
-                                        mime="image/tiff", use_container_width=True,
+                                        mime="image/tiff", width="stretch",
                                     )
                             else:
                                 st.warning("掩膜文件不可用")
@@ -579,7 +579,7 @@ if geotiff_path:
                                     st.download_button(
                                         "⬇️ 水体多边形 GeoJSON", f,
                                         file_name="ai_water_polygons.geojson",
-                                        mime="application/geo+json", use_container_width=True,
+                                        mime="application/geo+json", width="stretch",
                                     )
                             else:
                                 st.info("矢量文件未生成 (AI 模式下可选)")
@@ -592,7 +592,7 @@ if geotiff_path:
                             st.download_button(
                                 "⬇️ 统计结果 CSV", csv_buf,
                                 file_name="ai_water_stats.csv",
-                                mime="text/csv", use_container_width=True,
+                                mime="text/csv", width="stretch",
                             )
 
     # ============================================
@@ -632,7 +632,7 @@ if geotiff_path:
         if st.button(
             "⚡ 运行 ONNX 水体分割",
             type="primary",
-            use_container_width=True,
+            width="stretch",
             disabled=onnx_btn_disabled,
             help=onnx_btn_help,
         ):
@@ -771,7 +771,7 @@ if geotiff_path:
                                     st.download_button(
                                         "⬇️ ONNX 水体掩膜 GeoTIFF", f,
                                         file_name="onnx_water_mask.tif",
-                                        mime="image/tiff", use_container_width=True,
+                                        mime="image/tiff", width="stretch",
                                     )
                             else:
                                 st.warning("掩膜文件不可用")
@@ -782,7 +782,7 @@ if geotiff_path:
                                     st.download_button(
                                         "⬇️ 水体多边形 GeoJSON", f,
                                         file_name="onnx_water_polygons.geojson",
-                                        mime="application/geo+json", use_container_width=True,
+                                        mime="application/geo+json", width="stretch",
                                     )
                             else:
                                 st.info("矢量未生成")
@@ -794,7 +794,7 @@ if geotiff_path:
                             st.download_button(
                                 "⬇️ 统计结果 CSV", csv_buf,
                                 file_name="onnx_water_stats.csv",
-                                mime="text/csv", use_container_width=True,
+                                mime="text/csv", width="stretch",
                             )
 
 else:

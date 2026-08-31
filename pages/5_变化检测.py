@@ -954,7 +954,7 @@ if st.session_state.get("cd_analysis_done"):
                     data=f.read(),
                     file_name=f"change_{idx_cfg['key']}_{datetime.now().strftime('%Y%m%d')}.tif",
                     mime="image/tiff",
-                    use_container_width=True,
+                    width="stretch",
                 )
 
         with col_export2:
@@ -965,7 +965,7 @@ if st.session_state.get("cd_analysis_done"):
                 data=stats_csv.getvalue(),
                 file_name=f"change_stats_{idx_cfg['key']}_{datetime.now().strftime('%Y%m%d')}.csv",
                 mime="text/csv",
-                use_container_width=True,
+                width="stretch",
             )
 
         with col_export3:
@@ -977,7 +977,7 @@ if st.session_state.get("cd_analysis_done"):
                 data=png_buf.getvalue(),
                 file_name=f"change_map_{idx_cfg['key']}_{datetime.now().strftime('%Y%m%d')}.png",
                 mime="image/png",
-                use_container_width=True,
+                width="stretch",
             )
 
         try:

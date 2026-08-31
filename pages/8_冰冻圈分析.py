@@ -100,7 +100,7 @@ with st.sidebar:
         pixel_size = st.number_input("像元大小 (m)", value=10.0, min_value=1.0)
 
     search_clicked = st.button(
-        "🔍 搜索影像 & 分析", type="primary", use_container_width=True
+        "🔍 搜索影像 & 分析", type="primary", width="stretch"
     )
 
 # ============================================================
@@ -493,7 +493,7 @@ if search_clicked:
             data=csv,
             file_name=f"cryosphere_{area_name}_{main_date}.csv",
             mime="text/csv",
-            use_container_width=True,
+            width="stretch",
         )
     with col_d2:
         st.info(

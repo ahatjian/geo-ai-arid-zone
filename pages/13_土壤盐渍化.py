@@ -114,7 +114,7 @@ with st.sidebar:
     thresholds = [t1, t2, t3, t4]
 
     search_clicked = st.button(
-        "🔍 搜索影像 & 分析", type="primary", use_container_width=True
+        "🔍 搜索影像 & 分析", type="primary", width="stretch"
     )
 
 # ============================================================
@@ -306,7 +306,7 @@ if search_clicked:
                 class_colors=class_colors,
                 title=f"土壤盐渍化分级 — {area_name} ({main_date})",
             )
-            st.image(fig_img, use_container_width=True)
+            st.image(fig_img, width="stretch")
 
     # Tab: NDSI 盐分指数
     if use_ndsi:
@@ -373,7 +373,7 @@ if search_clicked:
             }
             for s_ in result.stats
         ])
-        st.dataframe(df, use_container_width=True, hide_index=True)
+        st.dataframe(df, width="stretch", hide_index=True)
 
         # 面积占比横向柱状图
         names = [s_["name"] for s_ in result.stats]

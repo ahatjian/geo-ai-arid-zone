@@ -114,7 +114,7 @@ with st.sidebar:
         help="留出多少比例样本做精度评估")
 
     train_clicked = st.button(
-        "🎯 训练 & 分类", type="primary", use_container_width=True
+        "🎯 训练 & 分类", type="primary", width="stretch"
     )
 
 # ============================================================
@@ -312,7 +312,7 @@ if train_clicked:
             class_colors=ARID6_COLORS,
             title=f"监督分类结果 — {area_name} ({item['datetime']})",
         )
-        st.image(fig_img, use_container_width=True)
+        st.image(fig_img, width="stretch")
 
     with tab_cm:
         st.caption("混淆矩阵 (测试集)")

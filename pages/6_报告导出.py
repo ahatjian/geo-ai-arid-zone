@@ -979,7 +979,7 @@ if preview or generate:
                 data=html_bytes,
                 file_name=f"遥感分析报告_{report_area}_{datetime.now().strftime('%Y%m%d')}.html",
                 mime="text/html",
-                use_container_width=True,
+                width="stretch",
             )
 
             # PDF 报告导出 (reportlab, 带中文字体)
@@ -1096,7 +1096,7 @@ if preview or generate:
                         data=pdf_bytes,
                         file_name=f"遥感分析报告_{report_area}_{datetime.now().strftime('%Y%m%d')}.pdf",
                         mime="application/pdf",
-                        use_container_width=True,
+                        width="stretch",
                     )
             except Exception as pdf_e:
                 st.caption(f"PDF 导出不可用: {pdf_e}")

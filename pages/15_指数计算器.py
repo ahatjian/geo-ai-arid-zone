@@ -60,7 +60,7 @@ with st.sidebar:
     max_items = st.slider("最大影像数", 1, 15, 5)
 
     search_clicked = st.button(
-        "🔍 搜索影像", type="primary", use_container_width=True
+        "🔍 搜索影像", type="primary", width="stretch"
     )
 
 # ============================================================

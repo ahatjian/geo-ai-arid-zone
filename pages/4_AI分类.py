@@ -367,7 +367,7 @@ if "公开" in run_mode:
                             f,
                             file_name=fname,
                             mime="image/tiff",
-                            use_container_width=True,
+                            width="stretch",
                         )
                     st.success(f"✅ 已导出: {fname}")
 
@@ -379,7 +379,7 @@ if "公开" in run_mode:
                 csv_data,
                 file_name=f"landcover_stats_{area_name}.csv",
                 mime="text/csv",
-                use_container_width=True,
+                width="stretch",
             )
 
 # ============================================
@@ -482,13 +482,13 @@ else:
             btn_label,
             type="primary",
             disabled=btn_disabled,
-            use_container_width=True,
+            width="stretch",
         )
     with col_btn2:
         run_baseline_btn = st.button(
             "📊 指数阈值分类 (基线)",
             disabled=geotiff_path is None,
-            use_container_width=True,
+            width="stretch",
         )
 
     # ---- AI 推理执行 ----
@@ -801,7 +801,7 @@ else:
                 csv_data,
                 file_name=f"onnx_class_stats_{task_type.replace(' ', '_')}.csv",
                 mime="text/csv",
-                use_container_width=True,
+                width="stretch",
             )
         with col_exp2:
             # 导出分类结果为 NumPy
@@ -812,7 +812,7 @@ else:
                 np_bytes.getvalue(),
                 file_name=f"onnx_class_array_{task_type.replace(' ', '_')}.npy",
                 mime="application/octet-stream",
-                use_container_width=True,
+                width="stretch",
             )
 
     # ---- 基线指数阈值分类 ----
