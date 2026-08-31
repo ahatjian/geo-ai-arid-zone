@@ -260,3 +260,96 @@ def calc_mean_timeseries_trend(
     result["n_valid"] = n_valid
 
     return result
+
+
+# ============================================================
+# Savitzky-Golay 时序平滑 (NDVI 时序重建标准方法)
+# ============================================================
+
+def savgol_smooth(
+    values: np.ndarray,
+    window: int = 7,
+    polyorder: int = 2,
+    mode: str = "interp",
+) -> np.ndarray:
+    """
+    Savitzky-Golay 滤波平滑 NDVI 时序。
+
+    原理: 用滑动窗口内的多项式最小二乘拟合替代原值，
+          去除传感器噪声和云污染残留，保留季节趋势。
+
+    参数:
+        values: 一维时序 (T,), 允许 NaN (mode="interp" 时插值填充)
+        window: 窗口大小 (奇数, 默认 7, 对应半月合成)
+        polyorder: 多项式阶数 (默认 2, 不宜超过 window-1)
+        mode: scipy.signal.savgol_filter 边界模式 ("interp" 推荐)
+
+    返回:
+        smoothed: (T,) 平滑后时序 (与输入同长)
+
+    说明:
+        窗口需为奇数且 ≤ 时序长度; polyorder < window。
+    """
+    values = np.asarray(values, dtype=np.float64)
+
+    if values.ndim != 1:
+        raise ValueError(f"savgol_smooth 仅支持一维时序, 实际: {values.ndim}D")
+
+    n = len(values)
+    if n < 5:
+        return values.copy()
+
+    if window % 2 == 0:
+        window += 1  # 强制奇数
+    window = min(window, n if n % 2 == 1 else n - 1)
+    polyorder = min(polyorder, window - 1)
+    if polyorder < 1:
+        polyorder = 1
+
+    # 缺失值填充: 线性插值, 两端回退到邻近有效值
+    work = values.copy()
+    nan_mask = ~np.isfinite(work)
+    if nan_mask.all():
+        return values.copy()
+    if nan_mask.any():
+        idx = np.arange(n)
+        valid_idx = idx[~nan_mask]
+        work = np.interp(idx, valid_idx, work[valid_idx])
+
+    try:
+        from scipy.signal import savgol_filter
+        return savgol_filter(work, window_length=window, polyorder=polyorder, mode=mode)
+    except ImportError:
+        # scipy 不可用时回退到滑动平均
+        kernel = np.ones(window) / window
+        return np.convolve(work, kernel, mode="same")
+
+
+def smooth_ndvi_stack(
+    ndvi_stack: np.ndarray,
+    window: int = 7,
+    polyorder: int = 2,
+) -> np.ndarray:
+    """
+    对 NDVI 时序立方体 (H, W, T) 逐像元 S-G 平滑。
+
+    参数:
+        ndvi_stack: (H, W, T) NDVI 时序
+        window/polyorder: S-G 滤波参数
+
+    返回:
+        smoothed: (H, W, T)
+    """
+    ndvi_stack = np.asarray(ndvi_stack, dtype=np.float64)
+    if ndvi_stack.ndim != 3:
+        raise ValueError(f"需要 3D 数组 (H,W,T), 实际: {ndvi_stack.ndim}D")
+
+    H, W, T = ndvi_stack.shape
+    if T < 5:
+        return ndvi_stack.copy()
+
+    flat = ndvi_stack.reshape(-1, T)
+    smoothed = np.vstack([
+        savgol_smooth(row, window=window, polyorder=polyorder) for row in flat
+    ])
+    return smoothed.reshape(H, W, T)

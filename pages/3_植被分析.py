@@ -307,6 +307,22 @@ elif "多景" in data_mode and len(uploaded_files_list) >= 2:
                     mean_val = float(np.nanmean(ndvi_arr))
                     mean_values.append(mean_val)
 
+                # ===== Savitzky-Golay 平滑 (可选) =====
+                st.markdown("**🛰️ 时序平滑 (Savitzky-Golay)**")
+                s_col1, s_col2, s_col3 = st.columns([1, 1, 2])
+                with s_col1:
+                    use_smoothing = st.toggle("启用 S-G 平滑", value=True,
+                                              help="去除传感器噪声和云污染残留，保留季节趋势")
+                with s_col2:
+                    sg_window = st.number_input("窗口", 3, 15, 5, step=2,
+                                                help="窗口越大越平滑")
+                y_original = np.array(mean_values)
+                y = y_original
+                if use_smoothing:
+                    from utils.trend import savgol_smooth
+                    y = savgol_smooth(y_original, window=int(sg_window), polyorder=2)
+                    st.caption(f"✅ 已平滑 (窗口={int(sg_window)}, 多项式=2) — 原始 vs 平滑 R²={np.corrcoef(y_original, y)[0,1]:.4f}")
+
                 # ===== Sen+MK 趋势分析 =====
                 from scipy.stats import theilslopes
                 try:
@@ -316,7 +332,6 @@ elif "多景" in data_mode and len(uploaded_files_list) >= 2:
                     mk = None
 
                 x = np.arange(len(mean_values))
-                y = np.array(mean_values)
 
                 # Sen 斜率
                 slope, intercept, lo_slope, up_slope = theilslopes(y, x, 0.95)
@@ -349,16 +364,29 @@ elif "多景" in data_mode and len(uploaded_files_list) >= 2:
                 with col4:
                     st.metric("影像数", len(mean_values))
 
-                # 时序曲线
+                # 时序曲线 (原始 vs 平滑)
                 st.divider()
                 st.subheader("📈 时序变化曲线")
 
                 index_label = "NDVI" if "NDVI" in index_type else "EVI"
-                fig1 = plot_time_series(
-                    dates, mean_values,
-                    y_label=f"平均 {index_label}",
-                    title=f"{index_label} 时序变化 (n={len(mean_values)})",
-                )
+                if use_smoothing:
+                    import plotly.graph_objects as go
+                    fig1 = plot_time_series(
+                        dates, y_original,
+                        y_label=f"平均 {index_label}",
+                        title=f"{index_label} 时序变化 — 原始 (n={len(mean_values)})",
+                    )
+                    fig1.add_trace(
+                        go.Scatter(x=dates, y=y, mode="lines+markers",
+                                   name="S-G 平滑",
+                                   line=dict(width=3, color="#e67e22"))
+                    )
+                else:
+                    fig1 = plot_time_series(
+                        dates, y,
+                        y_label=f"平均 {index_label}",
+                        title=f"{index_label} 时序变化 (n={len(mean_values)})",
+                    )
                 st.plotly_chart(fig1)
 
                 # 趋势散点
@@ -380,8 +408,10 @@ elif "多景" in data_mode and len(uploaded_files_list) >= 2:
 
                 results_df = pd.DataFrame({
                     "日期": dates,
-                    f"平均{index_label}": mean_values,
+                    f"平均{index_label}": y_original,
                 })
+                if use_smoothing:
+                    results_df[f"{index_label} S-G平滑"] = y
                 results_df.loc["趋势"] = [
                     f"斜率={slope:.6f}, p={p_value:.4f}",
                     "",

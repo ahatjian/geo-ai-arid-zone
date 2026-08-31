@@ -1,6 +1,6 @@
 # 🌍 西北干旱区遥感智能分析平台
 
-> v1.15 | Phase 1-6 全部完成 | 20 分析模块 + DeepSeek AI 智能查询与解读 + 自定义 AOI + 矢量导出 + 数据下载中心
+> v1.16 | Phase 1-6 全部完成 | 20 分析模块 + DeepSeek AI 智能查询与解读 + 影像预处理 + PDF 报告 + 自定义 AOI + 矢量导出 + 数据下载中心
 
 基于 **Microsoft Planetary Computer (STAC API)** + **Streamlit** + **DeepSeek AI** 的 Web 端干旱区遥感智能分析应用。面向中国西北干旱半干旱地区，提供卫星数据检索、遥感指数计算、AI地物分类、干旱预测、沙漠化评估、冰冻圈分析、农业干旱监测、时序动画及智能工作流全链路功能。
 
@@ -29,7 +29,9 @@
 - 🎬 **时序动画** — NDVI/水体/雪盖 GIF 动画生成 (单指数/多指数对比/趋势曲线 3 种模式)
 - 🌍 **生态评估** — PSR 压力-状态-响应 生态安全指数 (ESI) + 可调权重 + 5 级安全分级
 - ⚡ **智能工作流** — DeepSeek AI 自然语言查询 + 一键分步分析 + 综合报告自动生成 + AI 智能解读
-- 🤖 **AI 智能解读** — 基于各模块分析指标，DeepSeek 自动生成专业生态/环境解读，嵌入 HTML 报告（无 API Key 时自动降级为规则模板）
+- 🤖 **AI 智能解读** — 基于各模块分析指标，DeepSeek 自动生成专业生态/环境解读，嵌入 HTML/PDF 报告（无 API Key 时自动降级为规则模板）
+- 🛰️ **影像预处理** — Sentinel-2 SCL / Landsat QA_PIXEL 逐像元云掩膜 + 分辨率重采样 + Savitzky-Golay 时序平滑（NDVI 重建）
+- 📄 **PDF 科研报告** — reportlab 生成带中文字体的 PDF 版报告（HTML/PDF 双格式下载）
 - 🗺️ **矢量导出** — 分类/分级/掩膜结果矢量化，导出 GeoJSON / Shapefile (zip) / KML，衔接 ArcGIS/QGIS/Google Earth
 - 📦 **数据下载中心** — 结果持久化 (跨会话) + 统一下载 / 批量打包 (zip) / 预览 / 删除
 
@@ -191,8 +193,8 @@ docker build -t geo-ai-app . && docker run -p 8501:8501 geo-ai-app
 
 ## 状态
 
-- **版本**: v1.15 | **页面**: 20 | **工具模块**: 27
-- **测试**: 201 用例全部通过 | **部署**: Streamlit Cloud ✅
+- **版本**: v1.16 | **页面**: 20 | **工具模块**: 29
+- **测试**: 233 用例全部通过 | **部署**: Streamlit Cloud ✅
 - **Python**: 3.11 | **PyTorch**: 2.11.0+cpu
 
 ## License

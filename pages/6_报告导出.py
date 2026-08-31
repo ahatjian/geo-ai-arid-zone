@@ -831,6 +831,73 @@ if preview or generate:
                 mime="text/html",
                 use_container_width=True,
             )
+
+            # PDF 报告导出 (reportlab, 带中文字体)
+            try:
+                from utils.pdf_report import generate_report_pdf
+
+                # 组装 PDF 章节: 从 HTML 报告的 sections 提取文本数据
+                pdf_sections = []
+                if has_water and water_area > 0:
+                    pdf_sections.append({
+                        "heading": "水体监测分析",
+                        "content": f"水体指数: {water_index} | 水体面积: {water_area:.2f} km² | "
+                                   f"水体占比: {water_pct:.1f}% | 趋势: {water_trend}",
+                    })
+                if has_veg and veg_mean != 0:
+                    pdf_sections.append({
+                        "heading": "植被分析",
+                        "content": f"{veg_index} 均值: {veg_mean:.4f} | 覆盖度: {veg_coverage:.1f}% | "
+                                   f"趋势: {veg_trend} | Sen 斜率: {veg_slope:.1f}×10⁻³/yr",
+                    })
+                if has_change and (change_increase + change_decrease) > 0:
+                    pdf_sections.append({
+                        "heading": "变化检测分析",
+                        "content": f"增加: {change_increase:.2f} km² | 减少: {change_decrease:.2f} km² | "
+                                   f"稳定: {change_stable:.2f} km² | 净变化: {change_increase - change_decrease:+.2f} km²",
+                    })
+                if has_ai and class_areas:
+                    area_lines = "；".join(
+                        f"{k}: {v:.2f} km²" for k, v in list(class_areas.items())[:6]
+                    )
+                    pdf_sections.append({
+                        "heading": "AI 分类分析",
+                        "content": f"模型: {ai_model} | 类别数: {ai_classes} | 各类面积: {area_lines}",
+                    })
+                if ai_section_html and "AI 智能解读" in ai_section_html:
+                    ai_pdf_text = ai_section_html.split("</h2>")[1].split("</div>")[0]
+                    pdf_sections.append({
+                        "heading": "AI 智能解读",
+                        "content": ai_pdf_text.replace("<br>", "\n"),
+                    })
+                if add_section and section_content:
+                    pdf_sections.append({
+                        "heading": section_title,
+                        "content": section_content,
+                    })
+
+                pdf_bytes = generate_report_pdf(
+                    title=report_title,
+                    meta_lines=[
+                        f"研究区域: {report_area}",
+                        f"分析日期: {report_date}",
+                        f"作者: {author}" if author else "作者: —",
+                        f"生成时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
+                    ],
+                    sections=pdf_sections,
+                    footer="本报告由 Geo AI 干旱区遥感智能分析平台自动生成",
+                )
+                if pdf_bytes:
+                    st.download_button(
+                        label="📄 下载 PDF 报告 (科研版式)",
+                        data=pdf_bytes,
+                        file_name=f"遥感分析报告_{report_area}_{datetime.now().strftime('%Y%m%d')}.pdf",
+                        mime="application/pdf",
+                        use_container_width=True,
+                    )
+            except Exception as pdf_e:
+                st.caption(f"PDF 导出不可用: {pdf_e}")
+
             st.success(f"✅ 报告已生成 — 点击上方按钮下载")
 
             # AI 解读展示

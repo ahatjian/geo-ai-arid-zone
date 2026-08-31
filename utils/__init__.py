@@ -23,6 +23,7 @@ from .ai_engine import (
 from .trend import (
     calc_sen_mk_trend, calc_sen_mk_trend_pixelwise,
     calc_mean_timeseries_trend, theil_sen_slope,
+    savgol_smooth, smooth_ndvi_stack,
 )
 from .forecast import (
     ForecastResult,
@@ -137,6 +138,14 @@ from .ai_insight import (
 )
 from .save_ui import (
     render_save_button, render_save_csv_button,
+)
+from .preprocess import (
+    apply_s2_cloud_mask, apply_landsat_cloud_mask,
+    mask_clouds, resample_array, normalize_to_uint8,
+    cloud_cover_fraction, mask_stats,
+)
+from .pdf_report import (
+    generate_report_pdf, report_to_pdf_download,
 )
 from .cryosphere import (
     SNOW_COVER_CLASSES, GLACIER_CLASSES, CryosphereResult,
