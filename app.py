@@ -1,6 +1,6 @@
 """
 Geo AI 干旱区遥感智能分析平台 — 首页入口
-版本 v1.20 — 23 模块完整链路: 从数据浏览到智能工作流 + AI 解读
+版本 v1.21 — 24 模块完整链路: 从数据浏览到智能工作流 + AI 解读
 """
 
 import streamlit as st
@@ -168,7 +168,7 @@ with st.sidebar:
     cols3 = st.columns(2)
     with cols3[0]:
         st.markdown(
-            '<div class="stats-box"><div class="stats-number">23</div><div class="stats-label">分析模块</div></div>',
+            '<div class="stats-box"><div class="stats-number">24</div><div class="stats-label">分析模块</div></div>',
             unsafe_allow_html=True,
         )
     with cols3[1]:
@@ -346,6 +346,12 @@ with tab_intro:
             "label": "大气校正",
             "desc": "DOS 暗像元法\n辐射定标",
             "page": "23_辐射定标大气校正",
+        },
+        {
+            "icon": "🗺️",
+            "label": "空间邻域分析",
+            "desc": "AI 智能缓冲区\n叠加分析",
+            "page": "24_空间邻域分析",
         },
     ]
 

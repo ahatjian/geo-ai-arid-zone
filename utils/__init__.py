@@ -172,6 +172,10 @@ from .texture import (
     build_texture_stack, summarize_texture,
     TEXTURE_PROPS, TEXTURE_NAMES_CN,
 )
+from .spatial import (
+    raster_buffer, buffer_zone_stats, smart_buffer_analysis,
+    neighborhood_stats, overlay_crosstab, overlay_analysis_text,
+)
 from .cryosphere import (
     SNOW_COVER_CLASSES, GLACIER_CLASSES, CryosphereResult,
     calc_ndsi, calc_ndsi_nir, calc_snow_cover,
