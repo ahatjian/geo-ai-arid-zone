@@ -176,6 +176,10 @@ from .spatial import (
     raster_buffer, buffer_zone_stats, smart_buffer_analysis,
     neighborhood_stats, overlay_crosstab, overlay_analysis_text,
 )
+from .ai_assistant import (
+    chat_with_assistant, auto_analyze, detect_anomalies,
+    anomaly_insight, is_ai_available,
+)
 from .cryosphere import (
     SNOW_COVER_CLASSES, GLACIER_CLASSES, CryosphereResult,
     calc_ndsi, calc_ndsi_nir, calc_snow_cover,

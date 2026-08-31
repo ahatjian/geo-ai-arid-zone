@@ -4,15 +4,15 @@ import utils.llm as llm
 
 
 class TestModuleDefinitions:
-    def test_all_24_modules_registered(self):
-        """平台 24 个分析模块应全部注册到 LLM 模块清单。"""
-        assert len(llm.MODULE_DEFINITIONS) == 24
+    def test_all_25_modules_registered(self):
+        """平台 25 个分析模块应全部注册到 LLM 模块清单。"""
+        assert len(llm.MODULE_DEFINITIONS) == 25
 
     def test_known_modules_present(self):
         names = {m["name"] for m in llm.MODULE_DEFINITIONS}
         for expected in ["数据浏览", "智能工作流", "土壤盐渍化", "地表温度",
                          "指数计算器", "土地转移", "蒸散发", "监督分类",
-                         "矢量导出", "数据下载中心", "系统状态", "图像增强", "大气校正", "空间邻域分析"]:
+                         "矢量导出", "数据下载中心", "系统状态", "图像增强", "大气校正", "空间邻域分析", "AI智能助手"]:
             assert expected in names, f"缺少模块: {expected}"
 
     def test_pages_unique(self):
