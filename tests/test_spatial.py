@@ -157,3 +157,44 @@ class TestOverlayCrosstab:
         with pytest.raises(ValueError):
             overlay_crosstab(np.zeros((10, 10), dtype=np.int16),
                              np.zeros((20, 20), dtype=np.int16))
+
+
+class TestSecurity:
+    """空间分析安全加固测试"""
+
+    def test_oversized_class_rejected(self):
+        """恶意超大类别值应被拒绝 (内存 DoS 防护)"""
+        from utils.spatial import overlay_crosstab
+        a = np.array([[0, 1], [2, 3]], dtype=np.int32)
+        b = np.full((2, 2), 999999, dtype=np.int32)  # 恶意类别值
+        with pytest.raises(ValueError):
+            overlay_crosstab(a, b)
+
+    def test_negative_class_rejected(self):
+        from utils.spatial import overlay_crosstab
+        a = np.array([[0, 1]], dtype=np.int16)
+        b = np.array([[-5, 0]], dtype=np.int16)
+        with pytest.raises(ValueError):
+            overlay_crosstab(a, b)
+
+    def test_sparse_classes_compact(self):
+        """稀疏类别 (如 0 和 100) 应紧凑分配, 不产生大数组"""
+        from utils.spatial import overlay_crosstab
+        a = np.array([[0, 100]], dtype=np.int16)
+        b = np.array([[0, 1]], dtype=np.int16)
+        result = overlay_crosstab(a, b)
+        # 形状 = 实际类别数 (2×2), 而非 101×2
+        assert result["crosstab"].shape == (2, 2)
+        assert result["crosstab"].sum() == 2
+
+    def test_sparse_values_mapped(self):
+        """稀疏类别的面积统计应正确映射回原始值"""
+        from utils.spatial import overlay_crosstab
+        a = np.array([[0, 100]], dtype=np.int16)
+        b = np.array([[0, 1]], dtype=np.int16)
+        result = overlay_crosstab(a, b, pixel_size_m=10)
+        # 每个组合 1 像元 = 100 m² = 0.0001 km²
+        assert result["rows"][0]["面积_km2"] == pytest.approx(0.0001)
+        # 原始类别值保留在行记录中
+        vals = {(r["a_val"], r["b_val"]) for r in result["rows"]}
+        assert (0, 0) in vals and (100, 1) in vals

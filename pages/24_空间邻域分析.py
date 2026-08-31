@@ -58,10 +58,7 @@ with st.sidebar:
     if src_option == "📤 上传 GeoTIFF":
         uploaded = st.file_uploader("上传分类图 或 指数图 GeoTIFF", type=["tif", "tiff"])
         if uploaded:
-            tmp_dir = tempfile.gettempdir()
-            geotiff_path = os.path.join(tmp_dir, f"spatial_{uploaded.name}")
-            with open(geotiff_path, "wb") as f:
-                f.write(uploaded.getvalue())
+            geotiff_path = save_upload_tmp(uploaded)
             st.success(f"✅ 已加载: {uploaded.name}")
     else:
         data_mode = "session"
@@ -83,10 +80,30 @@ with st.sidebar:
 # 主面板
 # ============================================================
 
+# 栅格读取安全限制 (防超大文件内存 DoS)
+MAX_RASTER_PIXELS = 50_000_000  # 50 MP
+
+
 def load_raster(path: str) -> np.ndarray:
+    """读取单波段栅格 (带尺寸限制)。"""
     import rasterio
     with rasterio.open(path) as src:
+        if src.width * src.height > MAX_RASTER_PIXELS:
+            raise ValueError(
+                f"栅格过大 ({src.width}×{src.height} = {src.width*src.height/1e6:.0f} MP, "
+                f"上限 {MAX_RASTER_PIXELS/1e6:.0f} MP)，请裁剪后上传"
+            )
         return src.read(1).astype(np.float64)
+
+
+def save_upload_tmp(uploaded) -> str:
+    """安全保存上传文件到临时目录 (唯一名, 使用后清理)。"""
+    import uuid as _uuid
+    safe_name = f"spatial_{_uuid.uuid4().hex[:12]}.tif"
+    geotiff_path = os.path.join(tempfile.gettempdir(), safe_name)
+    with open(geotiff_path, "wb") as f:
+        f.write(uploaded.getvalue())
+    return geotiff_path
 
 
 # 确定输入
@@ -171,9 +188,7 @@ with tab_buf:
             metric_file = st.file_uploader("上传指标图 (NDVI/LST/盐分等)", type=["tif", "tiff"],
                                            key="buf_metric")
             if metric_file:
-                mtmp = os.path.join(tempfile.gettempdir(), f"buf_m_{metric_file.name}")
-                with open(mtmp, "wb") as f:
-                    f.write(metric_file.getvalue())
+                mtmp = save_upload_tmp(metric_file)
                 value_arr = load_raster(mtmp)
         elif "session" in metric_source and "veg_index" in st.session_state:
             value_arr = st.session_state["veg_index"]
@@ -322,7 +337,7 @@ with tab_ov:
     else:
         ov_file = st.file_uploader("上传第二图层 GeoTIFF", type=["tif", "tiff"], key="ov_file")
         if ov_file:
-            otmp = os.path.join(tempfile.gettempdir(), f"ov_{ov_file.name}")
+            otmp = save_upload_tmp(ov_file)
             with open(otmp, "wb") as f:
                 f.write(ov_file.getvalue())
             overlay_arr = load_raster(otmp)

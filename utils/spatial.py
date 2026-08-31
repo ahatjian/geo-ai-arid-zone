@@ -267,35 +267,45 @@ def overlay_crosstab(
     vals_a = array_a[valid]
     vals_b = array_b[valid]
 
-    # 自动类别范围
-    max_a = int(max(vals_a.max(), 0))
-    max_b = int(max(vals_b.max(), 0))
+    # 安全防护: 类别值必须在合理范围 (防止恶意超大类别值 → 内存 DoS)
+    MAX_CLASS = 255
+    if vals_a.min() < 0 or vals_b.min() < 0:
+        raise ValueError("类别值不能为负")
+    if vals_a.max() > MAX_CLASS or vals_b.max() > MAX_CLASS:
+        raise ValueError(f"类别值超出安全范围 (最大 {MAX_CLASS})")
 
-    # 交叉计数
-    crosstab = np.zeros((max_a + 1, max_b + 1), dtype=np.int64)
-    np.add.at(crosstab, (vals_a, vals_b), 1)
+    # 按实际观测类别紧凑分配 (不依赖最大值, 防稀疏大数组)
+    unique_a = np.unique(vals_a)
+    unique_b = np.unique(vals_b)
+    map_a = {v: i for i, v in enumerate(unique_a)}
+    map_b = {v: i for i, v in enumerate(unique_b)}
+    idx_a = np.array([map_a[v] for v in vals_a], dtype=np.int32)
+    idx_b = np.array([map_b[v] for v in vals_b], dtype=np.int32)
+
+    crosstab = np.zeros((len(unique_a), len(unique_b)), dtype=np.int64)
+    np.add.at(crosstab, (idx_a, idx_b), 1)
 
     area_per_pixel = pixel_size_m ** 2 / 1e6  # km²
     areas = crosstab * area_per_pixel
     total = int(valid.sum())
 
-    def _name(names, idx):
-        if names and idx < len(names):
-            return str(names[idx])
-        return f"类{idx}"
+    def _name(names, val, idx):
+        if names and val < len(names):
+            return str(names[val])
+        return f"类{val}"
 
     # 行列表 (按面积降序)
     rows = []
-    for i in range(max_a + 1):
-        for j in range(max_b + 1):
+    for i, val_a in enumerate(unique_a):
+        for j, val_b in enumerate(unique_b):
             if crosstab[i, j] > 0:
                 rows.append({
-                    "A": _name(names_a, i),
-                    "B": _name(names_b, j),
-                    "面积_km2": round(float(areas[i, j]), 2),
+                    "A": _name(names_a, int(val_a), i),
+                    "B": _name(names_b, int(val_b), j),
+                    "面积_km2": round(float(areas[i, j]), 4),
                     "占比_pct": round(float(crosstab[i, j]) / total * 100, 2),
-                    "a_val": i,
-                    "b_val": j,
+                    "a_val": int(val_a),
+                    "b_val": int(val_b),
                 })
     rows.sort(key=lambda r: r["面积_km2"], reverse=True)
 
