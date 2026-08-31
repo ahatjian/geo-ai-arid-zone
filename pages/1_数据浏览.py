@@ -77,28 +77,20 @@ with st.sidebar:
 st.title("🗺️ 卫星影像数据浏览")
 st.markdown(f"**研究区: {area_name}** | 数据源: Microsoft Planetary Computer")
 
-# 研究区概览地图
+# 研究区概览地图 (leafmap 失败自动降级为静态图)
+from utils.map_utils import render_area_map
+
 col_map, col_info = st.columns([2, 1])
 
 with col_map:
     with StreamlitErrorBoundary("研究区地图", st=st, show_traceback=False):
-        import leafmap
-        from shapely.geometry import box
-        import geopandas as gpd
-
-        m = leafmap.Map(center=area_info["center"], zoom=6, height=350)
-        m.add_basemap("Esri.WorldImagery")
-
-        bbox_geom = box(*bbox_custom)
-        gdf = gpd.GeoDataFrame(
-            {"name": [area_name]}, geometry=[bbox_geom], crs="EPSG:4326"
+        mode, static_img = render_area_map(
+            area_name, bbox_custom, area_info["center"], STUDY_AREAS
         )
-        m.add_gdf(
-            gdf,
-            layer_name=area_name,
-            style={"color": "red", "fillOpacity": 0.05, "weight": 2},
-        )
-        m.to_streamlit(height=350)
+        if mode == "static" and static_img:
+            st.image(static_img, caption=f"📍 {area_name} 位置示意", width="stretch")
+        elif mode == "error":
+            st.warning("地图组件加载失败")
 
 with col_info:
     st.markdown(f"""
@@ -107,9 +99,26 @@ with col_info:
     - 南: {bbox_custom[1]:.1f}°
     - 东: {bbox_custom[2]:.1f}°
     - 北: {bbox_custom[3]:.1f}°
-    
+    """)
+
+    # 研究区描述卡片
+    keywords_html = " ".join(
+        f"<span style='display:inline-block;background:#e8f4fd;color:#1f77b4;"
+        f"border-radius:10px;padding:2px 8px;margin:2px;font-size:11px;'>{kw}</span>"
+        for kw in area_info.get("keywords", [])
+    )
+    st.markdown(
+        f"<div style='background:#f8fbff;border:1px solid #d4e6f1;border-radius:8px;"
+        f"padding:10px 12px;margin:6px 0;'>"
+        f"<b>📖 {area_name}</b><br>"
+        f"<span style='font-size:12px;color:#555;'>{area_info.get('description', '')}</span><br>"
+        f"<div style='margin-top:6px;'>{keywords_html}</div></div>",
+        unsafe_allow_html=True,
+    )
+
+    st.markdown(f"""
     **卫星**: {satellite} ({sat_info['resolution']}m)
-    
+
     **可用波段**: {', '.join(sat_info['bands'].keys())}
     """)
 
@@ -164,6 +173,30 @@ if "search_results" in st.session_state and st.session_state["search_results"]:
     # 影像预览
     # ============================================
     st.subheader("👁️ 影像预览")
+
+    # ---- 多景影像网格预览 (每景完整显示) ----
+    st.markdown("**📸 多景影像快速浏览**")
+    st.caption("前几景影像的完整 RGB 预览（点击下方选择框可切换单景详细分析）")
+    from utils.pc_data import get_rgb_preview_cached
+
+    n_grid = min(len(results), 6)
+    grid_cols = st.columns(min(3, n_grid))
+    grid_imgs = {}
+    for i in range(n_grid):
+        with grid_cols[i % 3]:
+            r = results[i]
+            try:
+                img = get_rgb_preview_cached(r["id"], collection=satellite_used, width=400)
+                if img:
+                    grid_imgs[i] = img
+                    st.image(img, caption=f"{i+1}. {r['datetime'][:10]} ☁️{r['cloud_cover']}%",
+                             width="stretch")
+                else:
+                    st.caption(f"{i+1}. {r['datetime'][:10]} — 预览不可用")
+            except Exception:
+                st.caption(f"{i+1}. {r['datetime'][:10]} — 加载失败")
+
+    st.divider()
 
     col1, col2 = st.columns([1, 3])
     with col1:

@@ -186,6 +186,9 @@ from .ai_vision import (
 from .ai_report import (
     generate_full_report, sections_from_sources,
 )
+from .map_utils import (
+    draw_area_schematic, render_area_map,
+)
 from .cryosphere import (
     SNOW_COVER_CLASSES, GLACIER_CLASSES, CryosphereResult,
     calc_ndsi, calc_ndsi_nir, calc_snow_cover,

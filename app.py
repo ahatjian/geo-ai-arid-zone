@@ -496,31 +496,40 @@ with tab_areas:
 
     st.divider()
 
-    # 概览地图
+    # 概览地图 (leafmap 失败自动降级为静态示意图)
     st.subheader("研究区概览")
     with StreamlitErrorBoundary("研究区概览地图", st=st, show_traceback=False):
-        import leafmap
+        from utils.map_utils import draw_area_schematic
+        try:
+            import leafmap
+            from shapely.geometry import box
+            import geopandas as gpd
 
-        m = leafmap.Map(center=[40, 90], zoom=4, height=400)
+            m = leafmap.Map(center=[40, 90], zoom=4, height=400)
 
-        # 添加所有研究区边界
-        from shapely.geometry import box
-        import geopandas as gpd
+            # 添加所有研究区边界
+            for name, info in STUDY_AREAS.items():
+                bbox = info["bbox"]
+                bbox_geom = box(bbox[0], bbox[1], bbox[2], bbox[3])
+                gdf = gpd.GeoDataFrame(
+                    {"name": [name]}, geometry=[bbox_geom], crs="EPSG:4326"
+                )
+                m.add_gdf(
+                    gdf,
+                    layer_name=name,
+                    style={"color": "blue", "fillOpacity": 0.08, "weight": 1.5},
+                )
 
-        for name, info in STUDY_AREAS.items():
-            bbox = info["bbox"]
-            bbox_geom = box(bbox[0], bbox[1], bbox[2], bbox[3])
-            gdf = gpd.GeoDataFrame(
-                {"name": [name]}, geometry=[bbox_geom], crs="EPSG:4326"
-            )
-            m.add_gdf(
-                gdf,
-                layer_name=name,
-                style={"color": "blue", "fillOpacity": 0.08, "weight": 1.5},
-            )
-
-        m.add_basemap("Esri.WorldImagery")
-        m.to_streamlit(height=400)
+            m.add_basemap("Esri.WorldImagery")
+            m.to_streamlit(height=400)
+        except Exception:
+            # 降级: 静态 6 研究区示意图
+            img = draw_area_schematic("塔里木盆地", STUDY_AREAS["塔里木盆地"]["bbox"],
+                                      all_areas=STUDY_AREAS, figsize=(9, 6))
+            if img:
+                st.image(img, caption="6 大研究区位置示意", width="stretch")
+            else:
+                st.warning("地图组件加载失败，请刷新重试")
 
 with tab_about:
     st.subheader("关于本平台")
