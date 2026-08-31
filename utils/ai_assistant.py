@@ -160,6 +160,30 @@ def chat_with_assistant(
     # 确保系统提示存在
     full_messages = [{"role": "system", "content": ASSISTANT_SYSTEM_PROMPT}]
 
+    # RAG 知识库注入: 从用户最新问题检索相关遥感知识 (提高准确性, 减少幻觉)
+    try:
+        from utils.knowledge_base import build_knowledge_context, search_index_formula
+        latest_user = next(
+            (m["content"] for m in reversed(messages) if m.get("role") == "user"), ""
+        )
+        if latest_user:
+            rag_parts = []
+            formula = search_index_formula(str(latest_user))
+            if formula:
+                rag_parts.append(f"[指数公式] {formula}")
+            kb_ctx = build_knowledge_context(str(latest_user), top_k=3)
+            if kb_ctx:
+                rag_parts.append(kb_ctx)
+            if rag_parts:
+                full_messages.append({
+                    "role": "system",
+                    "content": "\n".join(rag_parts),
+                })
+    except ImportError:
+        pass  # 知识库不可用时静默跳过
+    except Exception as e:
+        logger.debug(f"RAG 知识库注入失败: {e}")
+
     # 注入平台当前分析上下文 (AI 感知用户已完成的分析)
     if include_context:
         platform_ctx = build_platform_context()

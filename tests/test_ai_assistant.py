@@ -144,3 +144,48 @@ class TestPlatformContext:
         from utils.ai_assistant import build_platform_context
         ctx = build_platform_context()
         assert isinstance(ctx, str)
+
+
+class TestKnowledgeRAG:
+    """RAG 遥感知识库测试"""
+
+    def test_search_ndvi(self):
+        from utils.knowledge_base import search_knowledge
+        hits = search_knowledge("NDVI 怎么计算")
+        assert hits
+        assert any("NDVI" in h["content"] for h in hits)
+
+    def test_search_atmospheric(self):
+        from utils.knowledge_base import search_knowledge
+        hits = search_knowledge("什么是 DOS 大气校正")
+        assert any("大气校正" in h["content"] for h in hits)
+
+    def test_search_study_area(self):
+        from utils.knowledge_base import search_knowledge
+        hits = search_knowledge("塔里木盆地生态")
+        assert any("塔里木盆地" in h["content"] for h in hits)
+
+    def test_no_match_returns_empty(self):
+        from utils.knowledge_base import search_knowledge
+        assert search_knowledge("qqqqzzzz毫无意义") == []
+
+    def test_build_context(self):
+        from utils.knowledge_base import build_knowledge_context
+        ctx = build_knowledge_context("MNDWI 水体指数")
+        assert "知识库" in ctx
+        assert "MNDWI" in ctx
+
+    def test_empty_query_no_context(self):
+        from utils.knowledge_base import build_knowledge_context
+        assert build_knowledge_context("") == ""
+
+    def test_index_formula(self):
+        from utils.knowledge_base import search_index_formula, get_index_formula
+        assert "NDVI" in search_index_formula("帮我算 NDVI")
+        assert get_index_formula("ndvi") == "(NIR - R) / (NIR + R)"
+
+    def test_knowledge_stats(self):
+        from utils.knowledge_base import knowledge_stats
+        stats = knowledge_stats()
+        assert stats["entries"] >= 30
+        assert stats["index_formulas"] >= 10

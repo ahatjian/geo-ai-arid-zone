@@ -117,6 +117,28 @@ with tab_query:
 
             # 快捷: 一键设置所有匹配模块
             st.divider()
+
+            # AI 自动执行: 把解析结果填入分步向导并自动运行
+            auto_exec_names = [m["name"] for m in matched
+                               if m["name"] in {"植被分析", "水体监测", "土壤盐渍化", "干旱监测"}]
+            if auto_exec_names:
+                col_auto1, col_auto2 = st.columns([1, 3])
+                with col_auto1:
+                    if st.button("⚡ AI 自动执行分析", type="primary",
+                                 help="将 AI 解析的研究区/年份/模块自动填入分步向导并一键执行"):
+                        st.session_state["wf_auto_plan"] = {
+                            "area": detected_area or st.session_state.get("selected_area", "塔里木盆地"),
+                            "modules": auto_exec_names,
+                            "years": [int(y) for y in years] if years else None,
+                        }
+                        st.rerun()
+                with col_auto2:
+                    st.caption(
+                        f"AI 将自动分析: {detected_area or '默认研究区'} "
+                        f"{'(' + years[0] + '年)' if years else ''} "
+                        f"→ {'、'.join(auto_exec_names)}"
+                    )
+
             if st.button("⚡ 一键进入首个推荐模块", type="primary"):
                 st.switch_page(f"pages/{matched[0]['page']}.py")
         else:
@@ -163,11 +185,12 @@ with tab_wizard:
                 except Exception as e:
                     st.error(f"GeoJSON 解析失败: {e}")
         else:
-            default_area = st.session_state.get("selected_area", "塔里木盆地")
+            default_area = st.session_state.get("wf_area", st.session_state.get("selected_area", "塔里木盆地"))
             if default_area not in STUDY_AREAS:
                 default_area = "塔里木盆地"
             wiz_area = st.selectbox("研究区", list(STUDY_AREAS.keys()),
-                                   index=list(STUDY_AREAS.keys()).index(default_area))
+                                   index=list(STUDY_AREAS.keys()).index(default_area),
+                                   key="wf_area")
             st.session_state["selected_area"] = wiz_area
             wiz_info = STUDY_AREAS[wiz_area]
             wiz_bbox = wiz_info["bbox"]
@@ -177,9 +200,11 @@ with tab_wizard:
                               format_func=lambda x: f"{x} ({COLLECTIONS[x]['resolution']}m)")
         col_d1, col_d2 = st.columns(2)
         with col_d1:
-            wiz_start = st.date_input("开始", date.today() - timedelta(days=365))
+            wiz_start = st.date_input("开始", value=st.session_state.get("wf_start", date.today() - timedelta(days=365)),
+                                      key="wf_start")
         with col_d2:
-            wiz_end = st.date_input("结束", date.today())
+            wiz_end = st.date_input("结束", value=st.session_state.get("wf_end", date.today()),
+                                    key="wf_end")
 
     # Step 2: 选择分析模块
     st.markdown("### 🔧 Step 2: 选择分析模块")
@@ -208,9 +233,37 @@ with tab_wizard:
     for i, (name, icon, desc) in enumerate(all_modules):
         with cols_mod[i % 4]:
             module_choices[name] = st.checkbox(f"{icon} {name}", value=i < 3,
-                                              help=desc)
+                                              help=desc, key=f"wf_mod_{name}")
 
     selected_modules = [m[0] for m in all_modules if module_choices[m[0]]]
+
+    # ============================================================
+    # AI 自动执行: 检测自然语言查询解析的 plan, 预置向导并自动运行
+    # ============================================================
+    auto_plan = st.session_state.pop("wf_auto_plan", None)
+    if auto_plan:
+        # 1. 研究区
+        plan_area = auto_plan.get("area", "塔里木盆地")
+        if plan_area in STUDY_AREAS:
+            st.session_state["wf_area"] = plan_area
+        # 2. 日期 (年份 → 1月1日 至 12月31日)
+        plan_years = auto_plan.get("years")
+        if plan_years:
+            y = plan_years[0]
+            st.session_state["wf_start"] = date(y, 1, 1)
+            st.session_state["wf_end"] = date(y, 12, 31)
+        # 3. 模块勾选 (只勾 AI 推荐的可快评模块)
+        for name, _, _ in all_modules:
+            st.session_state[f"wf_mod_{name}"] = name in auto_plan.get("modules", [])
+        # 4. 标记自动执行
+        st.session_state["wf_auto_run"] = True
+        st.rerun()
+
+    # 显示 AI 方案提示
+    if st.session_state.get("wf_auto_run"):
+        st.info("⚡ **AI 已按自然语言解析结果自动设置研究区/日期/模块，即将自动执行**")
+    elif st.session_state.get("wf_plan_applied"):
+        st.success("✅ AI 方案已应用 — 检查参数后点击「🚀 一键执行分析」")
 
     # Step 3: 执行
     st.markdown("### ⚡ Step 3: 执行分析")
@@ -225,7 +278,12 @@ with tab_wizard:
 
         run_wiz = st.button("🚀 一键执行分析", type="primary")
 
-        if run_wiz:
+        # AI 自动执行: 由自然语言解析触发 (wf_auto_run 标志)
+        auto_trigger = bool(st.session_state.pop("wf_auto_run", False))
+        if auto_trigger:
+            st.session_state["wf_plan_applied"] = True
+
+        if run_wiz or auto_trigger:
             bbox = wiz_bbox
             results_summary = {}
 
