@@ -64,10 +64,12 @@ from utils.ai_assistant import (
 
 AI_ON = is_ai_available()
 
-tab_chat, tab_auto, tab_anom = st.tabs([
+tab_chat, tab_auto, tab_anom, tab_vision, tab_quality = st.tabs([
     "💬 AI 对话助手",
     "🪄 AI 一键分析",
     "🕵️ AI 异常检测",
+    "👁️ AI 影像理解",
+    "🏥 AI 质量诊断",
 ])
 
 # ============================================================
@@ -124,7 +126,13 @@ with tab_chat:
 
         with st.chat_message("assistant"):
             with st.spinner("🤔 思考中..."):
-                resp = chat_with_assistant(st.session_state["chat_history"])
+                # 隐私保护: 仅当用户明确要求解读其分析时注入上下文
+                wants_context = any(k in user_input for k in
+                                    ["解读我的分析", "我的分析", "分析结果说明", "我刚才"])
+                resp = chat_with_assistant(
+                    st.session_state["chat_history"],
+                    include_context=wants_context,
+                )
             reply = resp["reply"]
             st.markdown(reply)
             st.session_state["chat_history"].append({"role": "assistant", "content": reply})
@@ -310,3 +318,116 @@ with tab_anom:
             )
     else:
         st.info("👆 上传指标图或先在植被分析页生成 NDVI")
+
+# ============================================================
+# Tab 4: AI 影像理解 (看图说话)
+# ============================================================
+with tab_vision:
+    st.subheader("👁️ AI 影像理解")
+    st.caption("AI 基于光谱指纹'看图'——判断景观类型/生态状况/空间特征")
+
+    vis_file = st.file_uploader("上传多波段 GeoTIFF (6波段)", type=["tif", "tiff"], key="vis_upload")
+    if vis_file:
+        vis_path = save_upload_tmp(vis_file)
+        try:
+            vis_bands = load_bands(vis_path)
+            st.success(f"✅ 已加载 {vis_bands.shape[0]} 波段")
+        except Exception as e:
+            st.error(f"❌ 读取失败: {e}")
+            vis_bands = None
+        finally:
+            try:
+                os.remove(vis_path)
+            except OSError:
+                pass
+
+        if vis_bands is not None:
+            if st.button("👁️ AI 看图理解", type="primary"):
+                with st.spinner("AI 提取光谱指纹并解读..."):
+                    from utils.ai_vision import vision_describe
+                    result = vision_describe(vis_bands)
+
+                fp = result["fingerprint"]
+                st.divider()
+                st.subheader("📊 光谱指纹")
+
+                # 地物构成
+                comp_cols = st.columns(4)
+                for i, (name, ratio) in enumerate(fp["composition"].items()):
+                    with comp_cols[i]:
+                        st.metric(name, f"{ratio*100:.1f}%")
+
+                # 指数
+                idx_cols = st.columns(4)
+                for i, (name, val) in enumerate(fp["indices"].items()):
+                    with idx_cols[i]:
+                        st.metric(name, f"{val:.4f}")
+
+                # AI 描述
+                st.subheader("🤖 AI 影像描述")
+                desc = result["description"]
+                ai_esc = __import__("html").escape(desc or "")
+                st.markdown(
+                    f"<div style='background:#f0f8f4;border-left:4px solid #27ae60;"
+                    f"padding:14px 18px;border-radius:6px;line-height:1.9;font-size:14px;'>"
+                    f"👁️ **AI 解读**：{ai_esc}</div>",
+                    unsafe_allow_html=True,
+                )
+    else:
+        st.info("👆 上传影像，AI 将'看图'描述")
+
+# ============================================================
+# Tab 5: AI 质量诊断
+# ============================================================
+with tab_quality:
+    st.subheader("🏥 AI 影像质量诊断")
+    st.caption("AI 自动评估云覆盖/噪声/异常像元，判定数据是否可用")
+
+    q_file = st.file_uploader("上传待诊断 GeoTIFF", type=["tif", "tiff"], key="q_upload")
+    if q_file:
+        q_path = save_upload_tmp(q_file)
+        try:
+            q_bands = load_bands(q_path)
+            st.success(f"✅ 已加载 {q_bands.shape[0]} 波段")
+        except Exception as e:
+            st.error(f"❌ 读取失败: {e}")
+            q_bands = None
+        finally:
+            try:
+                os.remove(q_path)
+            except OSError:
+                pass
+
+        if q_bands is not None:
+            if st.button("🏥 开始质量诊断", type="primary"):
+                with st.spinner("AI 质量评估中..."):
+                    from utils.ai_vision import quality_diagnose
+                    result = quality_diagnose(q_bands)
+
+                st.divider()
+                st.subheader("📊 诊断结果")
+
+                c1, c2, c3, c4, c5 = st.columns(5)
+                with c1:
+                    st.metric("综合评级", result["grade"])
+                with c2:
+                    st.metric("质量分", f"{result['score']}/100")
+                with c3:
+                    st.metric("云覆盖", f"{result['metrics']['cloud_ratio']*100:.1f}%")
+                with c4:
+                    st.metric("噪声水平", f"{result['metrics']['noise_level']:.4f}")
+                with c5:
+                    st.metric("异常像元", f"{result['metrics']['anomaly_ratio']*100:.2f}%")
+
+                # AI 解读
+                st.subheader("🤖 AI 质量评估")
+                diag = result["ai_diagnosis"]
+                ai_esc = __import__("html").escape(diag or "")
+                st.markdown(
+                    f"<div style='background:#fdf0f0;border-left:4px solid #e74c3c;"
+                    f"padding:14px 18px;border-radius:6px;line-height:1.9;font-size:14px;'>"
+                    f"🏥 **AI 诊断**：{ai_esc}</div>",
+                    unsafe_allow_html=True,
+                )
+    else:
+        st.info("👆 上传影像，AI 将评估数据质量")

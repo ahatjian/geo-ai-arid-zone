@@ -125,7 +125,7 @@ def chat_with_assistant(
     api_key: Optional[str] = None,
     temperature: float = 0.5,
     max_tokens: int = 1000,
-    include_context: bool = True,
+    include_context: bool = False,
 ) -> Dict:
     """
     多轮对话 (DeepSeek)。
@@ -136,7 +136,9 @@ def chat_with_assistant(
         api_key: DeepSeek Key (None=自动获取)
         temperature: 采样温度
         max_tokens: 最大输出长度
-        include_context: 是否注入平台当前分析上下文 (AI 感知用户已完成的分析)
+        include_context: 是否注入平台当前分析上下文。
+            默认 False (隐私保护: 不自动把用户分析数据发给第三方)。
+            仅当用户明确要求解读其分析时由页面显式开启。
 
     返回:
         dict: {"reply": 助手回复, "success": bool, "error": str|None,

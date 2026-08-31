@@ -180,6 +180,9 @@ from .ai_assistant import (
     chat_with_assistant, auto_analyze, detect_anomalies,
     anomaly_insight, is_ai_available, build_platform_context,
 )
+from .ai_vision import (
+    image_fingerprint, vision_describe, quality_diagnose,
+)
 from .cryosphere import (
     SNOW_COVER_CLASSES, GLACIER_CLASSES, CryosphereResult,
     calc_ndsi, calc_ndsi_nir, calc_snow_cover,
