@@ -163,6 +163,10 @@ from .atmospheric import (
     radiometric_calibration, toa_reflectance, relative_normalization,
     preprocess_pipeline,
 )
+from .bfast import (
+    detect_breaks, chow_test, detect_vegetation_breaks,
+    summarize_breaks,
+)
 from .cryosphere import (
     SNOW_COVER_CLASSES, GLACIER_CLASSES, CryosphereResult,
     calc_ndsi, calc_ndsi_nir, calc_snow_cover,

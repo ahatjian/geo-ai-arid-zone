@@ -465,6 +465,84 @@ elif "多景" in data_mode and len(uploaded_files_list) >= 2:
                 else:
                     st.info("💡 时序长度 ≥ 25 期时自动启用 STL 分解（当前不足）")
 
+                # ===== BFAST 断点检测 (植被突变) =====
+                st.divider()
+                st.subheader("⚡ BFAST 时序断点检测（植被突变）")
+                st.caption(
+                    "BFAST (Breaks For Additive Seasonal and Trend) 检测植被覆盖的突变事件："
+                    "森林砍伐/火灾/干旱灾害（负向突变）与生态恢复（正向突变）"
+                )
+                if len(y) >= 30:
+                    from utils.bfast import detect_breaks, summarize_breaks
+                    bfast_result = detect_breaks(y, seasonal_period=12)
+
+                    if bfast_result["break_indices"]:
+                        # 断点汇总表
+                        st.subheader("📋 检测到的突变事件")
+                        rows = summarize_breaks(bfast_result)
+                        for i, row in enumerate(rows):
+                            if i < len(bfast_result["break_dates"]):
+                                row["日期"] = bfast_result["break_dates"][i]
+                            elif i < len(composite_dates):
+                                row["日期"] = composite_dates[row["时间索引"]] if row["时间索引"] < len(composite_dates) else f"t={row['时间索引']}"
+                        st.dataframe(rows, width="stretch", hide_index=True)
+
+                        # 断点可视化: 原始 + 去季节 + 断点标注
+                        import plotly.graph_objects as go
+                        fig_bf = go.Figure()
+                        fig_bf.add_trace(go.Scatter(
+                            x=composite_dates, y=y, mode="lines",
+                            name=f"{index_label} 原始",
+                            line=dict(color="#999999", width=1.5),
+                        ))
+                        fig_bf.add_trace(go.Scatter(
+                            x=composite_dates, y=bfast_result["deseasonalized"],
+                            mode="lines", name="去季节序列",
+                            line=dict(color="#1f77b4", width=2),
+                        ))
+                        # 断点标注
+                        colors_ = ["#e74c3c" if d == "负向突变" else "#27ae60" for d in bfast_result["directions"]]
+                        for idx, color, mag, direction in zip(
+                            bfast_result["break_indices"],
+                            colors_,
+                            bfast_result["magnitudes"],
+                            bfast_result["directions"],
+                        ):
+                            date_label = (composite_dates[idx]
+                                          if idx < len(composite_dates)
+                                          else f"t={idx}")
+                            fig_bf.add_vline(
+                                x=date_label, line_dash="dash", line_color=color,
+                                annotation_text=f"{direction} {mag:+.3f}",
+                                annotation_position="top",
+                                annotation_font=dict(color=color, size=11),
+                            )
+                        fig_bf.update_layout(
+                            height=380,
+                            title_text="BFAST 断点检测 — 虚线为检测到的突变事件",
+                            xaxis_title="时间",
+                            yaxis_title=index_label,
+                        )
+                        st.plotly_chart(fig_bf)
+
+                        # 解读
+                        n_neg = sum(1 for d in bfast_result["directions"] if d == "负向突变")
+                        n_pos = sum(1 for d in bfast_result["directions"] if d == "正向突变")
+                        if n_neg > 0:
+                            st.warning(
+                                f"⚠️ 检测到 **{n_neg} 次负向突变**（植被退化）"
+                                "——建议结合干旱指数、土地利用变化交叉验证突变成因"
+                            )
+                        if n_pos > 0:
+                            st.success(
+                                f"✅ 检测到 **{n_pos} 次正向突变**（植被恢复）"
+                                "——可能是生态修复工程或降水改善的结果"
+                            )
+                    else:
+                        st.info("✅ 未检测到显著突变事件 — 植被时序变化平缓（或数据噪声过大）")
+                else:
+                    st.info("💡 时序长度 ≥ 30 期时自动启用 BFAST 断点检测（当前不足）")
+
                 # 导出
                 st.divider()
                 st.subheader("💾 结果导出")
