@@ -487,6 +487,10 @@ if geotiff_path:
                         water_mask = result["mask_array"]
                         stats = result["stats"]
 
+                        # 降级提示 (模型不可用时自动降级为 Otsu)
+                        if result.get("error") and "降级" in str(result["error"]):
+                            st.warning(f"⚠️ {result['error']}")
+
                         # ---- 面积统计 ----
                         st.divider()
                         st.subheader("📊 AI 水体面积统计")

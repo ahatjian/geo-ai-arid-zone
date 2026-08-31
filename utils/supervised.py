@@ -461,7 +461,18 @@ def evaluate_classification(
 
     cm = confusion_matrix(y_true, y_pred, labels=labels)
     oa = accuracy_score(y_true, y_pred)
-    kappa = cohen_kappa_score(y_true, y_pred, labels=labels)
+
+    # Kappa: 测试集可能未覆盖全部类别 (全零行/列会导致 nan)
+    # 用实际出现的类别计算, 避免 nan
+    present_labels = sorted(set(y_true.tolist()) | set(y_pred.tolist()))
+    if len(present_labels) >= 2 and len(present_labels) <= n_classes:
+        kappa = cohen_kappa_score(
+            y_true, y_pred, labels=present_labels
+        )
+    else:
+        kappa = 1.0 if oa == 1.0 else 0.0
+    if not np.isfinite(kappa):
+        kappa = 1.0 if oa == 1.0 else 0.0
 
     # 各类 F1
     per_class_f1 = {}

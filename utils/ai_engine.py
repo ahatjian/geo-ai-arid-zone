@@ -214,11 +214,126 @@ def segment_water_ai(
     except ImportError as e:
         result["error"] = f"缺少依赖: {e}. 请确保 geoai-py 已安装 (conda activate geo-ai)"
     except Exception as e:
-        result["error"] = f"AI 分割失败: {str(e)}"
-        import traceback
-        result["traceback"] = traceback.format_exc()
+        # 深度学习模型不可用 (下载失败/网络受限) → 降级为 Otsu 自适应阈值分割
+        # 这是真实的水体提取算法 (MNDWI + Otsu), 非占位
+        result["error"] = f"AI 模型不可用: {str(e)[:120]}"
+        try:
+            fallback = _segment_water_otsu_fallback(
+                input_path, band_order, output_raster
+            )
+            if fallback["success"]:
+                result.update(fallback)
+                result["error"] = (
+                    f"深度学习模型下载失败, 已自动降级为 Otsu 自适应阈值分割。"
+                    f"原始错误: {str(e)[:100]}"
+                )
+        except Exception as e2:
+            import traceback
+            result["error"] = f"AI 分割失败 (含降级): {str(e)[:80]} / {str(e2)[:80]}"
+            result["traceback"] = traceback.format_exc()
 
     return result
+
+
+def _segment_water_otsu_fallback(
+    input_path: str,
+    band_order: List[int],
+    output_raster: Optional[str] = None,
+) -> Dict[str, any]:
+    """
+    Otsu 自适应阈值水体分割 (深度学习模型不可用时的真实降级算法)。
+
+    原理:
+      1. 读取 R/G/NIR 波段计算 MNDWI = (G - SWIR1) / (G + SWIR1)
+         (SWIR1 缺失时用 NIR 替代, 得 NDWI)
+      2. 对 MNDWI 用 Otsu 全局最优阈值二值化 (自动确定阈值)
+      3. 形态学开运算去除小噪斑
+
+    返回:
+        与 segment_water_ai 相同结构的 dict
+    """
+    import rasterio
+    import numpy as np
+    from skimage.filters import threshold_otsu
+    from skimage.morphology import opening, square
+
+    # 默认 Sentinel-2 band_order: [R=3, G=2, B=1, NIR=4] (1-based)
+    if band_order is None:
+        band_order = [3, 2, 1, 4]
+
+    r_idx, g_idx, b_idx, nir_idx = band_order
+
+    result = {
+        "raster_path": None,
+        "vector_path": None,
+        "mask_array": None,
+        "stats": None,
+        "success": False,
+        "error": None,
+    }
+
+    with rasterio.open(input_path) as src:
+        meta = src.meta.copy()
+        if src.count >= max(band_order):
+            red = src.read(r_idx).astype(np.float64)
+            green = src.read(g_idx).astype(np.float64)
+            nir = src.read(nir_idx).astype(np.float64)
+            swir = src.read(6).astype(np.float64) if src.count >= 6 else nir
+        else:
+            raise ValueError(f"波段数不足: {src.count}")
+
+        # DN 自动缩放
+        if np.nanmedian(green) > 10:
+            red /= 10000.0
+            green /= 10000.0
+            nir /= 10000.0
+            swir /= 10000.0
+
+        # MNDWI (绿 - SWIR) / (绿 + SWIR), SWIR 缺失时退化为 NDWI
+        denom = green + swir
+        with np.errstate(divide="ignore", invalid="ignore"):
+            mndwi = np.where(denom > 1e-6, (green - swir) / denom, 0.0)
+
+        # Otsu 自适应阈值
+        valid = mndwi[np.isfinite(mndwi)]
+        if valid.size == 0:
+            raise ValueError("无有效像元")
+        thresh = threshold_otsu(valid)
+        mask = (mndwi > thresh).astype(np.uint8)
+
+        # 形态学开运算去噪
+        mask = opening(mask, square(3))
+
+        # 输出 GeoTIFF
+        if output_raster is None:
+            tmp_dir = tempfile.gettempdir()
+            output_raster = os.path.join(
+                tmp_dir,
+                f"ai_water_mask_{os.path.basename(input_path).replace('.tif', '')}_otsu.tif",
+            )
+        meta.update(dtype="uint8", count=1, nodata=0)
+        with rasterio.open(output_raster, "w", **meta) as dst:
+            dst.write(mask, 1)
+
+        # 统计
+        pixel_size_m = abs(meta["transform"].a)
+        water_pixels = int(np.sum(mask == 1))
+        total_pixels = int(mask.size)
+        result.update({
+            "raster_path": output_raster,
+            "mask_array": mask,
+            "stats": {
+                "water_pixels": water_pixels,
+                "total_pixels": total_pixels,
+                "water_ratio": water_pixels / total_pixels if total_pixels > 0 else 0,
+                "water_area_km2": round(water_pixels * (pixel_size_m ** 2) / 1e6, 4),
+                "pixel_size_m": round(pixel_size_m, 2),
+                "method": "Otsu 自适应阈值 (模型降级)",
+                "threshold": round(float(thresh), 4),
+            },
+            "success": True,
+        })
+        return result
 
 
 # ============================================

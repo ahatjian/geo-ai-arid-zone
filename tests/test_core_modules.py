@@ -235,3 +235,57 @@ class TestLLM:
         from utils.llm import is_llm_available
         available = is_llm_available()
         assert isinstance(available, bool)
+
+
+class TestOtsuFallback:
+    """Otsu 自适应阈值降级分割测试 (AI 模型不可用时的真实降级)"""
+
+    def _make_water_tif(self, tmp_path):
+        import rasterio
+        from rasterio.transform import from_origin
+        rng = np.random.default_rng(42)
+        bands = rng.uniform(0.05, 0.4, (6, 60, 60)).astype(np.float32)
+        bands[1, 20:40, 20:40] = 0.35   # green 高 (水体)
+        bands[4, 20:40, 20:40] = 0.06   # swir1 低 (水体)
+        path = str(tmp_path / "water_test.tif")
+        with rasterio.open(path, 'w', driver='GTiff', height=60, width=60, count=6,
+                           dtype='float32', crs='EPSG:4326',
+                           transform=from_origin(80, 40, 10, 10)) as dst:
+            dst.write(bands)
+        return path
+
+    def test_otsu_segment_water_region(self, tmp_path):
+        from utils.ai_engine import _segment_water_otsu_fallback
+        path = self._make_water_tif(tmp_path)
+        result = _segment_water_otsu_fallback(path, [3, 2, 1, 4])
+        assert result["success"]
+        assert result["mask_array"] is not None
+        assert "otsu" in result["stats"]["method"].lower() or "阈值" in result["stats"]["method"]
+        # 水体区域 (20:40, 20:40) 应被识别
+        water_zone = result["mask_array"][20:40, 20:40].mean()
+        assert water_zone > 0.5
+
+    def test_otsu_output_raster(self, tmp_path):
+        import rasterio
+        from utils.ai_engine import _segment_water_otsu_fallback
+        path = self._make_water_tif(tmp_path)
+        out = str(tmp_path / "mask_out.tif")
+        result = _segment_water_otsu_fallback(path, [3, 2, 1, 4], output_raster=out)
+        assert os.path.exists(out)
+        with rasterio.open(out) as src:
+            assert src.count == 1
+            assert src.read(1).dtype == np.uint8
+
+    def test_otsu_insufficient_bands(self, tmp_path):
+        import rasterio
+        from rasterio.transform import from_origin
+        from utils.ai_engine import _segment_water_otsu_fallback
+        # 只有 3 波段的影像
+        path = str(tmp_path / "low_band.tif")
+        with rasterio.open(path, 'w', driver='GTiff', height=10, width=10, count=3,
+                           dtype='float32', crs='EPSG:4326',
+                           transform=from_origin(80, 40, 10, 10)) as dst:
+            dst.write(np.ones((3, 10, 10), dtype=np.float32) * 0.2)
+        # 波段不足应明确报错 (异常上抛, 由外层 segment_water_ai 捕获)
+        with pytest.raises(ValueError):
+            _segment_water_otsu_fallback(path, [3, 2, 1, 4])
