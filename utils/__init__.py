@@ -167,6 +167,11 @@ from .bfast import (
     detect_breaks, chow_test, detect_vegetation_breaks,
     summarize_breaks,
 )
+from .texture import (
+    glcm_texture_maps, glcm_texture_maps_fast, glcm_global_stats,
+    build_texture_stack, summarize_texture,
+    TEXTURE_PROPS, TEXTURE_NAMES_CN,
+)
 from .cryosphere import (
     SNOW_COVER_CLASSES, GLACIER_CLASSES, CryosphereResult,
     calc_ndsi, calc_ndsi_nir, calc_snow_cover,

@@ -110,6 +110,8 @@ with st.sidebar:
     st.divider()
 
     use_indices = st.checkbox("添加遥感指数特征 (NDVI/NDWI/NDBI)", value=True)
+    use_texture = st.checkbox("添加 GLCM 纹理特征 (6种)", value=False,
+                              help="对比度/同质性/能量等纹理特征 (对 NIR 波段计算)，可提升地物边界与结构区分度")
     test_ratio = st.slider("测试集比例", 0.0, 0.5, 0.3, 0.05,
         help="留出多少比例样本做精度评估")
 
@@ -257,6 +259,7 @@ if train_clicked:
                 train_labels=train_labels,
                 classifier=classifier_key,
                 add_indices=use_indices,
+                add_texture=use_texture,
                 test_ratio=test_ratio,
                 **classifier_params,
             )

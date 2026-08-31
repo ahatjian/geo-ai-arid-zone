@@ -121,6 +121,9 @@ class SupervisedResult:
 def build_feature_stack(
     bands_dict: Dict[str, np.ndarray],
     add_indices: bool = True,
+    add_texture: bool = False,
+    texture_window: int = 9,
+    texture_step: int = 2,
 ) -> np.ndarray:
     """
     构建特征堆栈 (H, W, n_features)
@@ -128,6 +131,9 @@ def build_feature_stack(
     参数:
         bands_dict: {波段名: (H,W) 数组}，含 B/G/R/NIR/SWIR1/SWIR2
         add_indices: 是否添加遥感指数特征 (NDVI/NDWI/NDBI)
+        add_texture: 是否添加 GLCM 纹理特征 (对比度/同质性等)
+        texture_window: GLCM 滑窗大小
+        texture_step: 纹理采样步长 (大影像加速)
 
     返回:
         feature_stack: (H, W, n_features)
@@ -160,6 +166,17 @@ def build_feature_stack(
         ndbi = np.where(denom_ndbi > 1e-6, (swir1 - nir) / denom_ndbi, 0.0)
 
         features.extend([ndvi, ndwi, ndbi])
+
+    if add_texture:
+        # GLCM 纹理特征 (对 NIR 波段计算, 纹理信息最丰富)
+        from utils.texture import build_texture_stack
+        nir_arr = features[3]
+        texture_stack, _ = build_texture_stack(
+            nir_arr[None, :, :],
+            window_size=texture_window,
+            step=texture_step,
+        )
+        features.extend([texture_stack[i] for i in range(texture_stack.shape[0])])
 
     stack = np.stack(features, axis=-1)
     return stack.astype(np.float32)
@@ -501,6 +518,7 @@ def assess_supervised_classification(
     train_labels: np.ndarray,
     classifier: str = "random_forest",
     add_indices: bool = True,
+    add_texture: bool = False,
     test_ratio: float = 0.3,
     seed: int = 42,
     **params,
@@ -514,6 +532,7 @@ def assess_supervised_classification(
         train_labels: (N,) 训练样本标签
         classifier: 分类器类型
         add_indices: 是否添加指数特征
+        add_texture: 是否添加 GLCM 纹理特征
         test_ratio: 测试集比例 (用于精度评估)
         seed: 随机种子
         **params: 分类器参数
@@ -524,7 +543,9 @@ def assess_supervised_classification(
     from sklearn.model_selection import train_test_split
 
     # 1. 构建特征堆栈
-    feature_stack = build_feature_stack(bands_dict, add_indices=add_indices)
+    feature_stack = build_feature_stack(
+        bands_dict, add_indices=add_indices, add_texture=add_texture,
+    )
     H, W, nf = feature_stack.shape
 
     # 2. 提取训练样本特征
