@@ -1192,6 +1192,40 @@ if preview or generate:
 
             st.success(f"✅ 报告已生成 — 点击上方按钮下载")
 
+            # ============================================
+            # AI 智能报告全文 (DeepSeek 一键生成科研报告)
+            # ============================================
+            st.divider()
+            st.subheader("🤖 AI 智能报告全文")
+            st.caption("基于本次报告的全部分析指标，DeepSeek 生成完整科研报告（摘要/分项/结论/建议）")
+            if st.button("🧠 生成 AI 全文报告", type="primary", key="ai_full_report"):
+                with st.spinner("AI 正在撰写科研报告（约 30 秒）..."):
+                    from utils.ai_report import generate_full_report, sections_from_sources
+                    ai_sections = sections_from_sources(collected["sources"] if auto_collect else {})
+                    ai_result = generate_full_report(
+                        study_area=report_area,
+                        sections=ai_sections,
+                        time_range=report_date,
+                    )
+                st.session_state["ai_full_report_text"] = ai_result["report"]
+                st.session_state["ai_full_report_method"] = ai_result["method"]
+
+            if "ai_full_report_text" in st.session_state:
+                st.markdown(
+                    f"<div style='background:#f8fbff;border:1px solid #d4e6f1;border-radius:8px;"
+                    f"padding:16px 20px;line-height:1.9;font-size:13.5px;white-space:pre-wrap;'>"
+                    f"{__import__('html').escape(st.session_state['ai_full_report_text'])}</div>",
+                    unsafe_allow_html=True,
+                )
+                st.caption(f"🤖 由 DeepSeek AI 生成（{st.session_state.get('ai_full_report_method','deepseek')} 方法，共 {len(st.session_state['ai_full_report_text'])} 字）")
+                st.download_button(
+                    "📥 下载 AI 全文报告 (Markdown)",
+                    st.session_state["ai_full_report_text"].encode("utf-8"),
+                    file_name=f"AI报告_{report_area}_{datetime.now().strftime('%Y%m%d')}.md",
+                    mime="text/markdown",
+                    width="stretch",
+                )
+
             # AI 解读展示
             if ai_section_html and "AI 智能解读" in ai_section_html:
                 st.divider()

@@ -183,6 +183,9 @@ from .ai_assistant import (
 from .ai_vision import (
     image_fingerprint, vision_describe, quality_diagnose,
 )
+from .ai_report import (
+    generate_full_report, sections_from_sources,
+)
 from .cryosphere import (
     SNOW_COVER_CLASSES, GLACIER_CLASSES, CryosphereResult,
     calc_ndsi, calc_ndsi_nir, calc_snow_cover,

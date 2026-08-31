@@ -32,6 +32,7 @@
 - 🤖 **AI 智能解读** — 基于各模块分析指标，DeepSeek 自动生成专业生态/环境解读，嵌入 HTML/PDF 报告（无 API Key 时自动降级为规则模板）
 - 🛰️ **影像预处理** — Sentinel-2 SCL / Landsat QA_PIXEL 逐像元云掩膜 + 分辨率重采样 + Savitzky-Golay 时序平滑（NDVI 重建）
 - 📄 **PDF 科研报告** — reportlab 生成带中文字体的 PDF 版报告（HTML/PDF 双格式下载）
+- 📝 **AI 智能报告全文** — DeepSeek 一键生成完整科研报告（执行摘要/分项分析/综合结论/对策建议 + 指标数据表，Markdown 下载）
 - 🎨 **图像增强与变换** — PCA 主成分分析 + 空间滤波（均值/中值/高斯/锐化/边缘）+ 对比度增强（拉伸/均衡化/伽马/CLAHE）+ IHS 融合
 - 🎯 **非监督分类** — KMeans 聚类（含 NDVI/MNDWI/NDBI 特征栈 + 类别自动推断）
 - 📊 **STL 时序分解** — 趋势/季节/残差三分量分解（植被分析页自动启用）
