@@ -263,6 +263,10 @@ if train_clicked:
 
     st.success("✅ 训练完成")
 
+    # 提取汇总 (供展示 + session_state 采集共用)
+    s = result.summary
+    acc = result.accuracy
+
     # 写入 session_state 供报告导出页自动采集
     st.session_state["supervised_stats"] = {
         "area": area_name,
@@ -281,8 +285,6 @@ if train_clicked:
 
     # ---- 汇总卡片 ----
     st.subheader("📊 分类结果汇总")
-    s = result.summary
-    acc = result.accuracy
     col1, col2, col3, col4 = st.columns(4)
     with col1:
         st.metric("总体精度 OA", f"{acc['overall_accuracy']*100:.2f}%")

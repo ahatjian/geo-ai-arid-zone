@@ -119,14 +119,19 @@ if analyze_clicked:
 
     st.success("✅ 转移矩阵计算完成")
 
+    # 先计算统计量 (供 KPI 展示 + session_state 采集)
+    total_change = result["total_change_km2"]
+    total_area = float(np.sum(result["area_matrix"]))
+    change_rate = (total_change / total_area * 100) if total_area > 0 else 0.0
+
     # 写入 session_state 供报告导出页自动采集
     st.session_state["transition_stats"] = {
         "area": area_name,
         "t1": "2020 (ESA v100)",
         "t2": "2021 (ESA v200)",
         "summary": {
-            "total_change_km2": float(result["total_change_km2"]),
-            "total_area_km2": float(total_area * (pixel_size ** 2) / 1e6) if total_area > 0 else 0.0,
+            "total_change_km2": float(total_change),
+            "total_area_km2": float(total_area),  # area_matrix 单位已是 km²
             "n_major": len(result["major_transitions"]),
         },
         "major_transitions": result["major_transitions"][:5],
@@ -134,9 +139,6 @@ if analyze_clicked:
 
     # ---- KPI 卡片 ----
     st.subheader("📊 变化概览")
-    total_change = result["total_change_km2"]
-    total_area = float(np.sum(result["area_matrix"]))
-    change_rate = (total_change / total_area * 100) if total_area > 0 else 0.0
 
     col1, col2, col3, col4 = st.columns(4)
     with col1:

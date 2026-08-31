@@ -168,7 +168,7 @@ with st.sidebar:
     cols3 = st.columns(2)
     with cols3[0]:
         st.markdown(
-            '<div class="stats-box"><div class="stats-number">20</div><div class="stats-label">分析模块</div></div>',
+            '<div class="stats-box"><div class="stats-number">21</div><div class="stats-label">分析模块</div></div>',
             unsafe_allow_html=True,
         )
     with cols3[1]:
@@ -321,6 +321,12 @@ with tab_intro:
             "label": "数据下载中心",
             "desc": "结果持久化\n统一下载/打包/删除",
             "page": "20_数据下载中心",
+        },
+        {
+            "icon": "🛠️",
+            "label": "系统状态",
+            "desc": "缓存管理\n环境健康检查",
+            "page": "21_系统状态",
         },
     ]
 

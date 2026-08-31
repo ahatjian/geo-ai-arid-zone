@@ -288,6 +288,7 @@ elif "多景" in data_mode and len(uploaded_files_list) >= 2:
 
                 # 读取所有影像并计算指数
                 mean_values = []
+                ndvi_arrays = []
                 for i, uf in enumerate(uploaded_files_list):
                     tmp_path = os.path.join(tempfile.gettempdir(), f"veg_multi_{uf.name}")
                     with open(tmp_path, "wb") as f_write:
@@ -306,6 +307,29 @@ elif "多景" in data_mode and len(uploaded_files_list) >= 2:
 
                     mean_val = float(np.nanmean(ndvi_arr))
                     mean_values.append(mean_val)
+                    ndvi_arrays.append(ndvi_arr)
+
+                # ===== 月度合成 (MVC) =====
+                st.markdown("**🗓️ 月度合成 (MVC 最大值合成)**")
+                m_col1, m_col2 = st.columns([1, 3])
+                with m_col1:
+                    use_composite = st.toggle("启用月度合成", value=True,
+                                              help="按月份取 NDVI 最大值, 消除云噪声和观测缺失")
+                if use_composite:
+                    from utils.composite import composite_series_by_month
+                    monthly_means, month_labels = composite_series_by_month(
+                        ndvi_arrays, dates, method="max"
+                    )
+                    st.caption(
+                        f"✅ 已合成 {len(ndvi_arrays)} 景 → {len(month_labels)} 个月 "
+                        f"({'、'.join(month_labels)})"
+                    )
+                    # 用月度合成均值作为趋势分析输入
+                    y_original = monthly_means
+                    composite_dates = month_labels
+                else:
+                    y_original = np.array(mean_values)
+                    composite_dates = dates
 
                 # ===== Savitzky-Golay 平滑 (可选) =====
                 st.markdown("**🛰️ 时序平滑 (Savitzky-Golay)**")
@@ -316,7 +340,6 @@ elif "多景" in data_mode and len(uploaded_files_list) >= 2:
                 with s_col2:
                     sg_window = st.number_input("窗口", 3, 15, 5, step=2,
                                                 help="窗口越大越平滑")
-                y_original = np.array(mean_values)
                 y = y_original
                 if use_smoothing:
                     from utils.trend import savgol_smooth
@@ -331,7 +354,7 @@ elif "多景" in data_mode and len(uploaded_files_list) >= 2:
                     st.warning("pymannkendall 未安装，仅使用 Sen 斜率。安装: pip install pymannkendall")
                     mk = None
 
-                x = np.arange(len(mean_values))
+                x = np.arange(len(composite_dates))
 
                 # Sen 斜率
                 slope, intercept, lo_slope, up_slope = theilslopes(y, x, 0.95)
@@ -372,18 +395,18 @@ elif "多景" in data_mode and len(uploaded_files_list) >= 2:
                 if use_smoothing:
                     import plotly.graph_objects as go
                     fig1 = plot_time_series(
-                        dates, y_original,
+                        composite_dates, y_original,
                         y_label=f"平均 {index_label}",
                         title=f"{index_label} 时序变化 — 原始 (n={len(mean_values)})",
                     )
                     fig1.add_trace(
-                        go.Scatter(x=dates, y=y, mode="lines+markers",
+                        go.Scatter(x=composite_dates, y=y, mode="lines+markers",
                                    name="S-G 平滑",
                                    line=dict(width=3, color="#e67e22"))
                     )
                 else:
                     fig1 = plot_time_series(
-                        dates, y,
+                        composite_dates, y,
                         y_label=f"平均 {index_label}",
                         title=f"{index_label} 时序变化 (n={len(mean_values)})",
                     )
@@ -407,7 +430,7 @@ elif "多景" in data_mode and len(uploaded_files_list) >= 2:
                 st.subheader("💾 结果导出")
 
                 results_df = pd.DataFrame({
-                    "日期": dates,
+                    "日期": composite_dates,
                     f"平均{index_label}": y_original,
                 })
                 if use_smoothing:

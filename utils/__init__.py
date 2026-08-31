@@ -147,6 +147,9 @@ from .preprocess import (
 from .pdf_report import (
     generate_report_pdf, report_to_pdf_download,
 )
+from .composite import (
+    composite_ndvi_monthly, composite_series_by_month, merge_ndvi_max,
+)
 from .cryosphere import (
     SNOW_COVER_CLASSES, GLACIER_CLASSES, CryosphereResult,
     calc_ndsi, calc_ndsi_nir, calc_snow_cover,

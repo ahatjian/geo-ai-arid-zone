@@ -170,11 +170,11 @@ def get_rgb_preview(item, collection="Sentinel-2 L2A", width=512):
         collection_id = COLLECTIONS[collection]["id"]
         item_id = item.id
 
-        # 根据卫星类型选择波段名
+        # 根据卫星类型选择波段名 (PC 渲染服务: Sentinel 用资产名, Landsat 用短名称)
         if "Sentinel" in collection:
             assets_str = "&assets=B04&assets=B03&assets=B02"
-        else:  # Landsat
-            assets_str = "&assets=SR_B4&assets=SR_B3&assets=SR_B2"
+        else:  # Landsat (短名称: blue/green/red)
+            assets_str = "&assets=red&assets=green&assets=blue"
 
         url = (
             f"https://planetarycomputer.microsoft.com/api/data/v1/item/preview.png"
@@ -208,14 +208,15 @@ def get_ndvi_preview(item, collection="Sentinel-2 L2A", width=512):
 
         if "Sentinel" in collection:
             expression = "(B08-B04)%2F(B08%2BB04)"
-        else:  # Landsat
-            expression = "(SR_B5-SR_B4)%2F(SR_B5%2BSR_B4)"
+        else:  # Landsat (短名称: nir08/red)
+            expression = "(nir08-red)%2F(nir08%2Bred)"
 
         url = (
             f"https://planetarycomputer.microsoft.com/api/data/v1/item/preview.png"
             f"?collection={collection_id}"
             f"&item={quote(item_id)}"
             f"&expression={expression}"
+            f"&asset_as_band=True"
             f"&rescale=-1,1"
             f"&colormap_name=rdylgn"
             f"&width={width}"
@@ -242,14 +243,15 @@ def get_mndwi_preview(item, collection="Sentinel-2 L2A", width=512):
 
         if "Sentinel" in collection:
             expression = "(B03-B11)%2F(B03%2BB11)"
-        else:  # Landsat
-            expression = "(SR_B3-SR_B6)%2F(SR_B3%2BSR_B6)"
+        else:  # Landsat (短名称: green/swir16)
+            expression = "(green-swir16)%2F(green%2Bswir16)"
 
         url = (
             f"https://planetarycomputer.microsoft.com/api/data/v1/item/preview.png"
             f"?collection={collection_id}"
             f"&item={quote(item_id)}"
             f"&expression={expression}"
+            f"&asset_as_band=True"
             f"&rescale=-1,1"
             f"&colormap_name=blues"
             f"&width={width}"
@@ -380,7 +382,7 @@ def get_rgb_preview_cached(item_id: str, collection: str = "Sentinel-2 L2A", wid
     """
     catalog = get_catalog()
     collection_id = COLLECTIONS[collection]["id"]
-    item = catalog.get_item(item_id, collection_id)
+    item = catalog.get_collection(collection_id).get_item(item_id)
     return get_rgb_preview(item, collection=collection, width=width)
 
 
@@ -389,7 +391,7 @@ def get_ndvi_preview_cached(item_id: str, collection: str = "Sentinel-2 L2A", wi
     """缓存版 NDVI 预览 — 基于 item_id"""
     catalog = get_catalog()
     collection_id = COLLECTIONS[collection]["id"]
-    item = catalog.get_item(item_id, collection_id)
+    item = catalog.get_collection(collection_id).get_item(item_id)
     return get_ndvi_preview(item, collection=collection, width=width)
 
 
@@ -398,5 +400,5 @@ def get_mndwi_preview_cached(item_id: str, collection: str = "Sentinel-2 L2A", w
     """缓存版 MNDWI 预览 — 基于 item_id"""
     catalog = get_catalog()
     collection_id = COLLECTIONS[collection]["id"]
-    item = catalog.get_item(item_id, collection_id)
+    item = catalog.get_collection(collection_id).get_item(item_id)
     return get_mndwi_preview(item, collection=collection, width=width)
