@@ -260,6 +260,22 @@ if search_clicked:
     with col8:
         st.metric("太阳辐射", f"{s['rs_down']} W/m²")
 
+    # AI 智能解读 (统一组件)
+    from utils.ai_insight import render_ai_insight_block
+    render_ai_insight_block(
+        analysis_type="蒸散发水资源分析",
+        metrics={
+            "平均蒸散发(mm/day)": s["mean_et"],
+            "平均净辐射(W/m²)": s["mean_rn"],
+            "潜热通量(W/m²)": s["mean_le"],
+            "主导等级": s["dominant_level"],
+        },
+        study_area=area_name,
+        time_range=main_date,
+        key_suffix="et_ai",
+        show_button=True,
+    )
+
     st.divider()
 
     # ---- 标签页 ----

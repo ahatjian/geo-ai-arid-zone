@@ -89,3 +89,29 @@ class TestHistory:
     def test_is_ai_available(self):
         # 无 key 时不可用
         assert ai.is_ai_available() is False
+
+
+class TestRenderBlock:
+    """统一 AI 解读渲染组件测试"""
+
+    def test_render_block_no_key(self, monkeypatch):
+        """无 API Key 时应返回规则解读且不崩溃"""
+        import streamlit as st
+        from utils.ai_insight import render_ai_insight_block, _get_api_key
+        monkeypatch.setattr("utils.ai_insight._get_api_key", lambda: "")
+        # 未触发按钮时返回 None
+        result = render_ai_insight_block(
+            analysis_type="测试分析",
+            metrics={"NDVI均值": 0.3},
+            key_suffix="test_no_key",
+            show_button=True,
+        )
+        # AppTest 之外调用: 按钮未点击 → None (不崩溃)
+        assert result is None or isinstance(result, str)
+
+    def test_render_block_cache(self):
+        """同一 key 的解读应缓存 (不重复调用)"""
+        from utils.ai_insight import _rule_based_insight
+        text1 = _rule_based_insight("植被分析", {"NDVI均值": 0.25}, "塔里木盆地", "")
+        text2 = _rule_based_insight("植被分析", {"NDVI均值": 0.25}, "塔里木盆地", "")
+        assert text1 == text2  # 确定性

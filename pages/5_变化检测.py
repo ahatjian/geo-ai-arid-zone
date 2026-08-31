@@ -747,6 +747,24 @@ if st.session_state.get("cd_analysis_done"):
     with kpi5:
         st.metric("总分析面积", f"{area_total:.2f} km²")
 
+    # AI 智能解读 (统一组件)
+    from utils.ai_insight import render_ai_insight_block
+    render_ai_insight_block(
+        analysis_type="双时相变化检测分析",
+        metrics={
+            "增加面积(km²)": area_inc,
+            "减少面积(km²)": area_dec,
+            "净变化(km²)": area_inc - area_dec,
+            "T1指数均值": stats["idx_t1_mean"],
+            "T2指数均值": stats["idx_t2_mean"],
+            "检测方法": stats["method"],
+        },
+        study_area="研究区",
+        time_range=f"{t1_date} → {t2_date}",
+        key_suffix="cd_ai",
+        show_button=True,
+    )
+
     st.divider()
 
     # --- 双时相指数对比 ---

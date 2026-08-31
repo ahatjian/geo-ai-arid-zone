@@ -162,6 +162,21 @@ if search_clicked:
     with col4:
         st.markdown(f'<div class="eco-card {status_css}"><div class="label">综合状态</div><div class="value">{s["overall_status"]}</div></div>', unsafe_allow_html=True)
 
+    # AI 智能解读 (统一组件)
+    from utils.ai_insight import render_ai_insight_block
+    render_ai_insight_block(
+        analysis_type="生态安全评估 (PSR 模型)",
+        metrics={
+            "ESI生态安全指数": s["esi_mean"],
+            "安全区占比": s["safe_ratio"],
+            "不安全区占比": s["unsafe_ratio"],
+            "综合状态": s["overall_status"],
+        },
+        study_area=area_name,
+        key_suffix="eco_ai",
+        show_button=True,
+    )
+
     # Tab
     tabs = st.tabs(["ESI 综合", "PSI 压力", "SSI 状态", "RSI 响应"])
 

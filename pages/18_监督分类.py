@@ -300,6 +300,22 @@ if train_clicked:
 
     st.caption(f"分类器: {s['classifier']} | 特征数: {s['n_features']} | 测试样本: {s['n_test_samples']}")
 
+    # AI 智能解读 (统一组件)
+    from utils.ai_insight import render_ai_insight_block
+    render_ai_insight_block(
+        analysis_type="监督分类精度评估",
+        metrics={
+            "总体精度OA": acc["overall_accuracy"],
+            "Kappa系数": acc["kappa"],
+            "宏平均F1": acc["f1_macro"],
+            "分类器": s["classifier"],
+            "训练样本数": s["n_train_samples"],
+        },
+        study_area=area_name,
+        key_suffix="sup_ai",
+        show_button=True,
+    )
+
     st.divider()
 
     # ---- 标签页 ----

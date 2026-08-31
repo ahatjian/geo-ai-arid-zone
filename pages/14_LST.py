@@ -285,6 +285,22 @@ if search_clicked:
     with col4:
         st.metric("主导温区", s["dominant_level"])
 
+    # AI 智能解读 (统一组件)
+    from utils.ai_insight import render_ai_insight_block
+    render_ai_insight_block(
+        analysis_type="地表温度热环境分析",
+        metrics={
+            "平均地表温度(°C)": s["mean_lst_c"],
+            "最高地表温度(°C)": s["max_lst_c"],
+            "高温区占比": s["hot_ratio"],
+            "主导温区": s["dominant_level"],
+        },
+        study_area=area_name,
+        time_range=main_date,
+        key_suffix="lst_ai",
+        show_button=True,
+    )
+
     st.divider()
 
     # ---- 标签页 ----

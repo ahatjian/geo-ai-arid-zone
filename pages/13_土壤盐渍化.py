@@ -276,6 +276,22 @@ if search_clicked:
     with col4:
         st.metric("NDSI 盐分均值", f"{s['ndsi_salt_mean']:.4f}")
 
+    # AI 智能解读 (统一组件)
+    from utils.ai_insight import render_ai_insight_block
+    render_ai_insight_block(
+        analysis_type="土壤盐渍化分析",
+        metrics={
+            "盐渍化总面积占比": s["total_salinization_ratio"],
+            "重度及以上占比": s["severe_salinization_ratio"],
+            "NDSI盐分均值": s["ndsi_salt_mean"],
+            "主导等级": s["dominant_level"],
+        },
+        study_area=area_name,
+        time_range=main_date,
+        key_suffix="salinity_ai",
+        show_button=True,
+    )
+
     st.divider()
 
     # ---- 标签页 ----

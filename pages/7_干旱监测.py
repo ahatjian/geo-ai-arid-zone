@@ -494,6 +494,24 @@ if search_clicked:
                         hide_index=True,
                     )
 
+    # ---- Step 5.5: AI 干旱综合解读 ----
+    # 汇总各指数最新值 (取最后计算成功的指数)
+    ai_metrics = {}
+    for tab_name in ["VCI", "NDDI", "NDVI距平"]:
+        if tab_name in tab_contents:
+            s = tab_contents[tab_name].get("stats")
+            if s and "mean" in s:
+                ai_metrics[f"{tab_name}均值"] = s["mean"]
+    if ai_metrics:
+        from utils.ai_insight import render_ai_insight_block
+        render_ai_insight_block(
+            analysis_type="干旱状况综合分析",
+            metrics=ai_metrics,
+            study_area=area_name,
+            key_suffix="drought_ai",
+            show_button=True,
+        )
+
     # ---- Step 6: 时序趋势图 (所有指数共用) ----
     st.divider()
     st.subheader("📈 多时相趋势分析")

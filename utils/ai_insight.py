@@ -262,3 +262,94 @@ def get_insight_history() -> List[Dict]:
         return list(st.session_state.get("ai_insight_history", []))
     except Exception:
         return []
+
+
+# ============================================================
+# Streamlit 渲染组件 (各分析页面统一接入 AI 解读)
+# ============================================================
+
+def render_ai_insight_block(
+    analysis_type: str,
+    metrics: Dict,
+    study_area: str = "",
+    time_range: str = "",
+    key_suffix: str = "",
+    show_button: bool = True,
+    default_expanded: bool = True,
+) -> Optional[str]:
+    """
+    在分析页面渲染统一的 AI 解读区块。
+
+    用法 (各页面一行接入):
+        from utils.ai_insight import render_ai_insight_block
+        render_ai_insight_block(
+            analysis_type="土壤盐渍化分析",
+            metrics={"盐渍化总面积占比": 0.35, "重度及以上占比": 0.12},
+            study_area=area_name,
+            key_suffix="salinity",
+        )
+
+    特性:
+      - 自动检查 API 可用性 (无 key 时提示)
+      - 解读结果缓存于 session_state (避免重复调用)
+      - LLM 输出转义 (防 XSS)
+      - 显示解读来源 (DeepSeek AI / 规则模板)
+
+    参数:
+        analysis_type: 分析类型 (如 "土壤盐渍化分析")
+        metrics: 指标字典 {"指标名": 值, ...}
+        study_area: 研究区 (可选)
+        time_range: 时间范围 (可选)
+        key_suffix: 唯一标识 (避免多区块 key 冲突)
+        show_button: 是否用按钮触发 (False=自动生成)
+        default_expanded: 默认展开
+
+    返回:
+        str | None: 解读文本 (未触发时 None)
+    """
+    import streamlit as st
+    import html as _html
+
+    cache_key = f"ai_insight_{key_suffix}"
+    ai_ok = is_ai_available()
+
+    with st.expander("🤖 AI 智能解读", expanded=default_expanded):
+        if not ai_ok:
+            st.caption("🔑 配置 DEEPSEEK_API_KEY 后由 DeepSeek AI 解读，当前使用规则模板")
+        else:
+            st.caption("🧠 DeepSeek AI 基于本次分析指标生成专业解读")
+
+        # 已缓存 → 直接显示
+        if cache_key in st.session_state:
+            st.markdown(
+                f"<div style='background:#f0f8f4;border-left:4px solid #27ae60;"
+                f"padding:14px 18px;border-radius:6px;line-height:1.9;font-size:14px;'>"
+                f"{_html.escape(st.session_state[cache_key])}</div>",
+                unsafe_allow_html=True,
+            )
+            st.caption(f"来源: {'DeepSeek AI' if ai_ok else '规则模板'}")
+            return st.session_state[cache_key]
+
+        # 按钮或自动生成
+        if show_button:
+            clicked = st.button("🧠 生成 AI 解读", key=f"ai_btn_{key_suffix}")
+            if not clicked:
+                return None
+
+        with st.spinner("AI 解读中..."):
+            insight = generate_ai_insight(
+                analysis_type=analysis_type,
+                metrics=metrics,
+                study_area=study_area,
+                time_range=time_range,
+            )
+
+        st.session_state[cache_key] = insight
+        st.markdown(
+            f"<div style='background:#f0f8f4;border-left:4px solid #27ae60;"
+            f"padding:14px 18px;border-radius:6px;line-height:1.9;font-size:14px;'>"
+            f"{_html.escape(insight)}</div>",
+            unsafe_allow_html=True,
+        )
+        st.caption(f"来源: {'DeepSeek AI' if ai_ok else '规则模板'}")
+        return insight

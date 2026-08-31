@@ -192,6 +192,21 @@ if "单景" in data_mode and geotiff_path:
                 with cols2[1]:
                     st.metric("最小值", f"{stats['min']:.4f}")
 
+                # AI 智能解读 (统一组件)
+                from utils.ai_insight import render_ai_insight_block
+                render_ai_insight_block(
+                    analysis_type="植被覆盖分析",
+                    metrics={
+                        "NDVI均值": stats["mean"],
+                        "NDVI标准差": stats["std"],
+                        "密植被占比": stats["dense_veg_ratio"],
+                        "稀疏植被占比": stats["sparse_veg_ratio"],
+                        "裸地占比": stats["bare_ratio"],
+                    },
+                    key_suffix="veg_single_ai",
+                    show_button=True,
+                )
+
                 # 可视化
                 st.divider()
                 st.subheader("🗺️ 指数空间分布")
