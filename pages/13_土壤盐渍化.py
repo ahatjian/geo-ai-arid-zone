@@ -378,6 +378,28 @@ if search_clicked:
         st.pyplot(fig)
         plt.close(fig)
 
+    # ---- 结果一键入库 ----
+    st.divider()
+    st.subheader("💾 保存分析结果")
+    from utils.save_ui import render_save_button, render_save_csv_button
+
+    save_meta = {"研究区": area_name, "模块": "土壤盐渍化", "日期": main_date}
+    render_save_button(
+        default_name=f"{area_name}_盐渍化分级_{main_date[:10]}",
+        data=result.category,
+        kind="npy",
+        meta={**save_meta, "说明": "盐渍化5级分级结果 (0非/1轻/2中/3重/4极重)"},
+        key_suffix="salinity_cat",
+    )
+    render_save_button(
+        default_name=f"{area_name}_盐渍化统计_{main_date[:10]}",
+        data=result.stats,
+        kind="csv",
+        meta={**save_meta, "说明": "各等级面积占比统计"},
+        key_suffix="salinity_stats",
+    )
+    st.caption("💡 保存后可前往「📦 数据下载中心」统一管理、下载或打包全部结果")
+
     # ---- 多时相提示 ----
     if n_selected > 1:
         st.divider()

@@ -350,6 +350,35 @@ if search_clicked:
         气象参数需用户提供 (太阳辐射/气温/风速)。适用于区域蒸散发空间格局分析。
         """)
 
+    # ---- 结果一键入库 ----
+    st.divider()
+    st.subheader("💾 保存分析结果")
+    from utils.save_ui import render_save_button
+
+    save_meta = {"研究区": area_name, "模块": "蒸散发ET", "日期": main_date}
+    render_save_button(
+        default_name=f"{area_name}_蒸散发ET_{main_date[:10]}",
+        data=result.et_daily,
+        kind="npy",
+        meta={**save_meta, "说明": "日蒸散发 (mm/day)"},
+        key_suffix="et_daily",
+    )
+    render_save_button(
+        default_name=f"{area_name}_ET分级_{main_date[:10]}",
+        data=result.category,
+        kind="npy",
+        meta={**save_meta, "说明": "ET 5级分级"},
+        key_suffix="et_cat",
+    )
+    render_save_button(
+        default_name=f"{area_name}_ET统计_{main_date[:10]}",
+        data=result.stats,
+        kind="csv",
+        meta={**save_meta, "说明": "各ET等级面积占比统计"},
+        key_suffix="et_stats",
+    )
+    st.caption("💡 保存后可前往「📦 数据下载中心」统一管理、下载或打包全部结果")
+
     # ---- 多时相提示 ----
     if n_selected > 1:
         st.info(

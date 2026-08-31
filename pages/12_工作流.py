@@ -260,8 +260,12 @@ with tab_wizard:
                     progress.progress(0.5)
 
                     # 计算各项指标
-                    blue, green, red, nir, swir1 = bands[0], bands[1], bands[2], bands[3], bands[4]
+                    blue, green, red, nir, swir1, swir2 = bands[0], bands[1], bands[2], bands[3], bands[4], bands[5]
                     ndvi = np.clip((nir - red) / (nir + red + 1e-6), -1, 1)
+                    mndwi = np.clip((green - swir1) / (green + swir1 + 1e-6), -1, 1)
+                    evi = np.clip(2.5 * (nir - red) / (nir + 6 * red - 7.5 * blue + 1e-6), -1, 1)
+                    ndsi_salt = np.clip((red - swir1) / (red + swir1 + 1e-6), -1, 1)
+                    nddi = np.clip((ndvi - mndwi) / (ndvi + mndwi + 1e-6), -1, 1)
 
                     results_summary["study_area"] = wiz_area
                     results_summary["date"] = search_results[0]["datetime"]
@@ -269,16 +273,43 @@ with tab_wizard:
                     results_summary["ndvi_mean"] = float(np.nanmean(ndvi))
                     results_summary["ndvi_std"] = float(np.nanstd(ndvi))
 
-                    # 植被
-                    status.text("🌿 植被分析...")
-                    veg_px = int((ndvi > 0.2).sum())
-                    results_summary["vegetation_ratio"] = round(veg_px / max(ndvi.size, 1), 4)
+                    # 按勾选模块动态计算 (向导快速评估)
+                    progress.progress(0.6)
+                    wiz_metrics = {}
 
-                    # 水体 (MNDWI 简算)
-                    status.text("💧 水体分析...")
-                    mndwi = np.clip((green - swir1) / (green + swir1 + 1e-6), -1, 1)
-                    water_px = int((mndwi > 0).sum())
-                    results_summary["water_ratio"] = round(water_px / max(mndwi.size, 1), 4)
+                    # 植被分析
+                    if "植被分析" in selected_modules:
+                        status.text("🌿 植被分析...")
+                        veg_px = int((ndvi > 0.2).sum())
+                        results_summary["vegetation_ratio"] = round(veg_px / max(ndvi.size, 1), 4)
+                        wiz_metrics["植被覆盖率"] = results_summary["vegetation_ratio"]
+                        results_summary["evi_mean"] = float(np.nanmean(evi))
+                        wiz_metrics["EVI 均值"] = results_summary["evi_mean"]
+
+                    # 水体监测
+                    if "水体监测" in selected_modules:
+                        status.text("💧 水体分析...")
+                        water_px = int((mndwi > 0).sum())
+                        results_summary["water_ratio"] = round(water_px / max(mndwi.size, 1), 4)
+                        wiz_metrics["水体覆盖率"] = results_summary["water_ratio"]
+
+                    # 土壤盐渍化 (NDSI 盐分快速评估)
+                    if "土壤盐渍化" in selected_modules:
+                        status.text("🧂 盐渍化评估...")
+                        salt_px = int((ndsi_salt > 0).sum())
+                        results_summary["salinity_ratio"] = round(salt_px / max(ndsi_salt.size, 1), 4)
+                        results_summary["ndsi_mean"] = float(np.nanmean(ndsi_salt))
+                        wiz_metrics["NDSI 盐分均值"] = results_summary["ndsi_mean"]
+                        wiz_metrics["疑似盐渍化占比"] = results_summary["salinity_ratio"]
+
+                    # 干旱监测 (NDDI 快速评估)
+                    if "干旱监测" in selected_modules:
+                        status.text("🏜️ 干旱评估...")
+                        dry_px = int((nddi > 0.3).sum())
+                        results_summary["nddi_mean"] = float(np.nanmean(nddi))
+                        results_summary["dry_ratio"] = round(dry_px / max(nddi.size, 1), 4)
+                        wiz_metrics["NDDI 均值"] = results_summary["nddi_mean"]
+                        wiz_metrics["干旱风险占比"] = results_summary["dry_ratio"]
 
                     progress.progress(1.0)
                     status.text("✅ 分析完成")
@@ -298,26 +329,48 @@ with tab_wizard:
             st.divider()
             st.subheader("📊 分析结果概览")
 
-            col_r1, col_r2, col_r3, col_r4 = st.columns(4)
-            with col_r1:
+            # 按勾选模块动态展示指标
+            metric_cols = st.columns(4)
+            with metric_cols[0]:
                 st.metric("NDVI 均值", f"{results_summary['ndvi_mean']:.4f}")
-            with col_r2:
-                st.metric("植被覆盖率", f"{results_summary['vegetation_ratio']*100:.1f}%")
-            with col_r3:
-                st.metric("水体覆盖率", f"{results_summary['water_ratio']*100:.1f}%")
-            with col_r4:
+            if "植被分析" in selected_modules:
+                with metric_cols[1]:
+                    st.metric("植被覆盖率", f"{results_summary['vegetation_ratio']*100:.1f}%")
+            if "水体监测" in selected_modules:
+                with metric_cols[2]:
+                    st.metric("水体覆盖率", f"{results_summary['water_ratio']*100:.1f}%")
+            with metric_cols[3]:
                 st.metric("分析时相", results_summary["date"])
 
-            # AI 智能解读
+            # 其余勾选模块的指标展示
+            extra_metrics = {k: v for k, v in wiz_metrics.items() if k not in ("植被覆盖率", "水体覆盖率")}
+            if extra_metrics:
+                extra_cols = st.columns(min(4, len(extra_metrics)))
+                for i, (k, v) in enumerate(extra_metrics.items()):
+                    with extra_cols[i % 4]:
+                        if isinstance(v, float) and v <= 1.0:
+                            st.metric(k, f"{v:.4f}")
+                        else:
+                            st.metric(k, f"{v}")
+
+            # 提示: 未支持向导快评的模块 → 跳转深入分析
+            quick_modules = {"植被分析", "水体监测", "土壤盐渍化", "干旱监测"}
+            deep_modules = [m for m in selected_modules if m not in quick_modules]
+            if deep_modules:
+                st.info(
+                    "🔗 " + "、".join(deep_modules) + " 已为你准备好跳转入口"
+                    "（下方「进入详细分析」），向导快评覆盖植被/水体/盐渍化/干旱，"
+                    "其余模块请在对应页面用完整参数深入分析。"
+                )
+
+            # AI 智能解读 (基于实际勾选模块的指标)
             from utils.ai_insight import generate_ai_insight, is_ai_available as _ai_ok
+            insight_metrics = {"NDVI均值": results_summary["ndvi_mean"]}
+            insight_metrics.update(wiz_metrics)
             with st.spinner("🧠 DeepSeek AI 解读中..."):
                 ai_text = generate_ai_insight(
-                    analysis_type="植被+水体综合分析",
-                    metrics={
-                        "NDVI均值": results_summary["ndvi_mean"],
-                        "植被覆盖率": results_summary["vegetation_ratio"],
-                        "水体覆盖率": results_summary["water_ratio"],
-                    },
+                    analysis_type="+".join(selected_modules[:4]) + "综合分析",
+                    metrics=insight_metrics,
                     study_area=results_summary["study_area"],
                     time_range=results_summary["date"],
                 )
@@ -392,9 +445,19 @@ with tab_report:
         <h3>📊 核心指标</h3>
         <div class="metric-grid">
         <div class="metric"><div class="value">{wf_results['ndvi_mean']:.4f}</div><div class="label">NDVI 均值</div></div>
-        <div class="metric"><div class="value">{wf_results['vegetation_ratio']*100:.1f}%</div><div class="label">植被覆盖率</div></div>
-        <div class="metric"><div class="value">{wf_results['water_ratio']*100:.1f}%</div><div class="label">水体覆盖率</div></div>
-        <div class="metric"><div class="value">{wf_results['ndvi_std']:.4f}</div><div class="label">NDVI 标准差</div></div>
+        <div class="metric"><div class="value">{wf_results.get('vegetation_ratio', 0)*100:.1f}%</div><div class="label">植被覆盖率</div></div>
+        <div class="metric"><div class="value">{wf_results.get('water_ratio', 0)*100:.1f}%</div><div class="label">水体覆盖率</div></div>
+        <div class="metric"><div class="value">{wf_results.get('ndvi_std', 0):.4f}</div><div class="label">NDVI 标准差</div></div>
+        </div>
+        </div>
+
+        <div class="card">
+        <h3>📊 扩展指标</h3>
+        <div class="metric-grid">
+        <div class="metric"><div class="value">{wf_results.get('evi_mean', 0):.4f}</div><div class="label">EVI 均值</div></div>
+        <div class="metric"><div class="value">{wf_results.get('ndsi_mean', 0):.4f}</div><div class="label">NDSI 盐分均值</div></div>
+        <div class="metric"><div class="value">{wf_results.get('nddi_mean', 0):.4f}</div><div class="label">NDDI 均值</div></div>
+        <div class="metric"><div class="value">{wf_results.get('dry_ratio', 0)*100:.1f}%</div><div class="label">干旱风险占比</div></div>
         </div>
         </div>
 

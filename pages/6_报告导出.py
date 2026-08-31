@@ -552,18 +552,16 @@ def build_report_html():
     """根据用户填写的表单数据构建完整 HTML 报告"""
 
     # 所有用户输入视为不可信, 统一 HTML 转义 (防 XSS)
-    global report_title, report_area, author
-    global water_notes, veg_notes, change_notes, ai_notes
-    global section_title, section_content
-    report_title = html.escape(str(report_title or ""))
-    report_area = html.escape(str(report_area or ""))
-    author = html.escape(str(author or ""))
-    water_notes = html.escape(str(water_notes or ""))
-    veg_notes = html.escape(str(veg_notes or ""))
-    change_notes = html.escape(str(change_notes or ""))
-    ai_notes = html.escape(str(ai_notes or ""))
-    section_title = html.escape(str(section_title or ""))
-    section_content = html.escape(str(section_content or ""))
+    # 使用局部变量, 不污染全局 (下载文件名等仍用原始值)
+    report_title_esc = html.escape(str(report_title or ""))
+    report_area_esc = html.escape(str(report_area or ""))
+    author_esc = html.escape(str(author or ""))
+    water_notes_esc = html.escape(str(water_notes or ""))
+    veg_notes_esc = html.escape(str(veg_notes or ""))
+    change_notes_esc = html.escape(str(change_notes or ""))
+    ai_notes_esc = html.escape(str(ai_notes or ""))
+    section_title_esc = html.escape(str(section_title or ""))
+    section_content_esc = html.escape(str(section_content or ""))
 
     # 收集所有图片
     all_images = []
@@ -616,8 +614,8 @@ def build_report_html():
         sec += f'<tr><td>像素分辨率</td><td>{water_pixel} m</td></tr>\n'
         sec += f'<tr><td>变化趋势</td><td>{water_trend}</td></tr>\n'
         sec += f'</table>\n'
-        if water_notes:
-            sec += f'<div class="notes"><strong>分析备注：</strong>{water_notes}</div>\n'
+        if water_notes_esc:
+            sec += f'<div class="notes"><strong>分析备注：</strong>{water_notes_esc}</div>\n'
         for label, f in all_images:
             if label == "水体监测":
                 img_src = b64img(f)
@@ -645,8 +643,8 @@ def build_report_html():
         sec += f'<tr><td>趋势方向</td><td>{veg_trend}</td></tr>\n'
         sec += f'<tr><td>Sen 斜率</td><td>{veg_slope:.1f} × 10⁻³/yr</td></tr>\n'
         sec += f'</table>\n'
-        if veg_notes:
-            sec += f'<div class="notes"><strong>分析备注：</strong>{veg_notes}</div>\n'
+        if veg_notes_esc:
+            sec += f'<div class="notes"><strong>分析备注：</strong>{veg_notes_esc}</div>\n'
         for label, f in all_images:
             if label == "植被分析":
                 img_src = b64img(f)
@@ -678,8 +676,8 @@ def build_report_html():
         sec += f'<tr><td>稳定面积</td><td>{change_stable:.2f} km²</td></tr>\n'
         sec += f'<tr><td>净变化</td><td>{net_c:+.2f} km²</td></tr>\n'
         sec += f'</table>\n'
-        if change_notes:
-            sec += f'<div class="notes"><strong>分析备注：</strong>{change_notes}</div>\n'
+        if change_notes_esc:
+            sec += f'<div class="notes"><strong>分析备注：</strong>{change_notes_esc}</div>\n'
         for label, f in all_images:
             if label == "变化检测":
                 img_src = b64img(f)
@@ -710,8 +708,8 @@ def build_report_html():
         sec += f'<tr><td>OA</td><td>{ai_oa:.1f}%</td></tr>\n'
         sec += f'<tr><td>Kappa</td><td>{ai_kappa:.3f}</td></tr>\n'
         sec += f'</table>\n'
-        if ai_notes:
-            sec += f'<div class="notes"><strong>分析备注：</strong>{ai_notes}</div>\n'
+        if ai_notes_esc:
+            sec += f'<div class="notes"><strong>分析备注：</strong>{ai_notes_esc}</div>\n'
         for label, f in all_images:
             if label == "AI 分类":
                 img_src = b64img(f)
@@ -720,9 +718,9 @@ def build_report_html():
         sections.append(sec)
 
     # ---- 自定义章节 ----
-    if add_section and section_content:
-        sec = f'<h2>📝 {section_title}</h2>\n'
-        sec += f'<p style="line-height:1.8;">{section_content.replace(chr(10), "<br>")}</p>\n'
+    if add_section and section_content_esc:
+        sec = f'<h2>📝 {section_title_esc}</h2>\n'
+        sec += f'<p style="line-height:1.8;">{section_content_esc.replace(chr(10), "<br>")}</p>\n'
         sections.append(sec)
 
     # ---- AI 智能解读章节 ----
@@ -776,7 +774,7 @@ def build_report_html():
 
     # 组装完整报告
     report_date = analysis_date.strftime("%Y年%m月%d日") if hasattr(analysis_date, "strftime") else str(analysis_date)
-    author_line = f'<span>作者: {author}</span>' if author else ""
+    author_line = f'<span>作者: {author_esc}</span>' if author_esc else ""
 
     body_sections = "\n".join(sections) if sections else "<p style='color:#999;text-align:center;padding:40px;'>请在左侧各 Tab 中填入分析数据后生成报告</p>"
 
@@ -785,14 +783,14 @@ def build_report_html():
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>{report_title}</title>
+<title>{report_title_esc}</title>
 {CSS_STYLE}
 </head>
 <body>
 
-<h1>{report_title}</h1>
+<h1>{report_title_esc}</h1>
 <div class="meta">
-    <span>研究区域: {report_area}</span> | 
+    <span>研究区域: {report_area_esc}</span> | 
     <span>分析日期: {report_date}</span>
     {author_line}
 </div>

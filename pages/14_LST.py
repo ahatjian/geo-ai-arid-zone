@@ -394,6 +394,35 @@ if search_clicked:
         st.pyplot(fig)
         plt.close(fig)
 
+    # ---- 结果一键入库 ----
+    st.divider()
+    st.subheader("💾 保存分析结果")
+    from utils.save_ui import render_save_button
+
+    save_meta = {"研究区": area_name, "模块": "地表温度LST", "日期": main_date}
+    render_save_button(
+        default_name=f"{area_name}_地表温度_{main_date[:10]}",
+        data=result.lst_celsius,
+        kind="npy",
+        meta={**save_meta, "说明": "地表温度 (°C)"},
+        key_suffix="lst_temp",
+    )
+    render_save_button(
+        default_name=f"{area_name}_热环境分级_{main_date[:10]}",
+        data=result.category,
+        kind="npy",
+        meta={**save_meta, "说明": "热环境5级分级 (1低温~5高温)"},
+        key_suffix="lst_cat",
+    )
+    render_save_button(
+        default_name=f"{area_name}_热环境统计_{main_date[:10]}",
+        data=result.stats,
+        kind="csv",
+        meta={**save_meta, "说明": "各热环境等级面积占比统计"},
+        key_suffix="lst_stats",
+    )
+    st.caption("💡 保存后可前往「📦 数据下载中心」统一管理、下载或打包全部结果")
+
     # ---- 多时相提示 ----
     if n_selected > 1:
         st.divider()
