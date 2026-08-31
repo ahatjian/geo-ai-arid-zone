@@ -634,6 +634,13 @@ def build_report_html():
     section_title_esc = html.escape(str(section_title or ""))
     section_content_esc = html.escape(str(section_content or ""))
 
+    # 分析日期 (在函数开头计算, 后续 AI 解读/模板均引用)
+    report_date = (
+        analysis_date.strftime("%Y年%m月%d日")
+        if hasattr(analysis_date, "strftime")
+        else str(analysis_date)
+    )
+
     # 收集所有图片
     all_images = []
     for key, label in [
@@ -917,7 +924,6 @@ def build_report_html():
             )
 
     # 组装完整报告
-    report_date = analysis_date.strftime("%Y年%m月%d日") if hasattr(analysis_date, "strftime") else str(analysis_date)
     author_line = f'<span>作者: {author_esc}</span>' if author_esc else ""
 
     body_sections = "\n".join(sections) if sections else "<p style='color:#999;text-align:center;padding:40px;'>请在左侧各 Tab 中填入分析数据后生成报告</p>"
@@ -979,6 +985,17 @@ if preview or generate:
             # PDF 报告导出 (reportlab, 带中文字体)
             try:
                 from utils.pdf_report import generate_report_pdf
+
+                # has_* 变量定义在 build_report_html 内部, 此处重新计算
+                has_water = water_area > 0 or bool(water_notes)
+                has_veg = veg_mean != 0 or bool(veg_notes)
+                has_change = (change_increase > 0 or change_decrease > 0) or bool(change_notes)
+                has_ai = any(v > 0 for v in class_areas.values()) or bool(ai_notes)
+                report_date = (
+                    analysis_date.strftime("%Y年%m月%d日")
+                    if hasattr(analysis_date, "strftime")
+                    else str(analysis_date)
+                )
 
                 # 组装 PDF 章节: 从 HTML 报告的 sections 提取文本数据
                 pdf_sections = []

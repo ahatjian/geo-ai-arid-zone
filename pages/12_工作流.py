@@ -5,6 +5,7 @@
 """
 import streamlit as st
 import os, sys, tempfile, numpy as np, pandas as pd
+import html
 import matplotlib.pyplot as plt
 from datetime import date, timedelta, datetime
 from io import BytesIO
@@ -99,16 +100,19 @@ with tab_query:
                 with cols[i % 3]:
                     score = m.get("score", 1)
                     score_bar = "█" * min(score, 5) + "░" * max(0, 5 - score)
+                    # LLM 返回的模块名/描述视为不可信, 转义后渲染
+                    m_name_esc = html.escape(str(m.get("name", "")))
+                    m_desc_esc = html.escape(str(m.get("desc", "")))
                     st.markdown(f"""
                     <div style="border:1px solid #444;border-radius:8px;padding:14px;
                     background:linear-gradient(135deg, #1a1a2e, #16213e);margin-bottom:8px">
                     <div style="font-size:24px">{m['icon']}</div>
-                    <div style="font-weight:700;font-size:15px;margin:6px 0">{m['module']}</div>
-                    <div style="font-size:12px;color:#999;margin-bottom:6px">{m['desc']}</div>
+                    <div style="font-weight:700;font-size:15px;margin:6px 0">{m_name_esc}</div>
+                    <div style="font-size:12px;color:#999;margin-bottom:6px">{m_desc_esc}</div>
                     <div style="font-size:10px;color:#666">匹配度: {score_bar} ({m['score']})</div>
                     </div>
                     """, unsafe_allow_html=True)
-                    if st.button(f"进入 {m['module']}", key=f"q_{i}"):
+                    if st.button(f"进入 {m['name']}", key=f"q_{i}"):
                         st.switch_page(f"pages/{m['page']}.py")
 
             # 快捷: 一键设置所有匹配模块
@@ -374,10 +378,12 @@ with tab_wizard:
                     study_area=results_summary["study_area"],
                     time_range=results_summary["date"],
                 )
+            # LLM 输出视为不可信, 转义后展示 (防 XSS)
+            ai_text_esc = html.escape(ai_text or "")
             st.markdown(
                 f"<div style='background:#f0f8f4;border-left:4px solid #27ae60;"
                 f"padding:14px 18px;border-radius:6px;line-height:1.9;font-size:14px;'>"
-                f"🧠 **AI 解读**（{'DeepSeek AI' if _ai_ok() else '规则模板'}）：{ai_text}</div>",
+                f"🧠 **AI 解读**（{'DeepSeek AI' if _ai_ok() else '规则模板'}）：{ai_text_esc}</div>",
                 unsafe_allow_html=True,
             )
             st.session_state["workflow_ai_insight"] = ai_text
@@ -417,8 +423,11 @@ with tab_report:
     else:
         st.success(f"✅ 报告数据来源: {wf_results['study_area']} ({wf_results['date']})")
 
-        # 合并 AI 解读 (如分步向导已生成)
-        wf_results["ai_insight"] = st.session_state.get("workflow_ai_insight", "")
+        # 合并 AI 解读 (如分步向导已生成) + HTML 转义 (防 XSS)
+        wf_results["ai_insight"] = html.escape(str(st.session_state.get("workflow_ai_insight", "")))
+        wf_results["study_area_esc"] = html.escape(str(wf_results["study_area"]))
+        wf_results["satellite_esc"] = html.escape(str(wf_results["satellite"]))
+        wf_results["date_esc"] = html.escape(str(wf_results["date"]))
 
         # 生成 HTML 报告
         report_html = f"""
@@ -437,8 +446,8 @@ with tab_report:
         .footer {{ text-align:center; color:#999; font-size:12px; margin-top:40px; border-top:1px solid #eee; padding-top:20px; }}
         </style></head><body>
         <div class="header">
-        <h1>🛰️ {wf_results['study_area']} 遥感分析报告</h1>
-        <p>数据源: {wf_results['satellite']} | 分析日期: {wf_results['date']} | 生成: {datetime.now().strftime('%Y-%m-%d %H:%M')}</p>
+        <h1>🛰️ {wf_results['study_area_esc']} 遥感分析报告</h1>
+        <p>数据源: {wf_results['satellite_esc']} | 分析日期: {wf_results['date_esc']} | 生成: {datetime.now().strftime('%Y-%m-%d %H:%M')}</p>
         </div>
 
         <div class="card">

@@ -71,3 +71,33 @@ class TestFallbackParse:
 
     def test_method_flag(self):
         assert llm.fallback_parse("测试")["method"] == "fallback"
+
+
+class TestModuleFieldConsistency:
+    """模块字段一致性 — 页面用 name 而非 module (曾致 KeyError)"""
+
+    def test_modules_have_name_field(self):
+        """所有模块必须有 name 字段 (页面渲染依赖)"""
+        for m in llm.MODULE_DEFINITIONS:
+            assert "name" in m, f"模块缺少 name: {m}"
+
+    def test_no_module_field_used(self):
+        """fallback 返回的模块不应含 module 字段 (页面曾误用)"""
+        r = llm.fallback_parse("分析植被")
+        for m in r["modules"]:
+            assert "name" in m
+            assert "module" not in m
+
+    def test_deepseek_result_module_field(self):
+        """DeepSeek 返回模块也应标准化为 name 字段"""
+        r = llm.query_deepseek.__wrapped__ if hasattr(llm.query_deepseek, "__wrapped__") else None
+        # 直接测试 _validate_result 的标准化
+        result = llm._validate_result({
+            "study_area": "塔里木盆地",
+            "year_start": 2025, "year_end": 2025,
+            "modules": ["植被分析", "土壤盐渍化"],
+            "explanation": "测试",
+        })
+        for m in result["modules"]:
+            assert "name" in m
+            assert "module" not in m
