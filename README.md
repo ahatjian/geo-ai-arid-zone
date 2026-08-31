@@ -1,6 +1,6 @@
 # 🌍 西北干旱区遥感智能分析平台
 
-> v1.21 | Phase 1-6 全部完成 | 24 分析模块 + DeepSeek AI 智能查询与解读 + 影像预处理 + PDF 报告 + 自定义 AOI + 矢量导出 + 数据下载中心
+> v1.22 | Phase 1-6 全部完成 | 24 分析模块 + DeepSeek AI 智能查询与解读 + 影像预处理 + PDF 报告 + 自定义 AOI + 矢量导出 + 数据下载中心
 
 基于 **Microsoft Planetary Computer (STAC API)** + **Streamlit** + **DeepSeek AI** 的 Web 端干旱区遥感智能分析应用。面向中国西北干旱半干旱地区，提供卫星数据检索、遥感指数计算、AI地物分类、干旱预测、沙漠化评估、冰冻圈分析、农业干旱监测、时序动画及智能工作流全链路功能。
 
@@ -200,8 +200,8 @@ docker build -t geo-ai-app . && docker run -p 8501:8501 geo-ai-app
 
 ## 状态
 
-- **版本**: v1.21 | **页面**: 24 | **工具模块**: 38
-- **测试**: 332 用例全部通过 | **部署**: Streamlit Cloud ✅
+- **版本**: v1.22 | **页面**: 24 | **工具模块**: 38
+- **测试**: 338 用例全部通过 | **部署**: Streamlit Cloud ✅
 - **Python**: 3.11 | **PyTorch**: 2.11.0+cpu
 
 ## License
