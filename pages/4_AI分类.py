@@ -465,6 +465,21 @@ elif "非监督" in run_mode:
                 })
             st.dataframe(stats_rows, width="stretch", hide_index=True)
 
+            # AI 智能解读 (统一组件)
+            from utils.ai_insight import render_ai_insight_block
+            km_metrics = {}
+            for k in range(n_clusters):
+                count = int((classification == k).sum())
+                ratio = count / max(classification.size, 1)
+                nm = names[k] if k < len(names) else f"类别{k+1}"
+                km_metrics[f"{nm}占比"] = ratio
+            render_ai_insight_block(
+                analysis_type="KMeans 非监督分类结果分析",
+                metrics=km_metrics,
+                key_suffix="km_ai",
+                show_button=True,
+            )
+
             # 导出
             st.divider()
             st.subheader("💾 结果导出")
