@@ -169,7 +169,7 @@ if geotiff_path:
         # ============================================
         elif "滤波" in proc_mode:
             st.subheader("🌀 空间滤波")
-            from utils.image_processing import spatial_filter
+            from utils.image_processing import spatial_filter, contrast_enhance
 
             filter_type = st.selectbox(
                 "滤波类型",

@@ -14,6 +14,7 @@
 import os
 import sys
 import tempfile
+import uuid as _uuid
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -28,6 +29,15 @@ st.markdown(
     "**AI 智能缓冲区 · 邻域统计 · 叠加分析** — "
     "直接分析平台结果，DeepSeek 自动解读空间格局"
 )
+
+
+def save_upload_tmp(uploaded) -> str:
+    """安全保存上传文件到临时目录 (唯一名)。"""
+    safe_name = f"spatial_{_uuid.uuid4().hex[:12]}.tif"
+    geotiff_path = os.path.join(tempfile.gettempdir(), safe_name)
+    with open(geotiff_path, "wb") as f:
+        f.write(uploaded.getvalue())
+    return geotiff_path
 
 # ============================================================
 # 侧边栏: 数据源
@@ -98,16 +108,6 @@ def load_raster(path: str) -> np.ndarray:
                 f"上限 {MAX_RASTER_PIXELS/1e6:.0f} MP)，请裁剪后上传"
             )
         return src.read(1).astype(np.float64)
-
-
-def save_upload_tmp(uploaded) -> str:
-    """安全保存上传文件到临时目录 (唯一名, 使用后清理)。"""
-    import uuid as _uuid
-    safe_name = f"spatial_{_uuid.uuid4().hex[:12]}.tif"
-    geotiff_path = os.path.join(tempfile.gettempdir(), safe_name)
-    with open(geotiff_path, "wb") as f:
-        f.write(uploaded.getvalue())
-    return geotiff_path
 
 
 # 确定输入

@@ -50,7 +50,7 @@
 
 | 层级 | 技术 |
 |------|------|
-| 前端 | Streamlit (20 页面应用) |
+| 前端 | Streamlit (25 页面应用) |
 | 地图 | leafmap + Folium |
 | 数据源 | **Microsoft Planetary Computer** (STAC API, 免费, 国内可访问) |
 | 卫星 | Sentinel-2 (10m, 2015-) + Landsat 4-9 (30m, 1982-, 43年长时序) |
@@ -96,7 +96,7 @@ export DEEPSEEK_API_KEY=sk-xxx
 
 ```
 web-geo-ai/
-├── app.py                        # 首页入口 + 20模块导航
+├── app.py                        # 首页入口 + 25模块导航
 ├── pages/
 │   ├── 1_数据浏览.py              # STAC搜索 + RGB/NDVI/MNDWI预览
 │   ├── 2_水体监测.py              # MNDWI/AWEIsh + AI水体分割(含ONNX)
@@ -117,8 +117,13 @@ web-geo-ai/
 │   ├── 17_蒸散发.py               # SEBAL 能量平衡蒸散发估算
 │   ├── 18_监督分类.py              # 自定义样本训练模型 (RF/SVM/KNN/MLP)
 │   ├── 19_矢量导出.py              # 分类结果矢量化 (GeoJSON/Shapefile/KML)
-│   └── 20_数据下载中心.py           # 结果持久化 + 统一下载/打包/删除
-├── utils/                        # 工具函数库 (27 模块)
+│   ├── 20_数据下载中心.py           # 结果持久化 + 统一下载/打包/删除
+│   ├── 21_系统状态.py              # 缓存管理 + 环境健康检查
+│   ├── 22_图像增强.py              # PCA/空间滤波/对比度增强/IHS融合
+│   ├── 23_辐射定标大气校正.py        # DOS大气校正 + 辐射定标
+│   ├── 24_空间邻域分析.py            # AI智能缓冲区 + 叠加分析
+│   └── 25_AI助手.py                # AI对话/一键分析/异常检测/影像理解/质量诊断
+├── utils/                        # 工具函数库 (45 模块)
 │   ├── pc_data.py                # Planetary Computer STAC 数据获取
 │   ├── indices.py                # NDVI/MNDWI/EVI/AWEIsh 指数计算
 │   ├── drought.py                # SPI/SPEI/VCI/TCI/VHI/NDDI/TVDI/CDI
@@ -145,7 +150,22 @@ web-geo-ai/
 │   ├── export.py                 # GeoTIFF/CSV 导出
 │   ├── onnx_engine.py            # ONNX Runtime 推理加速
 │   ├── aoi.py                    # 自定义研究区 (AOI) 选择组件 + GeoJSON 解析
-│   └── error_handler.py          # 统一错误处理
+│   ├── error_handler.py          # 统一错误处理
+│   ├── ai_assistant.py           # AI 对话/自动分析/异常检测 (上下文感知)
+│   ├── ai_vision.py              # AI 视觉理解 + 质量诊断
+│   ├── ai_report.py              # AI 智能报告全文
+│   ├── knowledge_base.py         # RAG 遥感知识库 (35条指数/术语)
+│   ├── composite.py              # 月度 MVC 合成
+│   ├── preprocess.py             # 云掩膜 + 重采样
+│   ├── image_processing.py       # PCA/滤波/增强/IHS 融合
+│   ├── unsupervised.py           # KMeans 非监督分类
+│   ├── texture.py                # GLCM 纹理特征
+│   ├── bfast.py                  # BFAST 断点检测
+│   ├── spatial.py                # 空间邻域分析
+│   ├── atmospheric.py            # DOS 大气校正
+│   ├── save_ui.py                # 结果一键入库组件
+│   ├── map_utils.py              # 研究区地图 (leafmap降级静态图)
+│   └── pdf_report.py             # PDF 中文科研报告
 ├── tests/                        # 单元测试
 │   ├── test_core_modules.py      # 核心模块测试 (drought/desert/forecast...)
 │   ├── test_salinity.py          # 盐渍化模块测试
@@ -205,7 +225,7 @@ docker build -t geo-ai-app . && docker run -p 8501:8501 geo-ai-app
 ## 状态
 
 - **版本**: v1.23 | **页面**: 25 | **工具模块**: 39
-- **测试**: 350 用例全部通过 | **部署**: Streamlit Cloud ✅
+- **测试**: 392 用例全部通过 | **部署**: Streamlit Cloud ✅
 - **Python**: 3.11 | **PyTorch**: 2.11.0+cpu
 
 ## License

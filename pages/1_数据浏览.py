@@ -179,6 +179,7 @@ if "search_results" in st.session_state and st.session_state["search_results"]:
     st.caption("前几景影像的完整 RGB 预览（点击下方选择框可切换单景详细分析）")
     from utils.pc_data import get_rgb_preview_cached
 
+    satellite_used = st.session_state.get("search_satellite", satellite)
     n_grid = min(len(results), 6)
     grid_cols = st.columns(min(3, n_grid))
     grid_imgs = {}
