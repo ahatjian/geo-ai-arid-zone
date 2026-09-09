@@ -220,6 +220,26 @@ if search_clicked:
             else:
                 st.warning("⚠️ 计算结果全为无效值，请检查公式。")
 
+        # 指数含义说明 + AI 解读
+        from utils.ai_insight import explain_metrics, render_ai_insight_block
+        exp_text = explain_metrics([display_name])
+        if "该指标为" not in exp_text:
+            st.markdown(f"📖 **指数说明**: {exp_text}")
+        render_ai_insight_block(
+            analysis_type=f"{display_name} 指数分析",
+            metrics={
+                "指数均值": stats["mean"],
+                "标准差": stats["std"],
+                "最小值": stats["min"],
+                "最大值": stats["max"],
+                "有效像元占比": stats["valid_ratio"],
+            },
+            study_area=area_name,
+            time_range=item["datetime"],
+            key_suffix="index_ai",
+            show_button=True,
+        )
+
         # 导出提示
         st.divider()
         st.info(

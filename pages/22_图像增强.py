@@ -159,6 +159,20 @@ if geotiff_path:
                     "（>90% 说明信息浓缩有效，可用于分类前降维）"
                 )
 
+                # AI 解读 (PCA 信息浓缩有效性)
+                from utils.ai_insight import render_ai_insight_block
+                render_ai_insight_block(
+                    analysis_type="PCA 主成分分析",
+                    metrics={
+                        "PC1贡献率": ratios[0],
+                        "PC2贡献率": ratios[1] if len(ratios) > 1 else 0,
+                        "PC3贡献率": ratios[2] if len(ratios) > 2 else 0,
+                        "前3累计贡献率": float(cum[:3].sum()),
+                    },
+                    key_suffix="pca_ai",
+                    show_button=True,
+                )
+
                 # 前3分量 RGB 合成
                 if n_comp >= 3:
                     comp_rgb = pca_rgb_composite(pca)

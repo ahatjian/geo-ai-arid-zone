@@ -312,6 +312,20 @@ area_df = pd.DataFrame(areas)
 area_df.columns = ["类别ID", "类别名称", "多边形数", "面积(公顷)", "面积(km²)"]
 st.dataframe(area_df, width="stretch")
 
+# AI 解读 (分类面积空间格局)
+from utils.ai_insight import render_ai_insight_block
+vec_metrics = {}
+total_area_km2 = max(sum(r.get("area_km2", 0) for r in areas), 1e-9)
+for r in areas[:5]:
+    vec_metrics[f"{r['class_name']}面积占比"] = r.get("area_km2", 0) / total_area_km2
+vec_metrics["多边形总数"] = summary["polygon_count"]
+render_ai_insight_block(
+    analysis_type="矢量分类面积格局分析",
+    metrics=vec_metrics,
+    key_suffix="vector_ai",
+    show_button=True,
+)
+
 st.divider()
 
 # ---- Step 4: 预览 ----
