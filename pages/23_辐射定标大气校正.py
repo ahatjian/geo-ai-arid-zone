@@ -45,10 +45,8 @@ with st.sidebar:
     if "📤" in data_source:
         uploaded = st.file_uploader("上传多波段 GeoTIFF", type=["tif", "tiff"])
         if uploaded:
-            tmp_dir = tempfile.gettempdir()
-            geotiff_path = os.path.join(tmp_dir, f"atmo_{uploaded.name}")
-            with open(geotiff_path, "wb") as f:
-                f.write(uploaded.getvalue())
+            from utils.upload_utils import save_upload_stable
+            geotiff_path = save_upload_stable(uploaded, "atmo")
             st.success(f"✅ 已加载: {uploaded.name}")
     else:
         results = st.session_state.get("search_results", None)
@@ -257,9 +255,8 @@ if geotiff_path:
                                    }[x])
 
         if ref_upload:
-            ref_tmp = os.path.join(tempfile.gettempdir(), f"norm_ref_{ref_upload.name}")
-            with open(ref_tmp, "wb") as f:
-                f.write(ref_upload.getvalue())
+            from utils.upload_utils import save_upload_stable
+            ref_tmp = save_upload_stable(ref_upload, "normref")
             ref_bands = load_bands(ref_tmp)
 
             if ref_bands.shape != bands.shape:

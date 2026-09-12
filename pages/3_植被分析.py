@@ -66,10 +66,8 @@ if "单景" in data_mode:
     )
 
     if uploaded:
-        tmp_dir = tempfile.gettempdir()
-        geotiff_path = os.path.join(tmp_dir, f"veg_{uploaded.name}")
-        with open(geotiff_path, "wb") as f:
-            f.write(uploaded.getvalue())
+        from utils.upload_utils import save_upload_stable
+        geotiff_path = save_upload_stable(uploaded, "veg")
         st.success(f"✅ 已加载: {uploaded.name}")
     else:
         geotiff_path = None
@@ -267,9 +265,8 @@ elif "多景" in data_mode and len(uploaded_files_list) >= 2:
     st.subheader("🔧 波段映射与日期标注")
 
     # 先检查首景波段数
-    first_path = os.path.join(tempfile.gettempdir(), f"veg_multi_{uploaded_files_list[0].name}")
-    with open(first_path, "wb") as f:
-        f.write(uploaded_files_list[0].getvalue())
+    from utils.upload_utils import save_upload_stable
+    first_path = save_upload_stable(uploaded_files_list[0], "vegm")
 
     with rasterio.open(first_path) as src:
         n_bands = src.count
@@ -305,9 +302,7 @@ elif "多景" in data_mode and len(uploaded_files_list) >= 2:
                 mean_values = []
                 ndvi_arrays = []
                 for i, uf in enumerate(uploaded_files_list):
-                    tmp_path = os.path.join(tempfile.gettempdir(), f"veg_multi_{uf.name}")
-                    with open(tmp_path, "wb") as f_write:
-                        f_write.write(uf.getvalue())
+                    tmp_path = save_upload_stable(uf, "vegm")
 
                     with rasterio.open(tmp_path) as src:
                         red_arr = src.read(band_red_idx).astype(np.float32)

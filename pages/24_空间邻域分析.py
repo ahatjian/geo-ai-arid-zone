@@ -34,12 +34,9 @@ st.markdown(
 
 
 def save_upload_tmp(uploaded) -> str:
-    """安全保存上传文件到临时目录 (唯一名)。"""
-    safe_name = f"spatial_{_uuid.uuid4().hex[:12]}.tif"
-    geotiff_path = os.path.join(tempfile.gettempdir(), safe_name)
-    with open(geotiff_path, "wb") as f:
-        f.write(uploaded.getvalue())
-    return geotiff_path
+    """保存上传文件到稳定临时路径 (内容 hash 命名, 防积累)。"""
+    from utils.upload_utils import save_upload_stable
+    return save_upload_stable(uploaded, "spatial")
 
 # ============================================================
 # 侧边栏: 数据源

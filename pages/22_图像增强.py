@@ -47,10 +47,8 @@ with st.sidebar:
     if "📤" in data_source:
         uploaded = st.file_uploader("上传多波段 GeoTIFF", type=["tif", "tiff"])
         if uploaded:
-            tmp_dir = tempfile.gettempdir()
-            geotiff_path = os.path.join(tmp_dir, f"imgproc_{uploaded.name}")
-            with open(geotiff_path, "wb") as f:
-                f.write(uploaded.getvalue())
+            from utils.upload_utils import save_upload_stable
+            geotiff_path = save_upload_stable(uploaded, "imgproc")
             st.success(f"✅ 已加载: {uploaded.name}")
     else:
         # 从数据浏览页共享的搜索影像
