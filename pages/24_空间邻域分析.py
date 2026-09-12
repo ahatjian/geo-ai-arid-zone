@@ -22,6 +22,8 @@ import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
 
+from utils.error_handler import StreamlitErrorBoundary
+
 st.set_page_config(page_title="空间邻域分析", page_icon="🗺️", layout="wide")
 
 st.title("🗺️ 空间邻域分析（Geo AI）")
@@ -201,7 +203,7 @@ with tab_buf:
             value_arr = input_arr.astype(np.float64)
 
         if st.button("🎯 执行缓冲区分析", type="primary"):
-            with st.spinner("缓冲区分析中..."):
+            with st.spinner("缓冲区分析中..."), StreamlitErrorBoundary("缓冲区分析", st=st, show_traceback=False):
                 from utils.spatial import smart_buffer_analysis
                 result = smart_buffer_analysis(
                     input_arr, value_arr, target_class=int(target_cls),
@@ -280,7 +282,7 @@ with tab_nb:
         nb_kernel = st.slider("邻域大小", 3, 15, 5, step=2)
 
     if st.button("📐 计算邻域统计", type="primary"):
-        with st.spinner("邻域计算中..."):
+        with st.spinner("邻域计算中..."), StreamlitErrorBoundary("邻域统计", st=st, show_traceback=False):
             from utils.spatial import neighborhood_stats
             nb_map = neighborhood_stats(input_arr, nb_kernel, nb_stat)
 
@@ -350,7 +352,7 @@ with tab_ov:
         if overlay_arr.shape != input_arr.shape:
             st.warning(f"⚠️ 尺寸不一致: 主图 {input_arr.shape} vs 叠加 {overlay_arr.shape}")
         elif st.button("🔀 执行叠加分析", type="primary"):
-            with st.spinner("叠加分析中..."):
+            with st.spinner("叠加分析中..."), StreamlitErrorBoundary("叠加分析", st=st, show_traceback=False):
                 from utils.spatial import overlay_crosstab, overlay_analysis_text
                 class_names_a = st.session_state.get("spatial_class_names", None)
                 result = overlay_crosstab(

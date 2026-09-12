@@ -21,6 +21,8 @@ import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
 
+from utils.error_handler import StreamlitErrorBoundary
+
 st.set_page_config(page_title="图像增强与变换", page_icon="🎨", layout="wide")
 
 st.title("🎨 图像增强与变换")
@@ -133,7 +135,7 @@ if geotiff_path:
 
             n_comp = st.slider("保留分量数", 1, min(bands.shape[0], 6), min(3, bands.shape[0]))
             if st.button("🔬 执行 PCA", type="primary"):
-                with st.spinner("计算主成分..."):
+                with st.spinner("计算主成分..."), StreamlitErrorBoundary("PCA 计算", st=st, show_traceback=False):
                     pca = pca_transform(bands, n_components=n_comp)
 
                 # 存 session 供其他页面使用 (PCA 降维后波段可用于分类)
@@ -200,7 +202,7 @@ if geotiff_path:
             band_sel = st.selectbox("处理波段", list(range(1, bands.shape[0] + 1)),
                                     format_func=lambda b: f"波段 {b}")
             if st.button("🌀 执行滤波", type="primary"):
-                with st.spinner("滤波中..."):
+                with st.spinner("滤波中..."), StreamlitErrorBoundary("空间滤波", st=st, show_traceback=False):
                     out = spatial_filter(bands[band_sel - 1], filter_type, kernel)
                 # 显示增强对比
                 show = contrast_enhance(bands[band_sel - 1], "percentile")
@@ -239,7 +241,7 @@ if geotiff_path:
             band_sel = st.selectbox("处理波段", list(range(1, bands.shape[0] + 1)),
                                     format_func=lambda b: f"波段 {b}", key="ce_band")
             if st.button("☀️ 执行增强", type="primary"):
-                with st.spinner("增强中..."):
+                with st.spinner("增强中..."), StreamlitErrorBoundary("对比度增强", st=st, show_traceback=False):
                     if method == "percentile":
                         out = contrast_enhance(bands[band_sel - 1], method, percentile=pct)
                     elif method == "gamma":
@@ -280,7 +282,7 @@ if geotiff_path:
                 pan_band = st.selectbox("全色波段 (用于锐化)", list(range(1, bands.shape[0] + 1)),
                                         index=3, format_func=lambda b: f"波段 {b}")
                 if st.button("🔗 执行融合", type="primary"):
-                    with st.spinner("融合中..."):
+                    with st.spinner("融合中..."), StreamlitErrorBoundary("IHS 融合", st=st, show_traceback=False):
                         rgb = load_rgb(geotiff_path)
                         pan = bands[pan_band - 1]
                         fused = ihs_fusion(rgb, pan, pan_strength=strength)

@@ -20,6 +20,8 @@ import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
 
+from utils.error_handler import StreamlitErrorBoundary
+
 st.set_page_config(page_title="辐射定标与大气校正", page_icon="🌤️", layout="wide")
 
 st.title("🌤️ 辐射定标与大气校正")
@@ -95,7 +97,7 @@ if geotiff_path:
         )
 
         if st.button("🌤️ 执行大气校正", type="primary"):
-            with st.spinner("大气校正中..."):
+            with st.spinner("大气校正中..."), StreamlitErrorBoundary("DOS 大气校正", st=st, show_traceback=False):
                 from utils.atmospheric import dos_correction, dos_quality_report
                 result = dos_correction(bands, dark_percentile=dark_pct,
                                         stretch_after=stretch)
@@ -205,7 +207,7 @@ if geotiff_path:
         use_default = st.checkbox("使用 Landsat 8 默认反射率系数", value=True)
 
         if st.button("📐 执行辐射定标", type="primary"):
-            with st.spinner("辐射定标中..."):
+            with st.spinner("辐射定标中..."), StreamlitErrorBoundary("辐射定标", st=st, show_traceback=False):
                 from utils.atmospheric import toa_reflectance
                 n = bands.shape[0]
                 if use_default:
@@ -263,7 +265,7 @@ if geotiff_path:
             if ref_bands.shape != bands.shape:
                 st.warning(f"⚠️ 波段数/尺寸不一致: 目标 {bands.shape} vs 参考 {ref_bands.shape}")
             elif st.button("🔗 执行归一化", type="primary"):
-                with st.spinner("归一化中..."):
+                with st.spinner("归一化中..."), StreamlitErrorBoundary("相对归一化", st=st, show_traceback=False):
                     from utils.atmospheric import relative_normalization
                     normalized = relative_normalization(bands, ref_bands, norm_method)
                 st.success(f"✅ 归一化完成 ({norm_method})")
