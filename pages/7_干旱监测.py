@@ -156,7 +156,8 @@ if search_clicked:
             results = []
 
     if not results:
-        st.warning("⚠️ 未找到符合条件的影像，请调整日期范围或云量阈值。")
+        from utils.empty_states import no_image_guidance
+        no_image_guidance(st, context="干旱监测")
         st.stop()
 
     st.success(f"✅ 找到 **{len(results)}** 景影像")

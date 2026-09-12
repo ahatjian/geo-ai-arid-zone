@@ -118,7 +118,8 @@ if search_clicked:
             results = []
 
     if not results:
-        st.warning("⚠️ 未找到影像")
+        from utils.empty_states import no_image_guidance
+        no_image_guidance(st, context="农业干旱分析")
         st.stop()
 
     st.success(f"✅ 找到 {len(results)} 景影像")

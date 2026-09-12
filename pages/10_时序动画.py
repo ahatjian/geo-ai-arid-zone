@@ -65,7 +65,8 @@ if search_clicked:
             results = []
 
     if not results:
-        st.warning("⚠️ 未找到影像")
+        from utils.empty_states import no_image_guidance
+        no_image_guidance(st, context="时序动画")
         st.stop()
 
     st.success(f"✅ {len(results)} 景影像")

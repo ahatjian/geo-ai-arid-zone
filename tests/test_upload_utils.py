@@ -77,3 +77,43 @@ class TestCleanupOldUploads:
     def test_no_files_graceful(self):
         from utils.upload_utils import cleanup_old_uploads
         assert cleanup_old_uploads("nonexistent_prefix_xyz", keep=5) == 0
+
+
+class TestEmptyStates:
+    """空状态引导组件测试"""
+
+    def test_no_image_guidance_runs(self):
+        """无影像引导应可调用不崩溃"""
+        import utils.empty_states as es
+        calls = []
+        class FakeSt:
+            def warning(self, m): calls.append(('w', m))
+            def markdown(self, m): calls.append(('m', m))
+            def caption(self, m): calls.append(('c', m))
+            def info(self, m): calls.append(('i', m))
+        es.no_image_guidance(FakeSt(), "测试上下文")
+        assert any('未找到' in c[1] for c in calls)
+        # 应含完整排查清单 (5 步)
+        full = " ".join(c[1] for c in calls)
+        assert "云量阈值" in full and "时间范围" in full and "数据源" in full
+
+    def test_no_data_guidance(self):
+        import utils.empty_states as es
+        calls = []
+        class FakeSt:
+            def info(self, m): calls.append(m)
+            def caption(self, m): calls.append(m)
+        es.no_data_guidance(FakeSt(), "缓冲区", source_page="植被分析")
+        full = " ".join(calls)
+        assert "植被分析" in full and "数据浏览" in full
+
+    def test_no_result_guidance_with_suggestions(self):
+        import utils.empty_states as es
+        calls = []
+        class FakeSt:
+            def warning(self, m): calls.append(m)
+            def markdown(self, m): calls.append(m)
+            def caption(self, m): calls.append(m)
+        es.no_result_guidance(FakeSt(), "矢量化", suggestions=["减小面积阈值", "检查输入"])
+        full = " ".join(calls)
+        assert "减小面积阈值" in full

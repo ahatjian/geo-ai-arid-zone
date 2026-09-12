@@ -76,7 +76,9 @@ if search_clicked:
             results = []
 
     if not results:
-        st.warning("⚠️ 无影像")
+        from utils.empty_states import no_image_guidance
+
+        no_image_guidance(st, context="生态评估")
         st.stop()
 
     st.success(f"✅ {len(results)} 景")

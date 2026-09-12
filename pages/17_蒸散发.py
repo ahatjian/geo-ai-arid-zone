@@ -117,7 +117,9 @@ if search_clicked:
             results = []
 
     if not results:
-        st.warning("⚠️ 未找到符合条件的影像。降低云量阈值试试？")
+        from utils.empty_states import no_image_guidance
+
+        no_image_guidance(st, context="蒸散发估算")
         st.stop()
 
     st.success(f"✅ 找到 **{len(results)}** 景影像")
