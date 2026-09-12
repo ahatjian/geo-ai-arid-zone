@@ -232,12 +232,22 @@ AI_MODELS = {
 # 路径配置
 # ============================================
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-MODELS_DIR = os.path.join(BASE_DIR, "models")
-DATA_DIR = os.path.join(BASE_DIR, "data")
-CACHE_DIR = os.path.join(BASE_DIR, ".cache")
+
+
+def _resolve_env_path(env_name: str, default_path: str) -> str:
+    value = os.environ.get(env_name, "").strip()
+    if value:
+        return os.path.abspath(os.path.expanduser(value))
+    return os.path.abspath(default_path)
+
+
+MODELS_DIR = _resolve_env_path("GEOAI_MODELS_DIR", os.path.join(BASE_DIR, "models"))
+DATA_DIR = _resolve_env_path("GEOAI_DATA_DIR", os.path.join(BASE_DIR, "data"))
+CACHE_DIR = _resolve_env_path("GEOAI_CACHE_DIR", os.path.join(BASE_DIR, ".cache"))
+RESULTS_DIR = _resolve_env_path("GEOAI_RESULTS_DIR", os.path.join(BASE_DIR, "results"))
 
 # 确保目录存在
-for d in [MODELS_DIR, DATA_DIR, CACHE_DIR]:
+for d in [MODELS_DIR, DATA_DIR, CACHE_DIR, RESULTS_DIR]:
     os.makedirs(d, exist_ok=True)
 
 # ============================================

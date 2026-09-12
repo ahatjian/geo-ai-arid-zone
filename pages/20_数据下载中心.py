@@ -20,6 +20,7 @@ import streamlit as st
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
+from config import RESULTS_DIR
 from utils.results_store import (
     save_result_file, list_results, get_result, get_result_path,
     load_result, delete_result, clear_results, package_results, get_store_info,
@@ -138,7 +139,7 @@ with StreamlitErrorBoundary("概要信息", st=st, show_traceback=False):
     with col2:
         st.metric("占用空间", info["total_human"])
     with col3:
-        st.metric("存储位置", "results/ 目录")
+        st.metric("存储位置", os.path.basename(RESULTS_DIR) or RESULTS_DIR)
 
 st.divider()
 

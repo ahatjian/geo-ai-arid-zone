@@ -19,7 +19,7 @@ import time
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import streamlit as st
-from config import BASE_DIR, CACHE_DIR, DATA_DIR
+from config import BASE_DIR, CACHE_DIR, DATA_DIR, RESULTS_DIR
 
 st.set_page_config(page_title="系统状态", page_icon="🛠️", layout="wide")
 
@@ -84,10 +84,10 @@ with tab_cache:
 
     # 目录列表
     dirs_to_show = [
-        ("缓存目录 (.cache)", os.path.join(BASE_DIR, ".cache"), "STAC 搜索/预览缓存"),
+        ("缓存目录 (.cache)", CACHE_DIR, "STAC 搜索/预览/影像缓存"),
         ("下载目录 (downloads)", os.path.join(BASE_DIR, "downloads"), "历史下载文件"),
-        ("数据目录 (data)", os.path.join(BASE_DIR, "data"), "平台数据文件"),
-        ("结果库 (results)", os.path.join(BASE_DIR, "results"), "用户保存的分析结果"),
+        ("数据目录 (data)", DATA_DIR, "平台数据文件"),
+        ("结果库 (results)", RESULTS_DIR, "用户保存的分析结果"),
     ]
 
     col_headers = st.columns([2, 1, 1, 2])

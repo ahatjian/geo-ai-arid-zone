@@ -30,13 +30,13 @@ from typing import Optional, List, Dict, Any
 
 import numpy as np
 
-from config import BASE_DIR
+from config import BASE_DIR, RESULTS_DIR
 
 # ============================================
 # 路径与常量
 # ============================================
 
-RESULTS_DIR = os.path.join(BASE_DIR, "results")
+# 结果目录优先使用服务器环境变量 GEOAI_RESULTS_DIR，便于挂载持久化卷。
 
 # kind → 扩展名映射
 KIND_EXT = {

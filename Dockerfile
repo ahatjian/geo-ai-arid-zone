@@ -32,6 +32,10 @@ ENV C_INCLUDE_PATH=/usr/include/gdal
 ENV PYTHONUNBUFFERED=1
 ENV STREAMLIT_SERVER_PORT=8501
 ENV STREAMLIT_SERVER_ADDRESS=0.0.0.0
+ENV GEOAI_DATA_DIR=/app/data
+ENV GEOAI_MODELS_DIR=/app/models
+ENV GEOAI_CACHE_DIR=/app/.cache
+ENV GEOAI_RESULTS_DIR=/app/results
 
 # ============================================
 # 工作目录
@@ -53,7 +57,8 @@ COPY . .
 # ============================================
 # 数据目录 (卷挂载点)
 # ============================================
-RUN mkdir -p /app/data /app/models /app/.cache /app/downloads
+RUN mkdir -p /app/data /app/models /app/.cache /app/results /app/downloads
+VOLUME ["/app/data", "/app/models", "/app/.cache", "/app/results"]
 
 # ============================================
 # 暴露端口

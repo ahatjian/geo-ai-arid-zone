@@ -1,0 +1,24 @@
+# Docker build context: keep images small and never package credentials.
+.git
+.gitignore
+.venv
+venv
+__pycache__
+*.py[cod]
+.pytest_cache
+.pytest_tmp
+.streamlit/secrets.toml
+.env
+data
+models
+results
+downloads
+.cache
+OWM_cache
+*.tif
+*.tiff
+*.onnx
+*.pth
+*.pt
+test
+test.npz
