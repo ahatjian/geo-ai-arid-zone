@@ -207,10 +207,15 @@ if search_clicked:
             if use_lst_ndvi:
                 try:
                     tmp_path = os.path.join(tempfile.gettempdir(), f"lst_ndvi_{item['id'][:12]}.tif")
-                    tif_path = download_multiband(
-                        item["item"], tmp_path, collection=satellite,
-                        band_names=["red", "nir"],
-                    )
+                    from utils.error_handler import StreamlitProgress
+                    _dl = StreamlitProgress(st, "⬇️ 下载 NDVI 波段", total=2)
+                    with _dl:
+                        tif_path = download_multiband(
+                            item["item"], tmp_path, collection=satellite,
+                            band_names=["red", "nir"],
+                            progress_callback=_dl.update,
+                        )
+                    _dl.close()
                     if tif_path and os.path.exists(tif_path):
                         import rasterio
                         with rasterio.open(tif_path) as src:

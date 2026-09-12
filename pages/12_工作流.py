@@ -312,7 +312,12 @@ with tab_wizard:
             status.text(f"⬇️ 下载 {search_results[0]['datetime']}...")
             try:
                 tmp = os.path.join(tempfile.gettempdir(), f"wiz_{search_results[0]['id'][:12]}.tif")
-                tif = download_multiband(search_results[0]["item"], tmp, collection=wiz_sat)
+                from utils.error_handler import StreamlitProgress
+                _dl = StreamlitProgress(st, "⬇️ 下载波段", total=6)
+                with _dl:
+                    tif = download_multiband(search_results[0]["item"], tmp, collection=wiz_sat,
+                                             progress_callback=_dl.update)
+                _dl.close()
                 if tif and os.path.exists(tif):
                     import rasterio
                     with rasterio.open(tif) as src:

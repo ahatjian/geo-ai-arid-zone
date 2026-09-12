@@ -161,7 +161,12 @@ if search_clicked:
 
         try:
             tmp_path = os.path.join(tempfile.gettempdir(), f"agri_{item['id'][:12]}.tif")
-            tif_path = download_multiband(item["item"], tmp_path, collection=satellite)
+            from utils.error_handler import StreamlitProgress
+            _dl = StreamlitProgress(st, "⬇️ 下载波段 [{idx+1}/{len(selected_items)}]", total=6)
+            with _dl:
+                tif_path = download_multiband(item["item"], tmp_path, collection=satellite,
+                                              progress_callback=_dl.update)
+            _dl.close()
             if tif_path and os.path.exists(tif_path):
                 import rasterio
                 with rasterio.open(tif_path) as src:

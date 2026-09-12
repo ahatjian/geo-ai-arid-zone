@@ -354,31 +354,36 @@ if "search_results" in st.session_state and st.session_state["search_results"]:
         st.markdown("下载全部 6 个波段并合成为一个多波段 GeoTIFF 文件")
         if st.button("📦 下载全波段 (6波段)", type="primary"):
             if selected_idx is not None:
-                with st.spinner("下载并合成中 (可能需要 1-2 分钟)..."):
-                    with StreamlitErrorBoundary("全波段下载", st=st):
-                        from utils.pc_data import download_multiband
+                with StreamlitErrorBoundary("全波段下载", st=st):
+                    from utils.pc_data import download_multiband
+                    from utils.error_handler import StreamlitProgress
 
-                        tmp_dir = tempfile.gettempdir()
-                        fname = f"{area_name}_{results[selected_idx]['datetime']}_6band.tif"
-                        output_path = os.path.join(tmp_dir, fname)
+                    tmp_dir = tempfile.gettempdir()
+                    fname = f"{area_name}_{results[selected_idx]['datetime']}_6band.tif"
+                    output_path = os.path.join(tmp_dir, fname)
 
+                    # 进度条: 每完成一个波段更新百分比
+                    dl_progress = StreamlitProgress(st, "⬇️ 下载波段", total=6)
+                    with dl_progress:
                         result_path = download_multiband(
                             results[selected_idx]["item"],
                             output_path,
                             collection=satellite_used,
                             band_names=["blue", "green", "red", "nir", "swir1", "swir2"],
+                            progress_callback=dl_progress.update,
                         )
+                    dl_progress.close()
 
-                        if result_path and os.path.exists(output_path):
-                            with open(output_path, "rb") as f:
-                                st.download_button(
-                                    "⬇️ 保存多波段 GeoTIFF",
-                                    f,
-                                    file_name=fname,
-                                    mime="image/tiff",
-                                )
-                            st.success(f"✅ 全波段下载完成: {fname}")
-                        else:
+                    if result_path and os.path.exists(output_path):
+                        with open(output_path, "rb") as f:
+                            st.download_button(
+                                "⬇️ 保存多波段 GeoTIFF",
+                                f,
+                                file_name=fname,
+                                mime="image/tiff",
+                            )
+                        st.success(f"✅ 全波段下载完成: {fname}")
+                    else:
                             st.error("多波段下载失败")
 
 else:

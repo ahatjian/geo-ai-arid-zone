@@ -302,7 +302,8 @@ def download_band(item, band_name, output_path, collection="Sentinel-2 L2A"):
 # ============================================
 # 批量下载多波段 (GeoTIFF)
 # ============================================
-def download_multiband(item, output_path, collection="Sentinel-2 L2A", band_names=None):
+def download_multiband(item, output_path, collection="Sentinel-2 L2A", band_names=None,
+                       progress_callback=None):
     """
     下载多个波段并合成为一个多波段 GeoTIFF
 
@@ -311,6 +312,8 @@ def download_multiband(item, output_path, collection="Sentinel-2 L2A", band_name
         output_path: 输出文件路径
         collection: 数据集名称
         band_names: 波段名称列表，默认 6 波段
+        progress_callback: 进度回调 callback(completed, total) — 每完成一个波段调用,
+                           用于大影像下载的进度展示
 
     返回:
         str: 成功返回输出路径，失败返回 None
@@ -318,6 +321,11 @@ def download_multiband(item, output_path, collection="Sentinel-2 L2A", band_name
     # 缓存命中: 文件已存在且有效
     import os
     if os.path.exists(output_path) and os.path.getsize(output_path) > 1024:
+        if progress_callback:
+            try:
+                progress_callback(1, 1)  # 缓存命中视为瞬时完成
+            except Exception:
+                pass
         return output_path
 
     try:
@@ -338,13 +346,20 @@ def download_multiband(item, output_path, collection="Sentinel-2 L2A", band_name
 
         # 读取所有波段
         all_bands = []
-        for bk in band_keys:
+        total_bands = len(band_keys)
+        for i, bk in enumerate(band_keys):
             href = item.assets[bk].href
             data = rioxarray.open_rasterio(href).squeeze()
             # 重采样到统一尺寸
             if data.shape != first_data.shape:
                 data = data.rio.reproject_match(first_data)
             all_bands.append(data.values.astype(first_data.dtype))
+            # 进度回调 (每完成一个波段)
+            if progress_callback:
+                try:
+                    progress_callback(i + 1, total_bands)
+                except Exception:
+                    pass
 
         # 写入多波段 TIFF
         stack = np.stack(all_bands, axis=0)

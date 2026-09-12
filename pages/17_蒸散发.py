@@ -169,7 +169,12 @@ if search_clicked:
 
             # 2. 读取多光谱波段 (反照率 + NDVI)
             tmp_path = os.path.join(tempfile.gettempdir(), f"et_ms_{item['id'][:12]}.tif")
-            tif_path = download_multiband(item["item"], tmp_path, collection=satellite)
+            from utils.error_handler import StreamlitProgress
+            _dl = StreamlitProgress(st, "⬇️ 下载波段 [{idx+1}/{n_selected}]", total=6)
+            with _dl:
+                tif_path = download_multiband(item["item"], tmp_path, collection=satellite,
+                                              progress_callback=_dl.update)
+            _dl.close()
             import rasterio
             with rasterio.open(tif_path) as src:
                 bands = src.read().astype(np.float32)

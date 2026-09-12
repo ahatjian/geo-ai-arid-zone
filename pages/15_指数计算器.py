@@ -134,7 +134,12 @@ if search_clicked:
     with st.spinner("⬇️ 下载 6 波段数据..."):
         with StreamlitErrorBoundary("波段下载", st=st, show_traceback=False):
             tmp_path = os.path.join(tempfile.gettempdir(), f"idx_{item['id'][:12]}.tif")
-            tif_path = download_multiband(item["item"], tmp_path, collection=satellite)
+            from utils.error_handler import StreamlitProgress
+            _dl = StreamlitProgress(st, "⬇️ 下载波段", total=6)
+            with _dl:
+                tif_path = download_multiband(item["item"], tmp_path, collection=satellite,
+                                              progress_callback=_dl.update)
+            _dl.close()
             import rasterio
             with rasterio.open(tif_path) as src:
                 bands_data = src.read().astype(np.float32)

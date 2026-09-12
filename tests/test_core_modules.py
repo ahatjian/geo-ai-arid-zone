@@ -289,3 +289,34 @@ class TestOtsuFallback:
         # 波段不足应明确报错 (异常上抛, 由外层 segment_water_ai 捕获)
         with pytest.raises(ValueError):
             _segment_water_otsu_fallback(path, [3, 2, 1, 4])
+
+
+class TestDownloadProgress:
+    """download_multiband 进度回调测试"""
+
+    def test_cache_hit_triggers_callback(self, tmp_path):
+        """缓存命中时应立即回调 (1,1)"""
+        from utils.pc_data import download_multiband
+        # 造一个 >1024 字节的假缓存文件
+        f = tmp_path / "cached.tif"
+        f.write_bytes(b"x" * 2048)
+        calls = []
+        result = download_multiband(None, str(f), progress_callback=lambda i, n: calls.append((i, n)))
+        assert result == str(f)
+        assert calls == [(1, 1)]
+
+    def test_callback_signature(self):
+        """回调签名 callback(completed, total)"""
+        from utils.pc_data import download_multiband
+        import inspect
+        sig = inspect.signature(download_multiband)
+        assert "progress_callback" in sig.parameters
+        # 默认 None (向后兼容)
+        assert sig.parameters["progress_callback"].default is None
+
+    def test_no_callback_no_error(self, tmp_path):
+        """不传回调时应正常工作 (向后兼容)"""
+        from utils.pc_data import download_multiband
+        f = tmp_path / "cached2.tif"
+        f.write_bytes(b"x" * 2048)
+        assert download_multiband(None, str(f)) == str(f)

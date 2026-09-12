@@ -373,9 +373,18 @@ if data_mode == "🛰️ STAC 自动下载":
                 t2_tmp.close()
 
                 st.info("⏳ 下载 T1 影像 (6波段, 可能需要1-2分钟)...")
-                download_multiband(t1_sel["item"], t1_path, collection=satellite)
+                from utils.error_handler import StreamlitProgress
+                _dl1 = StreamlitProgress(st, "⬇️ 下载 T1 波段", total=6)
+                with _dl1:
+                    download_multiband(t1_sel["item"], t1_path, collection=satellite,
+                                       progress_callback=_dl1.update)
+                _dl1.close()
                 st.info("⏳ 下载 T2 影像 (6波段, 可能需要1-2分钟)...")
-                download_multiband(t2_sel["item"], t2_path, collection=satellite)
+                _dl2 = StreamlitProgress(st, "⬇️ 下载 T2 波段", total=6)
+                with _dl2:
+                    download_multiband(t2_sel["item"], t2_path, collection=satellite,
+                                       progress_callback=_dl2.update)
+                _dl2.close()
 
                 st.session_state["cd_t1_path"] = t1_path
                 st.session_state["cd_t2_path"] = t2_path

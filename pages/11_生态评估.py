@@ -93,7 +93,12 @@ if search_clicked:
         status.text(f"⬇️ [{idx+1}/{len(results)}] {r['datetime']}")
         try:
             tmp = os.path.join(tempfile.gettempdir(), f"eco_{r['id'][:12]}.tif")
-            tif = download_multiband(r["item"], tmp, collection=satellite)
+            from utils.error_handler import StreamlitProgress
+            _dl = StreamlitProgress(st, "⬇️ 下载波段", total=6)
+            with _dl:
+                tif = download_multiband(r["item"], tmp, collection=satellite,
+                                         progress_callback=_dl.update)
+            _dl.close()
             if tif and os.path.exists(tif):
                 import rasterio
                 with rasterio.open(tif) as src:

@@ -225,9 +225,14 @@ if search_clicked:
                 tempfile.gettempdir(),
                 f"drought_{item['id'][:12]}.tif"
             )
-            tif_path = download_multiband(
-                item["item"], tmp_path, collection=satellite
-            )
+            from utils.error_handler import StreamlitProgress
+            _dl = StreamlitProgress(st, f"⬇️ 下载波段 [{idx+1}/{n_selected}]", total=6)
+            with _dl:
+                tif_path = download_multiband(
+                    item["item"], tmp_path, collection=satellite,
+                    progress_callback=_dl.update,
+                )
+            _dl.close()
 
             if tif_path and os.path.exists(tif_path):
                 # 读取波段并计算指数
