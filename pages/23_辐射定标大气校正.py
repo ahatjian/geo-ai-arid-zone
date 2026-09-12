@@ -50,10 +50,15 @@ with st.sidebar:
             st.success(f"✅ 已加载: {uploaded.name}")
     else:
         results = st.session_state.get("search_results", None)
-        if results:
-            st.caption(f"📡 使用数据浏览页的 {len(results)} 景影像")
+        from utils.upload_utils import get_shared_geotiff_path
+        geotiff_path = get_shared_geotiff_path(st.session_state)
+        if geotiff_path:
+            name = st.session_state.get("multiband_name") or "共享多波段影像"
+            st.success(f"✅ 已加载: {name}")
+        elif results:
+            st.info("📡 已找到影像列表，但请先在「数据浏览」页下载全波段 GeoTIFF")
         else:
-            st.info("👈 请先在「数据浏览」页搜索影像")
+            st.info("👈 请先在「数据浏览」页搜索并下载全波段影像")
 
     st.divider()
 
@@ -268,6 +273,30 @@ if geotiff_path:
                 st.success(f"✅ 归一化完成 ({norm_method})")
                 st.caption(f"目标均值: {np.nanmean(bands):.4f} → 归一化后: {np.nanmean(normalized):.4f} (参考: {np.nanmean(ref_bands):.4f})")
                 st.session_state["normalized_bands"] = normalized
+
+                out_tif3 = os.path.join(tempfile.gettempdir(), "relative_normalized.tif")
+                import rasterio
+                with rasterio.open(geotiff_path) as src:
+                    meta = src.meta.copy()
+                meta.update(dtype="float64", count=normalized.shape[0])
+                with rasterio.open(out_tif3, "w", **meta) as dst:
+                    dst.write(normalized)
+                with open(out_tif3, "rb") as f:
+                    st.download_button(
+                        "⬇️ 归一化 GeoTIFF",
+                        f,
+                        file_name="relative_normalized.tif",
+                        mime="image/tiff",
+                        width="stretch",
+                    )
+                from utils.save_ui import render_save_button
+                render_save_button(
+                    default_name=f"相对辐射归一化_{norm_method}",
+                    data=normalized,
+                    kind="npy",
+                    meta={"模块": "辐射定标与大气校正", "归一化方法": norm_method},
+                    key_suffix="norm_result",
+                )
 
 else:
     st.info("👈 请在左侧上传 GeoTIFF 影像开始预处理")

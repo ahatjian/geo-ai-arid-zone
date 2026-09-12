@@ -375,6 +375,7 @@ def train_classifier(
     from sklearn.svm import SVC
     from sklearn.neighbors import KNeighborsClassifier
     from sklearn.neural_network import MLPClassifier
+    from sklearn.calibration import CalibratedClassifierCV
 
     cfg = dict(CLASSIFIERS[classifier]["params"])
     cfg.update(params)
@@ -382,7 +383,12 @@ def train_classifier(
     if classifier == "random_forest":
         model = RandomForestClassifier(**cfg)
     elif classifier == "svm":
-        model = SVC(**cfg)
+        use_probability = bool(cfg.pop("probability", False))
+        base_model = SVC(**cfg)
+        model = (
+            CalibratedClassifierCV(base_model, method="sigmoid", cv=3)
+            if use_probability else base_model
+        )
     elif classifier == "knn":
         model = KNeighborsClassifier(**cfg)
     elif classifier == "mlp":

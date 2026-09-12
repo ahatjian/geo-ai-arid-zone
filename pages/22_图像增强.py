@@ -51,12 +51,16 @@ with st.sidebar:
             geotiff_path = save_upload_stable(uploaded, "imgproc")
             st.success(f"✅ 已加载: {uploaded.name}")
     else:
-        # 从数据浏览页共享的搜索影像
         results = st.session_state.get("search_results", None)
-        if results:
-            st.caption(f"📡 使用数据浏览页的 {len(results)} 景影像")
+        from utils.upload_utils import get_shared_geotiff_path
+        geotiff_path = get_shared_geotiff_path(st.session_state)
+        if geotiff_path:
+            name = st.session_state.get("multiband_name") or "共享多波段影像"
+            st.success(f"✅ 已加载: {name}")
+        elif results:
+            st.info("📡 已找到影像列表，但请先在「数据浏览」页下载全波段 GeoTIFF")
         else:
-            st.info("👈 请先在「数据浏览」页搜索影像")
+            st.info("👈 请先在「数据浏览」页搜索并下载全波段影像")
 
     st.divider()
 
@@ -104,6 +108,50 @@ def load_rgb(geotiff_path: str, band_order=None):
         green /= 10000.0
         blue /= 10000.0
     return np.stack([red, green, blue], axis=-1)
+
+
+def _prepare_raster_for_write(arr):
+    import numpy as np
+    arr = np.asarray(arr)
+    if arr.ndim == 3 and arr.shape[-1] <= 8 and arr.shape[0] > 8:
+        arr = np.moveaxis(arr, -1, 0)
+    return arr
+
+
+def save_processed_raster(arr, default_name, key_suffix, source_path):
+    import os
+    import tempfile
+    import rasterio
+    from utils.save_ui import render_save_button
+
+    arr = np.asarray(arr)
+    write_arr = _prepare_raster_for_write(arr)
+    out_tif = os.path.join(tempfile.gettempdir(), f"enhance_{key_suffix}.tif")
+
+    with rasterio.open(source_path) as src:
+        meta = src.meta.copy()
+    meta.update(dtype=write_arr.dtype, count=write_arr.shape[0] if write_arr.ndim == 3 else 1)
+    with rasterio.open(out_tif, "w", **meta) as dst:
+        if write_arr.ndim == 2:
+            dst.write(write_arr, 1)
+        else:
+            dst.write(write_arr)
+
+    with open(out_tif, "rb") as f:
+        st.download_button(
+            f"⬇️ 下载 {default_name} GeoTIFF",
+            f,
+            file_name=os.path.basename(out_tif),
+            mime="image/tiff",
+            key=f"dl_{key_suffix}",
+        )
+    render_save_button(
+        default_name=default_name,
+        data=arr,
+        kind="npy",
+        meta={"模块": "图像增强与变换", "输出": default_name},
+        key_suffix=key_suffix,
+    )
 
 
 # ---- 数据准备 ----
@@ -173,6 +221,8 @@ if geotiff_path:
                     show_button=True,
                 )
 
+                save_processed_raster(pca["pca"], f"PCA_{n_comp}分量", "pca", geotiff_path)
+
                 # 前3分量 RGB 合成
                 if n_comp >= 3:
                     comp_rgb = pca_rgb_composite(pca)
@@ -214,6 +264,7 @@ if geotiff_path:
                 axes[1].axis("off")
                 st.pyplot(fig)
                 plt.close(fig)
+                save_processed_raster(out, f"滤波_{filter_type}", f"filter_{filter_type}", geotiff_path)
 
         # ============================================
         # 对比度增强
@@ -265,6 +316,7 @@ if geotiff_path:
                 axes2[1].set_title("增强后直方图")
                 st.pyplot(fig2)
                 plt.close(fig2)
+                save_processed_raster(out, f"增强_{method}", f"contrast_{method}", geotiff_path)
 
         # ============================================
         # IHS 融合
@@ -293,6 +345,7 @@ if geotiff_path:
                     axes[1].axis("off")
                     st.pyplot(fig)
                     plt.close(fig)
+                    save_processed_raster(fused, f"IHS融合_{strength}", f"ihs_{strength}", geotiff_path)
 
 else:
     st.info("👈 请在左侧上传 GeoTIFF 影像开始处理")

@@ -34,12 +34,12 @@ def save_upload_stable(uploaded, prefix: str, max_size_mb: int = 200) -> str:
     if len(content) > max_size_mb * 1024 * 1024:
         raise ValueError(f"文件过大 (>{max_size_mb}MB)")
 
-    # 内容 hash (前 256KB 足够区分, 速度快)
-    h = hashlib.md5(content[:262144]).hexdigest()[:12]
+    # 完整内容 hash + 文件大小，避免不同大文件因前 256KB 相同而碰撞
+    h = hashlib.md5(content + str(len(content)).encode("utf-8")).hexdigest()[:12]
 
     # 扩展名白名单 (不信任客户端)
     ext = os.path.splitext(getattr(uploaded, "name", "") or "")[1].lower()
-    if ext not in (".tif", ".tiff", ".geojson", ".json", ".csv", ".npz", ".npy"):
+    if ext not in (".tif", ".tiff", ".geojson", ".json", ".csv", ".npz", ".npy", ".onnx", ".pth"):
         ext = ".tif"
 
     path = os.path.join(tempfile.gettempdir(), f"{prefix}_{h}{ext}")
@@ -85,3 +85,11 @@ def cleanup_old_uploads(prefix: str, keep: int = 20) -> int:
         except OSError:
             pass
     return removed
+
+def get_shared_geotiff_path(session_state):
+    """Return a reusable GeoTIFF shared by the data-browsing page."""
+    for key in ("multiband_tif", "local_tif"):
+        path = session_state.get(key)
+        if path and os.path.exists(path):
+            return path
+    return None

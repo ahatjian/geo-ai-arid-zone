@@ -333,7 +333,8 @@ with tab_ov:
         if overlay_arr is None:
             st.info("💡 提示: 请先在「干旱监测」页生成干旱分级结果")
     elif overlay_type == "土地覆盖":
-        overlay_arr = st.session_state.get("lc_result", None)
+        lc_result = st.session_state.get("lc_result", None)
+        overlay_arr = lc_result.get("class_array", None) if isinstance(lc_result, dict) else None
         names_b = ["水体", "植被", "裸地", "建设用地", "农田", "其他"]
         if overlay_arr is None:
             st.info("💡 提示: 请先在「AI 分类」页生成分类结果")
@@ -341,8 +342,6 @@ with tab_ov:
         ov_file = st.file_uploader("上传第二图层 GeoTIFF", type=["tif", "tiff"], key="ov_file")
         if ov_file:
             otmp = save_upload_tmp(ov_file)
-            with open(otmp, "wb") as f:
-                f.write(ov_file.getvalue())
             overlay_arr = load_raster(otmp)
 
     if overlay_arr is not None:

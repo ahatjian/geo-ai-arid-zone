@@ -408,9 +408,8 @@ elif "非监督" in run_mode:
                                type=["tif", "tiff"], key="km_upload")
 
     if km_file:
-        km_tmp = os.path.join(tempfile.gettempdir(), f"km_{km_file.name}")
-        with open(km_tmp, "wb") as f:
-            f.write(km_file.getvalue())
+        from utils.upload_utils import save_upload_stable
+        km_tmp = save_upload_stable(km_file, "kmeans")
         import rasterio
         with rasterio.open(km_tmp) as src:
             km_bands = src.read().astype(np.float64)
@@ -555,10 +554,8 @@ else:
             help="波段顺序: Blue, Green, Red, NIR, SWIR1, SWIR2",
         )
         if uploaded:
-            tmp_dir = tempfile.gettempdir()
-            geotiff_path = os.path.join(tmp_dir, f"ai_class_{uploaded.name}")
-            with open(geotiff_path, "wb") as f:
-                f.write(uploaded.getvalue())
+            from utils.upload_utils import save_upload_stable
+            geotiff_path = save_upload_stable(uploaded, "ai_class")
             st.success(f"✅ 已加载: {uploaded.name}")
 
             import rasterio
@@ -644,11 +641,9 @@ else:
 
                     # 准备模型路径
                     if onnx_model_file is not None:
-                        tmp_model = os.path.join(MODELS_DIR, f"uploaded_{onnx_model_file.name}")
+                        from utils.upload_utils import save_upload_stable
                         os.makedirs(MODELS_DIR, exist_ok=True)
-                        with open(tmp_model, "wb") as f:
-                            f.write(onnx_model_file.getvalue())
-                        actual_onnx_path = tmp_model
+                        actual_onnx_path = save_upload_stable(onnx_model_file, "onnx_model")
                         st.success(f"✅ ONNX 模型已加载: {onnx_model_file.name}")
                     else:
                         actual_onnx_path = onnx_model_path
@@ -766,9 +761,8 @@ else:
                     import geoai
 
                     # 临时保存用户上传的模型文件
-                    model_path = os.path.join(MODELS_DIR, "uploaded_model.pth")
-                    with open(model_path, "wb") as f:
-                        f.write(model_file.getvalue())
+                    from utils.upload_utils import save_upload_stable
+                    model_path = save_upload_stable(model_file, "pth_model")
 
                     st.success("✅ 模型文件已加载")
 

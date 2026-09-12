@@ -255,7 +255,7 @@ def _segment_water_otsu_fallback(
     import rasterio
     import numpy as np
     from skimage.filters import threshold_otsu
-    from skimage.morphology import opening, square
+    from skimage.morphology import opening, footprint_rectangle
 
     # 默认 Sentinel-2 band_order: [R=3, G=2, B=1, NIR=4] (1-based)
     if band_order is None:
@@ -302,7 +302,7 @@ def _segment_water_otsu_fallback(
         mask = (mndwi > thresh).astype(np.uint8)
 
         # 形态学开运算去噪
-        mask = opening(mask, square(3))
+        mask = opening(mask, footprint_rectangle((3, 3)))
 
         # 输出 GeoTIFF
         if output_raster is None:

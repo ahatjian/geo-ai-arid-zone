@@ -20,12 +20,15 @@ from PIL import Image
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from config import STUDY_AREAS, COLLECTIONS, COLORMAPS, CACHE_CONFIG
+from config import (
+    STUDY_AREAS, COLLECTIONS, COLORMAPS, CACHE_CONFIG,
+    LANDSAT_ST_ASSET, LANDSAT_ST_SCALE, LANDSAT_ST_OFFSET,
+)
 from utils.error_handler import StreamlitErrorBoundary
 from utils.aoi import render_aoi_selector
 from utils.pc_data import (
     search_images, get_rgb_preview_cached,
-    download_multiband, get_ndvi_preview_cached,
+    download_multiband, get_ndvi_preview_cached, download_asset,
 )
 
 st.set_page_config(page_title="干旱监测", page_icon="🏜️", layout="wide")
@@ -212,7 +215,8 @@ if search_clicked:
     all_ndvi = []       # (H, W) × T
     all_ndwi = []       # for NDDI
     image_labels = []   # 日期标签
-    latest_bands_data = None  # 最新影像的完整波段 (用于沙漠化)
+    latest_bands_data = None  # 首个成功影像的完整波段 (用于沙漠化/TVDI)
+    first_success_item = None
 
     for idx, item in enumerate(selected_items):
         pct = (idx + 1) / n_selected
@@ -277,9 +281,10 @@ if search_clicked:
                 all_ndwi.append(ndwi)
                 image_labels.append(item["datetime"])
 
-                # 保留最新影像的完整波段数据 (用于沙漠化评估)
-                if idx == 0:
+                # 保留首个成功影像的完整波段与元数据 (用于沙漠化/TVDI)
+                if latest_bands_data is None:
                     latest_bands_data = bands_data.astype(np.float32)
+                    first_success_item = item
 
                 # 清理临时文件
                 try:
@@ -408,9 +413,69 @@ if search_clicked:
         except Exception as e:
             st.warning(f"NDVI 距平计算失败: {e}")
 
+    # 4.4 TVDI 温度植被干旱指数 (需要 Landsat 热红外波段)
+    if use_tvdi:
+        if "Landsat" in satellite:
+            try:
+                st_asset = LANDSAT_ST_ASSET.get(satellite)
+                if st_asset:
+                    st_tif = os.path.join(
+                        tempfile.gettempdir(),
+                        f"drought_lst_{first_success_item['id'][:12]}.tif",
+                    )
+                    st_path = download_asset(first_success_item["item"], st_asset, st_tif)
+                    if st_path and os.path.exists(st_path):
+                        import rasterio
+                        with rasterio.open(st_path) as src:
+                            st_arr = src.read(1).astype(np.float32)
+                        lst_c = st_arr * LANDSAT_ST_SCALE + LANDSAT_ST_OFFSET - 273.15
+
+                        from utils.drought import calc_tvdi
+                        tvdi_flat, tvdi_info = calc_tvdi(ndvi_stack[:, :, 0], lst_c)
+                        if "error" not in tvdi_info:
+                            tvdi = np.reshape(tvdi_flat, ndvi_stack[:, :, 0].shape)
+                            tvdi_cat = np.full(tvdi.shape, 0, dtype=np.int8)
+                            tvdi_cat[tvdi > 0.8] = 4
+                            tvdi_cat[(tvdi > 0.6) & (tvdi <= 0.8)] = 3
+                            tvdi_cat[(tvdi > 0.4) & (tvdi <= 0.6)] = 2
+                            tvdi_cat[(tvdi > 0.2) & (tvdi <= 0.4)] = 1
+                            tab_names.append("TVDI")
+                            tab_contents["TVDI"] = {
+                                "data": tvdi,
+                                "category": tvdi_cat,
+                                "stats": compute_drought_index_stats(tvdi, "TVDI"),
+                                "cat_stats": compute_drought_stats(tvdi_cat, pixel_size_m=pixel_size),
+                                "vmin": 0, "vmax": 1,
+                                "cmap": "YlOrRd",
+                                "label": "TVDI (0-1)",
+                                "description": "温度植被干旱指数 — 值越大越干旱",
+                            }
+                        else:
+                            st.warning(f"TVDI 计算失败: {tvdi_info.get('error', '未知错误')}")
+                    else:
+                        st.warning("⚠️ TVDI 需要 Landsat 热红外波段，下载失败")
+                    try:
+                        if os.path.exists(st_tif):
+                            os.remove(st_tif)
+                    except Exception:
+                        pass
+                else:
+                    st.warning("⚠️ 当前 Landsat 产品未配置热红外资产")
+            except Exception as e:
+                st.warning(f"TVDI 计算失败: {e}")
+        else:
+            st.warning("⚠️ TVDI 需要 Landsat 热红外数据，当前数据源不可用")
+
     if not tab_contents:
         st.warning("⚠️ 没有成功计算的干旱指数，请检查数据")
         st.stop()
+
+    # 供「空间邻域分析」的叠加图层复用，优先使用 VCI 分级。
+    for preferred in ("VCI", "NDDI", "NDVI距平", "TVDI"):
+        if preferred in tab_contents:
+            st.session_state["drought_category"] = tab_contents[preferred]["category"]
+            st.session_state["drought_index_type"] = preferred
+            break
 
     # ---- Step 5: 结果展示 ----
     tabs = st.tabs(tab_names)

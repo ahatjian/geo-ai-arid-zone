@@ -267,10 +267,8 @@ if "📡" in data_mode:
 
     uploaded = st.file_uploader("或直接在此上传多波段 GeoTIFF", type=["tif", "tiff"], key="water_local")
     if uploaded:
-        tmp_dir = tempfile.gettempdir()
-        geotiff_path = os.path.join(tmp_dir, f"water_{uploaded.name}")
-        with open(geotiff_path, "wb") as f:
-            f.write(uploaded.getvalue())
+        from utils.upload_utils import save_upload_stable
+        geotiff_path = save_upload_stable(uploaded, "water")
         st.success(f"✅ 已加载: {uploaded.name}")
 else:
     required_bands = "R, G, B, NIR (4波段)" if is_ai_mode else "Green, NIR, SWIR1 (至少3波段)"
@@ -279,10 +277,8 @@ else:
         type=["tif", "tiff"]
     )
     if uploaded:
-        tmp_dir = tempfile.gettempdir()
-        geotiff_path = os.path.join(tmp_dir, f"water_{uploaded.name}")
-        with open(geotiff_path, "wb") as f:
-            f.write(uploaded.getvalue())
+        from utils.upload_utils import save_upload_stable
+        geotiff_path = save_upload_stable(uploaded, "water")
         st.success(f"✅ 已加载: {uploaded.name}")
 
 # ============================================
