@@ -30,7 +30,7 @@
 - 🌍 **生态评估** — PSR 压力-状态-响应 生态安全指数 (ESI) + 可调权重 + 5 级安全分级
 - ⚡ **智能工作流** — DeepSeek AI 自然语言查询 + 一键分步分析 + 综合报告自动生成 + AI 智能解读
 - 🤖 **AI 智能解读** — 基于各模块分析指标，DeepSeek 自动生成专业生态/环境解读，嵌入 HTML/PDF 报告（无 API Key 时自动降级为规则模板）
-- 🛰️ **影像预处理** — Sentinel-2 SCL / Landsat QA_PIXEL 逐像元云掩膜 + 分辨率重采样 + Savitzky-Golay 时序平滑（NDVI 重建）
+- 🛰️ **影像预处理** — Sentinel-2 SCL / Landsat QA_PIXEL 逐像元云掩膜（入口在「辐射定标与大气校正」页，可从数据浏览页共享影像自动获取掩膜图层）+ 分辨率重采样 + Savitzky-Golay 时序平滑（NDVI 重建）
 - 📄 **PDF 科研报告** — reportlab 生成带中文字体的 PDF 版报告（HTML/PDF 双格式下载）
 - 📝 **AI 智能报告全文** — DeepSeek 一键生成完整科研报告（执行摘要/分项分析/综合结论/对策建议 + 指标数据表，Markdown 下载）
 - ⚡ **AI 自动执行工作流** — 自然语言描述需求 → AI 解析 → 自动填充研究区/日期/模块并执行（"分析塔里木盆地2025年植被和干旱"一键完成）
@@ -79,7 +79,7 @@ streamlit run app.py
 
 ## 离线演示模式
 
-数据浏览页侧边栏提供 **🧪 离线演示模式**。启用后不访问外部卫星服务，自动生成本地模拟的 Sentinel-2 / Landsat 影像，可用于弱网、断网或答辩现场完整演示搜索、分析、预测、导出全流程。真实科研分析时关闭该开关即可恢复 Planetary Computer 数据源。
+**任意页面**的侧边栏顶部提供 **🧪 离线演示模式** 开关（全站共享同一状态）。启用后不访问外部卫星服务，自动生成本地模拟的 Sentinel-2 / Landsat 影像，可用于弱网、断网或答辩现场完整演示搜索、分析、预测、导出全流程。真实科研分析时关闭该开关即可恢复 Planetary Computer 数据源。
 
 ## DeepSeek AI 配置
 
@@ -174,6 +174,7 @@ web-geo-ai/
 │   ├── spatial.py                # 空间邻域分析
 │   ├── atmospheric.py            # DOS 大气校正
 │   ├── demo_data.py               # 离线演示数据生成与本地影像缓存
+│   ├── demo_mode.py               # 离线演示模式全局开关 (侧边栏组件)
 │   ├── save_ui.py                # 结果一键入库组件
 │   ├── map_utils.py              # 研究区地图 (leafmap降级静态图)
 │   └── pdf_report.py             # PDF 中文科研报告
@@ -259,7 +260,8 @@ docker build -t geo-ai-app . && docker run -p 8501:8501 geo-ai-app
 ## 状态
 
 - **版本**: v1.24 | **页面**: 25 | **工具模块**: 48
-- **测试**: 494 用例通过 (1 项按条件跳过) | **部署**: Streamlit Cloud ✅
+- **测试**: 530 用例通过 (1 项按条件跳过) | **部署**: Streamlit Cloud ✅
+- **CI**: GitHub Actions (ruff lint + pytest + 编译检查)
 - **Python**: 3.11 | **PyTorch**: 2.11.0+cpu
 
 ## License
