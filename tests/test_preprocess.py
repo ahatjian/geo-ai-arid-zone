@@ -219,3 +219,92 @@ class TestPdfReport:
         from utils.pdf_report import generate_report_pdf
         pdf = generate_report_pdf("空报告", ["无章节"], [])
         assert pdf is not None and pdf[:4] == b"%PDF"
+
+
+# ============================================================
+# 云掩膜资产配置 — 页面据此自动获取 SCL / QA_PIXEL
+# ============================================================
+
+class TestCloudAssetConfig:
+    """第 23 页的云掩膜靠 COLLECTIONS[*]["cloud_asset"] 自动下载图层。
+
+    缺这个字段不会报错, 只会静默跳过掩膜 —— 所以用测试把它钉死。
+    """
+
+    def test_every_collection_declares_cloud_asset(self):
+        from config import COLLECTIONS
+        for name, cfg in COLLECTIONS.items():
+            assert "cloud_asset" in cfg, f"{name} 未声明 cloud_asset"
+            assert cfg["cloud_asset"], f"{name} 的 cloud_asset 为空"
+
+    def test_sentinel2_uses_scl(self):
+        from config import COLLECTIONS
+        assert COLLECTIONS["Sentinel-2 L2A"]["cloud_asset"] == "SCL"
+
+    @pytest.mark.parametrize("sat", ["Landsat-8", "Landsat-9", "Landsat-7", "Landsat-4-5"])
+    def test_landsat_uses_qa_pixel(self, sat):
+        from config import COLLECTIONS
+        assert COLLECTIONS[sat]["cloud_asset"] == "QA_PIXEL"
+
+    def test_cloud_asset_not_mixed_into_bands(self):
+        """cloud_asset 必须是独立字段。
+
+        若混进 bands, 所有以 len(bands) 判断波段数的代码 (下载、校验、
+        页面提示) 都会把掩膜层当成反射率波段。
+        """
+        from config import COLLECTIONS
+        for name, cfg in COLLECTIONS.items():
+            assert cfg["cloud_asset"] not in cfg["bands"].values(), name
+
+    def test_band_count_still_six(self):
+        from config import COLLECTIONS
+        for name, cfg in COLLECTIONS.items():
+            assert len(cfg["bands"]) == 6, name
+
+    def test_cloud_asset_resolvable_via_download_asset(self):
+        """资产名要能被 pc_data.download_asset 直接使用 (即 STAC 资产键)"""
+        from config import COLLECTIONS
+        known = {"SCL", "QA_PIXEL"}
+        for name, cfg in COLLECTIONS.items():
+            assert cfg["cloud_asset"] in known, name
+
+
+class TestMaskCloudsDispatch:
+    """mask_clouds 按卫星名分派到 S2 / Landsat 两套位掩码逻辑"""
+
+    def test_sentinel_name_dispatches_to_scl(self):
+        from utils.preprocess import mask_clouds
+        bands = make_bands()
+        scl = make_scl()
+        masked, cm = mask_clouds(bands, scl, satellite="Sentinel-2 L2A")
+        # SCL=8/9 是云, 应被掩膜
+        assert cm[8, 8]     # 中云块
+        assert cm[17, 17]   # 高云块
+        assert np.isnan(masked[:, 8, 8]).all()
+
+    @pytest.mark.parametrize("sat", ["Landsat-8", "Landsat-9"])
+    def test_landsat_names_dispatch_to_qa_pixel(self, sat):
+        from utils.preprocess import mask_clouds
+        bands = make_bands()
+        qa = np.zeros((40, 40), dtype=np.uint16)
+        qa[10:20, 10:20] |= 1 << 3   # bit 3 = 云
+        masked, cm = mask_clouds(bands, qa, satellite=sat)
+        assert cm[15, 15]
+        assert not cm[0, 0]
+
+    def test_landsat_shadow_option_respected(self):
+        from utils.preprocess import mask_clouds
+        bands = make_bands()
+        qa = np.zeros((40, 40), dtype=np.uint16)
+        qa[5:10, 5:10] |= 1 << 4   # bit 4 = 云影, 非云
+
+        _, with_shadow = mask_clouds(bands, qa, satellite="Landsat-8", mask_shadow=True)
+        _, no_shadow = mask_clouds(bands, qa, satellite="Landsat-8", mask_shadow=False)
+        assert with_shadow[7, 7]
+        assert not no_shadow[7, 7]
+
+    def test_dimension_mismatch_raises(self):
+        """图层尺寸不符要显式报错 —— 页面据此提示用户而非静默算错"""
+        from utils.preprocess import mask_clouds
+        with pytest.raises(ValueError):
+            mask_clouds(make_bands(40, 40), make_scl(30, 30), satellite="Sentinel-2 L2A")

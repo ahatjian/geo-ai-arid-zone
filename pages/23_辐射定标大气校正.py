@@ -70,6 +70,19 @@ with st.sidebar:
     stretch = st.toggle("校正后拉伸到 0-1", value=True,
                         help="校正后重新归一化反射率范围")
 
+    st.divider()
+
+    st.subheader("☁️ 云掩膜")
+    do_cloud_mask = st.toggle(
+        "启用云掩膜", value=False,
+        help="用 Sentinel-2 SCL / Landsat QA_PIXEL 逐像元剔除云与云影, "
+             "置于辐射与大气校正之前 (云像元会污染暗像元估计)",
+    )
+    mask_shadow = st.toggle(
+        "同时掩膜云影", value=True, disabled=not do_cloud_mask,
+        help="云影反射率偏低, 不掩膜会被误判为暗地物",
+    )
+
 # ============================================================
 # 主面板
 # ============================================================
@@ -80,9 +93,102 @@ def load_bands(path: str) -> np.ndarray:
         return src.read().astype(np.float64)
 
 
+def resolve_cloud_layer():
+    """按共享影像的卫星自动获取云掩膜图层 (SCL / QA_PIXEL)。
+
+    返回 (layer, satellite, source_desc); 无法获取时三者均为 None。
+    上传兜底由 _apply_cloud_mask 处理。
+    """
+    import os
+    import tempfile
+    import rasterio
+    from config import COLLECTIONS
+
+    results = st.session_state.get("search_results") or []
+    satellite = st.session_state.get("search_satellite")
+    if not (results and satellite):
+        return None, None, None
+
+    asset = COLLECTIONS.get(satellite, {}).get("cloud_asset")
+    if not asset:
+        return None, None, None
+
+    from utils.pc_data import download_asset
+
+    out_path = os.path.join(tempfile.gettempdir(), f"cloudmask_{asset}.tif")
+    try:
+        path = download_asset(results[0]["item"], asset, out_path)
+    except Exception as e:
+        st.warning(f"云掩膜图层下载失败: {e}")
+        return None, None, None
+
+    if not path or not os.path.exists(path):
+        return None, None, None
+
+    with rasterio.open(path) as src:
+        layer = src.read(1)
+
+    return layer, satellite, f"{satellite} · {asset} (共享影像自动获取)"
+
+
+def _apply_cloud_mask(bands: np.ndarray, mask_shadow: bool) -> np.ndarray:
+    """剔除云与云影像元, 返回掩膜后的波段 (无效像元置 NaN)。
+
+    必须置于辐射/大气校正之前 —— 云的高路径辐射会污染 DOS 的
+    暗像元估计, 先校正再掩膜等于用被污染的参数处理全图。
+    """
+    import rasterio
+    from utils.preprocess import mask_clouds, cloud_cover_fraction
+
+    layer, satellite, source_desc = resolve_cloud_layer()
+
+    if layer is None:
+        uploaded = st.file_uploader(
+            "未从共享影像取到云掩膜图层 — 可上传 SCL / QA_PIXEL",
+            type=["tif", "tiff"], key="cloud_mask_upload",
+        )
+        if uploaded is not None:
+            from utils.upload_utils import save_upload_stable
+            path = save_upload_stable(uploaded, "cloudmask")
+            with rasterio.open(path) as src:
+                layer = src.read(1)
+            satellite = st.session_state.get("search_satellite") or "Sentinel-2 L2A"
+            source_desc = f"上传文件 · {uploaded.name}"
+
+    if layer is None:
+        st.info(
+            "☁️ 未获取到云掩膜图层, 本次跳过。先在「数据浏览」页搜索影像可自动"
+            "获取 SCL / QA_PIXEL, 或在此直接上传。"
+        )
+        return bands
+
+    if layer.shape != bands.shape[1:]:
+        st.warning(
+            f"云掩膜图层尺寸 {layer.shape} 与影像 {bands.shape[1:]} 不一致, 已跳过。"
+        )
+        return bands
+
+    masked, cloud_mask = mask_clouds(
+        bands, layer, satellite=satellite, mask_shadow=mask_shadow,
+    )
+    frac = cloud_cover_fraction(cloud_mask)
+
+    st.success(f"☁️ 云掩膜完成 — 来源: {source_desc}")
+    col1, col2 = st.columns(2)
+    col1.metric("云 / 云影占比", f"{frac * 100:.2f}%")
+    col2.metric("有效像元", f"{cloud_mask.size - int(cloud_mask.sum()):,}")
+
+    return masked
+
+
 if geotiff_path:
     bands = load_bands(geotiff_path)
     st.success(f"✅ 已加载 {bands.shape[0]} 波段 ({bands.shape[1]}×{bands.shape[2]})")
+
+    # ---- 云掩膜 (可选, 全流程最前端) ----
+    if do_cloud_mask:
+        bands = _apply_cloud_mask(bands, mask_shadow)
+
     st.divider()
 
     tab_dos, tab_cal, tab_norm = st.tabs(
