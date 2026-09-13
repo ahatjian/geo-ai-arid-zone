@@ -8,15 +8,13 @@
 
 import os
 import math
-import tempfile
 import warnings
 import numpy as np
 from typing import Optional, List, Dict, Tuple
 
-warnings.filterwarnings("ignore")
-
-# 从统一配置导入缓存 TTL
 from config import CACHE_CONFIG
+
+warnings.filterwarnings("ignore")
 
 # ---- 条件缓存装饰器 ----
 try:
@@ -253,10 +251,6 @@ def get_esa_landcover(
         return read_landcover_cog(url, bbox)
 
     # 多切片拼接
-    import rasterio
-    from rasterio.warp import reproject, Resampling
-    from rasterio.windows import from_bounds
-    from rasterio.warp import transform_bounds
 
     pieces = []
     for tile_name in tiles:
@@ -508,9 +502,7 @@ def get_landcover_for_study_area(
             pixel_size_m = 10.0
         elif source == "esri":
             # ESRI 通过 ImageServer 导出，计算度数到米的近似转换
-            center_lat = (bbox[1] + bbox[3]) / 2
             meters_per_deg_lat = 111320.0
-            meters_per_deg_lon = 111320.0 * math.cos(math.radians(center_lat))
             # 假设像素接近正方形，取 lat 方向
             pixel_size_m = pixel_size_deg * meters_per_deg_lat
         else:

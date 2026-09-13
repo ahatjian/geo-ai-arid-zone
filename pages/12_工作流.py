@@ -4,25 +4,24 @@
 支持: 自然语言描述需求 → 自动匹配模块 → 一键执行 → 生成报告
 """
 import streamlit as st
-import os, sys, tempfile, numpy as np, pandas as pd
+import os
+import sys
+import tempfile
+import numpy as np
 import html
-import matplotlib.pyplot as plt
 from datetime import date, timedelta, datetime
-from io import BytesIO
-from PIL import Image
 import re
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from config import STUDY_AREAS, COLLECTIONS, APP_VERSION
-from utils.error_handler import StreamlitErrorBoundary
 from utils.pc_data import search_images, download_multiband
+from utils.llm import query_deepseek, fallback_parse, is_llm_available
 
 st.set_page_config(page_title="工作流", page_icon="⚡", layout="wide")
 
 # ============================================================
 # 智能查询引擎 (LLM + 模板降级)
 # ============================================================
-from utils.llm import query_deepseek, fallback_parse, is_llm_available
 
 def parse_query(query: str) -> list:
     """解析自然语言查询, 返回匹配的分析模块列表"""

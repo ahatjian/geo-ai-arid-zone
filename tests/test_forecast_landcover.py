@@ -1,6 +1,7 @@
 """预测与土地覆盖模块单元测试 — forecast / landcover"""
 
-import sys, os
+import sys
+import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 import numpy as np

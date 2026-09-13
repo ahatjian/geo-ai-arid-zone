@@ -4,16 +4,16 @@
 支持单指数动画 / 多指数并列动画 / 趋势曲线动画
 """
 import streamlit as st
-import os, sys, tempfile, numpy as np
+import os
+import sys
+import tempfile
+import numpy as np
 from datetime import date, timedelta
-from io import BytesIO
-from PIL import Image
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-from config import STUDY_AREAS, COLLECTIONS
-from utils.error_handler import StreamlitErrorBoundary
+from config import COLLECTIONS
 from utils.aoi import render_aoi_selector
-from utils.pc_data import search_images, get_rgb_preview_cached, download_multiband
+from utils.pc_data import search_images, download_multiband
 
 st.set_page_config(page_title="时序动画", page_icon="🎬", layout="wide")
 

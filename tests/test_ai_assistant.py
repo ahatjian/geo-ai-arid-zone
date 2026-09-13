@@ -1,6 +1,7 @@
 """AI 智能助手测试 — 对话/自动分析/异常检测"""
 
-import sys, os
+import sys
+import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 import numpy as np
@@ -79,7 +80,7 @@ class TestDetectAnomalies:
         band[5, 5] = 1.0  # 单像元异常 (碎斑)
         result = detect_anomalies(band, method="local", min_cluster=16)
         # 单像元异常应被过滤
-        assert result["anomaly_mask"][5, 5] == False or result["anomaly_ratio"] < 0.02
+        assert not result["anomaly_mask"][5, 5] or result["anomaly_ratio"] < 0.02
 
     def test_all_methods(self):
         from utils.ai_assistant import detect_anomalies

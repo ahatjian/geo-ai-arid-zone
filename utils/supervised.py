@@ -150,7 +150,6 @@ def build_feature_stack(
         features.append(arr)
 
     if add_indices:
-        blue = features[0]
         green = features[1]
         red = features[2]
         nir = features[3]

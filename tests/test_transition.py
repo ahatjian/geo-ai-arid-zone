@@ -2,7 +2,8 @@
 土地覆盖转移矩阵 (transition) 模块单元测试
 测试: 转移矩阵计算 + 净变化 + 主要转移方向
 """
-import sys, os
+import sys
+import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 import numpy as np

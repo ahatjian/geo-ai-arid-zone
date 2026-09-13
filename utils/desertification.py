@@ -561,7 +561,6 @@ def assess_desertification(
 
     # 提取波段 (统一 Sentinel/Landsat 索引)
     blue = bands_data[0]
-    green = bands_data[1]
     red = bands_data[2]
     nir = bands_data[3]
     swir1 = bands_data[4]

@@ -21,14 +21,12 @@ from PIL import Image
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from config import (
-    STUDY_AREAS, COLLECTIONS, COLORMAPS, CACHE_CONFIG,
-    LANDSAT_ST_ASSET, LANDSAT_ST_SCALE, LANDSAT_ST_OFFSET,
+    COLLECTIONS, LANDSAT_ST_ASSET, LANDSAT_ST_SCALE, LANDSAT_ST_OFFSET,
 )
-from utils.error_handler import StreamlitErrorBoundary
 from utils.aoi import render_aoi_selector
 from utils.pc_data import (
     search_images, get_rgb_preview_cached,
-    download_multiband, get_ndvi_preview_cached, download_asset,
+    download_multiband, download_asset,
 )
 
 st.set_page_config(page_title="干旱监测", page_icon="🏜️", layout="wide")
@@ -186,10 +184,10 @@ if search_clicked:
                 st.image(preview)
             else:
                 st.markdown(
-                    f'<div style="width:100%;height:140px;background:#1a1a2e;'
-                    f'border:1px dashed #444;border-radius:6px;display:flex;'
-                    f'align-items:center;justify-content:center;color:#666">'
-                    f'无预览</div>',
+                    '<div style="width:100%;height:140px;background:#1a1a2e;'
+                    'border:1px dashed #444;border-radius:6px;display:flex;'
+                    'align-items:center;justify-content:center;color:#666">'
+                    '无预览</div>',
                     unsafe_allow_html=True,
                 )
 
@@ -319,10 +317,8 @@ if search_clicked:
 
     # 延迟导入干旱模块 (避免 Streamlit 缓存警告)
     from utils.drought import (
-        calc_vci_pixelwise, calc_nddi, classify_vci,
-        calc_ndvi_anomaly_pixelwise,
+        calc_vci_pixelwise, calc_nddi, calc_ndvi_anomaly_pixelwise,
         compute_drought_index_stats, compute_drought_stats,
-        DROUGHT_CATEGORIES,
     )
 
     tab_names = []
@@ -674,7 +670,6 @@ if search_clicked:
 
         from utils.forecast import (
             forecast_drought_trend, plot_forecast, plot_forecast_comparison,
-            prepare_ndvi_timeseries, ForecastResult,
         )
 
         # 预测设置
@@ -709,7 +704,7 @@ if search_clicked:
                         test_ratio=test_ratio,
                     )
 
-                    st.success(f"✅ 预测完成")
+                    st.success("✅ 预测完成")
 
                     if forecast_method == "all":
                         results = forecast_result
@@ -785,10 +780,7 @@ if search_clicked:
         st.subheader("🏜️ 沙漠化评估")
 
         from utils.desertification import (
-            assess_desertification, get_desertification_colormap,
-            DESERTIFICATION_LEVELS, calc_albedo_s2, calc_tgsi,
-            calc_ndmi, calc_ddi, compute_desertification_stats,
-            analyze_desertification_trend,
+            assess_desertification, DESERTIFICATION_LEVELS, analyze_desertification_trend,
         )
 
         run_desert = st.button("🚀 评估沙漠化", type="primary", key="btn_desert")
@@ -971,7 +963,7 @@ if search_clicked:
         df_export = pd.DataFrame(all_stats_rows)
         csv = df_export.to_csv(index=False).encode("utf-8")
         st.download_button(
-            label=f"📊 下载统计摘要 CSV",
+            label="📊 下载统计摘要 CSV",
             data=csv,
             file_name=f"drought_stats_{area_name}_{start_date}_{end_date}.csv",
             mime="text/csv",

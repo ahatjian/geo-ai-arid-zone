@@ -437,7 +437,7 @@ def render_classification(
     norm = mcolors.BoundaryNorm(bounds, n_classes)
 
     fig, ax = plt.subplots(figsize=(8, 6))
-    im = ax.imshow(class_map, cmap=cmap, norm=norm, interpolation="nearest")
+    ax.imshow(class_map, cmap=cmap, norm=norm, interpolation="nearest")
     ax.set_title(title, fontsize=13)
     ax.axis("off")
 
@@ -621,7 +621,7 @@ def render_multilevel_change(
     norm = mcolors.BoundaryNorm(bounds, n_levels)
 
     fig, ax = plt.subplots(figsize=figsize)
-    im = ax.imshow(change_class, cmap=cmap, norm=norm, interpolation="nearest")
+    ax.imshow(change_class, cmap=cmap, norm=norm, interpolation="nearest")
     ax.set_title(title, fontsize=14, fontweight="bold")
     ax.axis("off")
 
@@ -754,10 +754,10 @@ def plot_multilevel_change_stacked_bar(
     import plotly.graph_objects as go
 
     levels = list(range(-3, 4))
-    colors_ordered = [MULTILEVEL_COLORS[l] for l in levels]
-    labels_ordered = [MULTILEVEL_LABELS[l] for l in levels]
+    colors_ordered = [MULTILEVEL_COLORS[lv] for lv in levels]
+    labels_ordered = [MULTILEVEL_LABELS[lv] for lv in levels]
 
-    counts = [level_counts.get(l, 0) for l in levels]
+    counts = [level_counts.get(lv, 0) for lv in levels]
     percentages = [c / max(total_pixels, 1) * 100 for c in counts]
 
     # 构建悬停文本

@@ -2,7 +2,8 @@
 监督分类训练 (supervised) 模块单元测试
 测试: 特征构建 + 采样 + 训练 + 预测 + 精度评估
 """
-import sys, os
+import sys
+import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 import numpy as np

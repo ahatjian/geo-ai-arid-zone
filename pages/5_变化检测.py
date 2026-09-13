@@ -13,11 +13,10 @@ import numpy as np
 import pandas as pd
 from io import BytesIO
 from datetime import datetime
-import json
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from config import STUDY_AREAS, COLORMAPS, INDEX_THRESHOLDS, COLLECTIONS
+from config import STUDY_AREAS, COLLECTIONS
 from utils.error_handler import StreamlitErrorBoundary
 from utils.aoi import parse_geojson_bbox
 
@@ -50,8 +49,6 @@ st.markdown("自动搜索两期卫星影像或手动上传，计算指数差异�
 def _run_change_analysis(t1_path, t2_path, idx_cfg, method, threshold, pixel_size):
     """执行变化检测核心分析，结果存入 session_state"""
     from utils.indices import load_bands_from_geotiff, calc_ndvi, calc_mndwi, calc_evi
-    import rasterio
-    from rasterio.warp import reproject, Resampling
 
     # 加载所有6波段 (STAC下载的是标准6波段 multiband)
     bands_t1 = load_bands_from_geotiff(t1_path)
@@ -134,31 +131,26 @@ def _run_landcover_cross(change_class, bbox):
         cc = change_class[:h_min, :w_min]
         lc = esa_data[:h_min, :w_min]
 
-        valid = (lc > 0) & (lc <= 11)  # ESA 11类
-
-        # ESA 类别简并
-        ESA_NAMES = {
-            10: "森林", 20: "灌木", 30: "草地",
-            40: "农田", 50: "建设用地",
-            60: "裸地/稀疏植被", 70: "冰雪",
-            80: "水体", 90: "湿地", 100: "苔原",
-        }
-
         # 简并到主要类别
         def simplify_lc(val):
-            if val in (10, 20): return "森林/灌木"
-            if val == 30: return "草地"
-            if val == 40: return "农田"
-            if val == 50: return "建设用地"
-            if val in (60, 70, 90, 100): return "裸地/稀疏植被"
-            if val == 80: return "水体"
+            if val in (10, 20):
+                return "森林/灌木"
+            if val == 30:
+                return "草地"
+            if val == 40:
+                return "农田"
+            if val == 50:
+                return "建设用地"
+            if val in (60, 70, 90, 100):
+                return "裸地/稀疏植被"
+            if val == 80:
+                return "水体"
             return "其他"
 
         simple_lc = np.array([simplify_lc(v) for v in lc.flatten()]).reshape(lc.shape)
 
         # 交叉表: 变化级别 × 土地覆盖
         levels = list(range(-3, 4))
-        from utils.visualization import MULTILEVEL_LABELS
         lc_types = ["森林/灌木", "草地", "农田", "建设用地", "裸地/稀疏植被", "水体", "其他"]
 
         cross = {}
@@ -604,7 +596,6 @@ else:
             with StreamlitErrorBoundary("手动上传变化检测分析", st=st, show_traceback=True):
                 with st.spinner("正在计算两期指数并检测变化..."):
                     from utils.indices import load_bands_from_geotiff, calc_ndvi, calc_mndwi, calc_evi
-                    import rasterio
 
                     # 确定需要加载的波段索引
                     needed_indices = []
@@ -724,7 +715,7 @@ if st.session_state.get("cd_analysis_done"):
 
     from utils.visualization import (
         render_index, render_multilevel_change, render_change_overlay,
-        plot_multilevel_change_stacked_bar, MULTILEVEL_LABELS, MULTILEVEL_COLORS,
+        plot_multilevel_change_stacked_bar, MULTILEVEL_LABELS,
     )
     from utils.indices import save_mask_geotiff
     import plotly.graph_objects as go
@@ -735,8 +726,8 @@ if st.session_state.get("cd_analysis_done"):
     st.subheader("📊 变化概览")
 
     # 增加总量 (1+2+3), 减少总量 (-1-2-3)
-    inc_total = sum(level_counts.get(l, 0) for l in [1, 2, 3])
-    dec_total = sum(level_counts.get(l, 0) for l in [-1, -2, -3])
+    inc_total = sum(level_counts.get(lv, 0) for lv in [1, 2, 3])
+    dec_total = sum(level_counts.get(lv, 0) for lv in [-1, -2, -3])
     stable = level_counts.get(0, 0)
 
     area_inc = inc_total * pixel_area_km2
@@ -746,9 +737,9 @@ if st.session_state.get("cd_analysis_done"):
 
     kpi1, kpi2, kpi3, kpi4, kpi5 = st.columns(5)
     with kpi1:
-        st.metric(f"增加总面积", f"{area_inc:.2f} km²", f"{inc_total / max(total_pixels, 1) * 100:.1f}%")
+        st.metric("增加总面积", f"{area_inc:.2f} km²", f"{inc_total / max(total_pixels, 1) * 100:.1f}%")
     with kpi2:
-        st.metric(f"减少总面积", f"{area_dec:.2f} km²", f"{dec_total / max(total_pixels, 1) * 100:.1f}%")
+        st.metric("减少总面积", f"{area_dec:.2f} km²", f"{dec_total / max(total_pixels, 1) * 100:.1f}%")
     with kpi3:
         st.metric("稳定面积", f"{area_stable:.2f} km²", f"{stable / max(total_pixels, 1) * 100:.1f}%")
     with kpi4:

@@ -12,7 +12,6 @@ import pandas as pd
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from config import STUDY_AREAS
 from utils.error_handler import StreamlitErrorBoundary
 from utils.aoi import render_aoi_selector
 from utils.landcover import get_esa_landcover, esa_to_arid6, ARID6_CLASSES, ESA_CLASSES

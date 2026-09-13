@@ -1,6 +1,7 @@
 """结果一键入库组件测试 — save_ui 与 results_store 联动"""
 
-import sys, os
+import sys
+import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 import numpy as np
@@ -50,7 +51,7 @@ class TestSaveResultRoundtrip:
 
     def test_result_id_unique(self):
         """连续保存多个结果 ID 不应重复"""
-        from utils.results_store import save_result, _new_result_id
+        from utils.results_store import _new_result_id
         ids = {_new_result_id() for _ in range(100)}
         assert len(ids) == 100  # uuid 短 ID 无碰撞
 
@@ -92,7 +93,6 @@ class TestSaveUiHelpers:
     def test_render_save_csv_button_dataframe(self):
         """stats list[dict] 应能转换为 DataFrame 供 csv 保存"""
         import pandas as pd
-        from utils.save_ui import render_save_csv_button
         # 仅验证转换逻辑 (不调用 streamlit 渲染)
         stats = [{"name": "A", "ratio": 0.6}]
         df = pd.DataFrame(stats) if not isinstance(stats, pd.DataFrame) else stats

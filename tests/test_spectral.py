@@ -2,7 +2,8 @@
 自定义光谱指数计算器 (spectral) 模块单元测试
 测试: 波段运算求值器 + 预设指数
 """
-import sys, os
+import sys
+import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 import numpy as np

@@ -26,10 +26,9 @@ import warnings
 from typing import Optional, Dict, List, Tuple
 from scipy import stats
 
-warnings.filterwarnings("ignore")
-
-# 从统一配置导入缓存 TTL
 from config import CACHE_CONFIG
+
+warnings.filterwarnings("ignore")
 
 # ---- 条件缓存装饰器 ----
 try:

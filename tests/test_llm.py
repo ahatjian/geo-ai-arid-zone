@@ -90,7 +90,6 @@ class TestModuleFieldConsistency:
 
     def test_deepseek_result_module_field(self):
         """DeepSeek 返回模块也应标准化为 name 字段"""
-        r = llm.query_deepseek.__wrapped__ if hasattr(llm.query_deepseek, "__wrapped__") else None
         # 直接测试 _validate_result 的标准化
         result = llm._validate_result({
             "study_area": "塔里木盆地",

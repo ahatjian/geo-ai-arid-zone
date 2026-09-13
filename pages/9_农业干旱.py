@@ -16,8 +16,7 @@ from PIL import Image
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from config import STUDY_AREAS, COLLECTIONS, COLORMAPS, CACHE_CONFIG
-from utils.error_handler import StreamlitErrorBoundary
+from config import COLLECTIONS
 from utils.aoi import render_aoi_selector
 from utils.pc_data import (
     search_images, get_rgb_preview_cached, download_multiband,
@@ -192,7 +191,7 @@ if search_clicked:
 
     # 分析
     from utils.agri_drought import (
-        assess_agri_drought, calc_cwsi_ndvi, calc_smi_swir,
+        calc_cwsi_ndvi, calc_smi_swir,
         calc_smi_combined, calc_mpdi, classify_agri_drought,
         estimate_irrigation_demand, AGRI_DROUGHT_LEVELS,
     )
@@ -243,9 +242,12 @@ if search_clicked:
 
     # ---- Tab ----
     tab_names = []
-    if use_cwsi: tab_names.append("CWSI 水分胁迫")
-    if use_smi: tab_names.append("SMI 土壤水分")
-    if use_irrigation: tab_names.append("灌溉需求")
+    if use_cwsi:
+        tab_names.append("CWSI 水分胁迫")
+    if use_smi:
+        tab_names.append("SMI 土壤水分")
+    if use_irrigation:
+        tab_names.append("灌溉需求")
 
     if not tab_names:
         tab_names = ["CWSI 水分胁迫"]

@@ -18,10 +18,13 @@
 """
 
 import numpy as np
-import pandas as pd
 import warnings
 from typing import Optional, Dict, List, Tuple, Union, Literal
 from dataclasses import dataclass, field
+
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+from scipy import stats as scipy_stats
 
 warnings.filterwarnings("ignore")
 
@@ -43,10 +46,6 @@ try:
     _IMPORTS["torch"] = True
 except ImportError:
     pass
-
-from sklearn.preprocessing import MinMaxScaler, StandardScaler
-from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
-from scipy import stats as scipy_stats
 
 # ---- 条件缓存 ----
 try:
@@ -631,7 +630,6 @@ def forecast_drought_trend(
     values, _ = prepare_ndvi_timeseries(ndvi_stack)
 
     # 如果有测试集，评估精度
-    metrics = {}
     if test_ratio > 0:
         train_values, test_values = split_train_test(values, test_ratio=test_ratio)
         use_values = train_values
@@ -765,7 +763,7 @@ def plot_forecast(
             result.confidence_lower,
             result.confidence_upper,
             alpha=0.2, color="#e74c3c",
-            label=f"80% 置信区间",
+            label="80% 置信区间",
         )
 
     # 分割线

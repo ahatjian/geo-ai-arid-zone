@@ -13,8 +13,6 @@
 
 import os
 import sys
-import tempfile
-import uuid as _uuid
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -349,7 +347,7 @@ with tab_ov:
             st.warning(f"⚠️ 尺寸不一致: 主图 {input_arr.shape} vs 叠加 {overlay_arr.shape}")
         elif st.button("🔀 执行叠加分析", type="primary"):
             with st.spinner("叠加分析中..."), StreamlitErrorBoundary("叠加分析", st=st, show_traceback=False):
-                from utils.spatial import overlay_crosstab, overlay_analysis_text
+                from utils.spatial import overlay_crosstab
                 class_names_a = st.session_state.get("spatial_class_names", None)
                 result = overlay_crosstab(
                     input_arr, overlay_arr.astype(np.int16),

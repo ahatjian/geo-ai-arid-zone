@@ -96,8 +96,7 @@ class TestRenderBlock:
 
     def test_render_block_no_key(self, monkeypatch):
         """无 API Key 时应返回规则解读且不崩溃"""
-        import streamlit as st
-        from utils.ai_insight import render_ai_insight_block, _get_api_key
+        from utils.ai_insight import render_ai_insight_block
         monkeypatch.setattr("utils.ai_insight._get_api_key", lambda: "")
         # 未触发按钮时返回 None
         result = render_ai_insight_block(

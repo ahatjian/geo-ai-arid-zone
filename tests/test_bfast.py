@@ -1,10 +1,10 @@
 """BFAST 时序断点检测测试 — 植被突变检测"""
 
-import sys, os
+import sys
+import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 import numpy as np
-import pytest
 
 
 def make_mutated_series(n=36, break_idx=20, magnitude=-0.12, seed=42,

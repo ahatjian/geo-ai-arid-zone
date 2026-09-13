@@ -31,6 +31,7 @@ from utils.vector import (
     compute_class_areas, summarize_vector,
 )
 from utils.landcover import ARID6_CLASSES, get_landcover_for_study_area
+from utils.ai_insight import render_ai_insight_block
 from utils.desertification import DESERTIFICATION_LEVELS
 from utils.salinity import SALINITY_LEVELS
 from utils.indices import calc_mndwi
@@ -128,7 +129,7 @@ def _plot_classification(category, class_names, class_colors, title):
     cmap = ListedColormap(class_colors[:n])
     norm = BoundaryNorm(np.arange(-0.5, n, 1), cmap.N)
     fig, ax = plt.subplots(figsize=(8, 6))
-    im = ax.imshow(category, cmap=cmap, norm=norm)
+    ax.imshow(category, cmap=cmap, norm=norm)
     # 图例
     handles = [
         plt.Rectangle((0, 0), 1, 1, color=class_colors[i], label=class_names[i])
@@ -143,7 +144,6 @@ def _plot_classification(category, class_names, class_colors, title):
 
 def _plot_vector_overlay(gdf, class_colors, title):
     """绘制矢量多边形图 (按类别着色)"""
-    import geopandas as gpd
 
     fig, ax = plt.subplots(figsize=(8, 6))
     if len(gdf) == 0:
@@ -313,7 +313,6 @@ area_df.columns = ["类别ID", "类别名称", "多边形数", "面积(公顷)",
 st.dataframe(area_df, width="stretch")
 
 # AI 解读 (分类面积空间格局)
-from utils.ai_insight import render_ai_insight_block
 vec_metrics = {}
 total_area_km2 = max(sum(r.get("area_km2", 0) for r in areas), 1e-9)
 for r in areas[:5]:

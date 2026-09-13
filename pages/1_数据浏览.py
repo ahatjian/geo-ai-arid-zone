@@ -12,9 +12,10 @@ from datetime import date, timedelta
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from config import STUDY_AREAS, COLLECTIONS
-from utils.error_handler import StreamlitErrorBoundary, safe_execute
+from utils.error_handler import StreamlitErrorBoundary
 from utils.aoi import render_aoi_selector
 from utils.demo_mode import is_demo_mode
+from utils.map_utils import render_area_map
 
 st.set_page_config(page_title="数据浏览", page_icon="🗺️", layout="wide")
 
@@ -82,8 +83,6 @@ st.title("🗺️ 卫星影像数据浏览")
 st.markdown(f"**研究区: {area_name}** | 数据源: Microsoft Planetary Computer")
 
 # 研究区概览地图 (leafmap 失败自动降级为静态图)
-from utils.map_utils import render_area_map
-
 col_map, col_info = st.columns([2, 1])
 
 with col_map:

@@ -31,7 +31,6 @@ import numpy as np
 
 if TYPE_CHECKING:  # 仅供类型注解解析, 运行时零开销
     import geopandas as gpd
-import pandas as pd
 
 # ============================================
 # 格式定义
@@ -89,7 +88,6 @@ def _sanitize_shapefile_fields(gdf) -> "gpd.GeoDataFrame":
        - 不支持 int64 (需转 int32)
        - 不支持混合几何类型 (需 explode 成单一 Polygon)
     """
-    import geopandas as gpd
 
     out = gdf.copy()
     # 拆解 MultiPolygon → Polygon (Shapefile 不接受混合几何类型)
@@ -246,7 +244,6 @@ def gdf_to_shapefile(
     返回:
         (zip 文件路径, zip 二进制内容) — zip 内含 .shp/.shx/.dbf/.prj/.cpg
     """
-    import geopandas as gpd
 
     out = _sanitize_shapefile_fields(gdf)
 

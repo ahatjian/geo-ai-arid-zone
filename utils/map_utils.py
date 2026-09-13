@@ -10,7 +10,6 @@ leafmap/Esri 底图在国内网络可能加载失败导致空白。
 不依赖外部底图, 保证任何网络下都有图可看。
 """
 
-import numpy as np
 from typing import Dict, List, Optional, Tuple
 
 
@@ -117,7 +116,6 @@ def render_area_map(
     """
     # 尝试 leafmap 交互地图
     try:
-        import streamlit as st
         import leafmap
         from shapely.geometry import box
         import geopandas as gpd

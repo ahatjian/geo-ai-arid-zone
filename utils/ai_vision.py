@@ -71,7 +71,7 @@ def image_fingerprint(
     if bands.shape[0] < 4:
         raise ValueError("至少需要 4 波段")
 
-    B, G, R, NIR = bands[0], bands[1], bands[2], bands[3]
+    G, R, NIR = bands[1], bands[2], bands[3]
     SWIR1 = bands[4] if bands.shape[0] > 4 else NIR
     SWIR2 = bands[5] if bands.shape[0] > 5 else SWIR1
 

@@ -19,6 +19,12 @@ import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
 
+from utils.ai_assistant import (
+    chat_with_assistant, auto_analyze, detect_anomalies,
+    anomaly_insight, is_ai_available,
+)
+from utils.upload_utils import get_shared_geotiff_path
+
 st.set_page_config(page_title="AI 智能助手", page_icon="🤖", layout="wide")
 
 st.title("🤖 AI 智能分析助手")
@@ -56,12 +62,6 @@ def save_upload_tmp(uploaded) -> str:
         f.write(uploaded.getvalue())
     return path
 
-
-from utils.ai_assistant import (
-    chat_with_assistant, auto_analyze, detect_anomalies,
-    anomaly_insight, is_ai_available,
-)
-from utils.upload_utils import get_shared_geotiff_path
 
 AI_ON = is_ai_available()
 
@@ -133,7 +133,7 @@ with tab_plan:
 
         plan = result["plan"]
         st.divider()
-        st.markdown(f"### 📍 研究目标")
+        st.markdown("### 📍 研究目标")
         st.write(plan_prompt.strip())
         st.caption(
             f"AI 模式：{'DeepSeek AI' if result['llm_available'] else '本地规则引擎'} | "

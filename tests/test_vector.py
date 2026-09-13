@@ -4,7 +4,6 @@
 覆盖: 矢量化正确性、面积过滤、简化、三格式导出、类别面积统计
 """
 import json
-import os
 import zipfile
 
 import numpy as np

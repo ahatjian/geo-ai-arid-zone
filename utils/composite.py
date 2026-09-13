@@ -15,7 +15,7 @@
 """
 
 import numpy as np
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Tuple
 
 
 def composite_ndvi_monthly(

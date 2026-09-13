@@ -16,7 +16,7 @@
 
 import numpy as np
 import warnings
-from typing import Optional, Dict, List, Tuple
+from typing import Dict, List, Tuple
 
 warnings.filterwarnings("ignore")
 

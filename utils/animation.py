@@ -18,7 +18,6 @@ import numpy as np
 import warnings
 from typing import Optional, List, Tuple, Dict
 from io import BytesIO
-from pathlib import Path
 
 warnings.filterwarnings("ignore")
 
@@ -80,9 +79,7 @@ def create_timeseries_animation(
         GIF bytes (output_path=None) 或 None (output_path指定)
     """
     import matplotlib.pyplot as plt
-    from matplotlib.animation import FuncAnimation, PillowWriter
     from PIL import Image
-    import io
 
     data_stack = np.asarray(data_stack, dtype=np.float64)
     if data_stack.ndim != 3:
@@ -193,7 +190,6 @@ def create_multi_index_animation(
     if n_indices == 0:
         return None
 
-    first_name = list(data_stacks.keys())[0]
     first_data = np.asarray(list(data_stacks.values())[0], dtype=np.float64)
     T = first_data.shape[-1]
     if T == 0:

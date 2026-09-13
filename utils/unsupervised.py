@@ -14,7 +14,7 @@
 """
 
 import numpy as np
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 
 
 def kmeans_classify(
@@ -120,7 +120,7 @@ def kmeans_feature_stack(
     if bands_data.shape[0] < 4:
         return bands_data
 
-    B, G, R, NIR = bands_data[0], bands_data[1], bands_data[2], bands_data[3]
+    G, R, NIR = bands_data[1], bands_data[2], bands_data[3]
     SWIR1 = bands_data[4] if bands_data.shape[0] > 4 else NIR
 
     stack = [bands_data]

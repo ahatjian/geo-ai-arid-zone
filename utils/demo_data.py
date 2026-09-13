@@ -15,7 +15,6 @@ from __future__ import annotations
 
 import hashlib
 import os
-import tempfile
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 
@@ -89,7 +88,6 @@ def _make_scene(
     water = np.clip(water + 0.05 * phase, 0.0, 1.0)
 
     # Soil/dry background.
-    soil = np.clip(0.22 + 0.10 * moisture + 0.03 * rng.randn(height, width), 0.08, 0.55)
 
     veg_mask = np.clip((veg - water) * 1.6, 0.0, 1.0)
     water_mask = np.clip((water - veg) * 1.8, 0.0, 1.0)

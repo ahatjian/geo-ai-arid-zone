@@ -1,6 +1,7 @@
 """图像处理 + 非监督分类 + STL 分解测试 — 专业平台能力验证"""
 
-import sys, os
+import sys
+import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 import numpy as np

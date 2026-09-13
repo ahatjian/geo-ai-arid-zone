@@ -1,9 +1,9 @@
 """AI 智能报告全文测试"""
 
-import sys, os
+import sys
+import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
-import pytest
 
 
 def make_sources():

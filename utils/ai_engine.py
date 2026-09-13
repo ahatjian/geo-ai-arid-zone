@@ -8,12 +8,11 @@ import os
 import tempfile
 import warnings
 import numpy as np
-from typing import Optional, List, Dict, Union, Tuple
+from typing import Optional, List, Dict
+
+from config import CACHE_CONFIG
 
 warnings.filterwarnings("ignore")
-
-# 从统一配置导入缓存 TTL
-from config import CACHE_CONFIG
 
 # ---- 条件缓存装饰器 ----
 try:
@@ -146,7 +145,7 @@ def segment_water_ai(
         # ============================================
         # 调用 geoai.segment_water
         # ============================================
-        segment_result = geoai.segment_water(
+        geoai.segment_water(
             input_path=input_path,
             band_order=band_order,
             output_raster=output_raster,

@@ -2,7 +2,8 @@
 土壤盐渍化模块单元测试
 测试: salinity (SI/NDSI/BI 指数 + 分级 + 评估)
 """
-import sys, os
+import sys
+import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 import numpy as np

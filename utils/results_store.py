@@ -30,7 +30,7 @@ from typing import Optional, List, Dict, Any
 
 import numpy as np
 
-from config import BASE_DIR, RESULTS_DIR
+from config import RESULTS_DIR
 
 # ============================================
 # 路径与常量

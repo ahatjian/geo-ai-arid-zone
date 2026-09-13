@@ -1,10 +1,10 @@
 """核心专题模块单元测试 — 沙漠化/冰冻圈/生态/农业干旱"""
 
-import sys, os
+import sys
+import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 import numpy as np
-import pytest
 
 
 def make_bands(h=40, w=40, seed=42):
@@ -106,7 +106,7 @@ class TestCryosphere:
         assert ndsi.shape == (5, 5)
 
     def test_calc_snow_cover_threshold(self):
-        from utils.cryosphere import calc_ndsi, calc_snow_cover
+        from utils.cryosphere import calc_snow_cover
         rng = np.random.default_rng(1)
         ndsi = rng.uniform(-0.5, 0.9, (30, 30))
         snow = calc_snow_cover(ndsi, threshold=0.4)

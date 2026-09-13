@@ -7,7 +7,6 @@ Planetary Computer 卫星数据获取模块
 import pystac_client
 import planetary_computer
 import numpy as np
-import matplotlib.pyplot as plt
 from PIL import Image
 import io
 import shutil
@@ -16,10 +15,9 @@ import warnings
 import requests
 from urllib.parse import quote
 
-warnings.filterwarnings("ignore")
+from config import COLLECTIONS, CACHE_CONFIG, CACHE_DIR
 
-# 从统一配置导入
-from config import COLLECTIONS, STUDY_AREAS, CACHE_CONFIG, CACHE_DIR
+warnings.filterwarnings("ignore")
 
 # ---- 条件缓存装饰器 ----
 try:
@@ -452,7 +450,6 @@ def download_multiband(item, output_path, collection="Sentinel-2 L2A", band_name
 
     try:
         import rasterio
-        from rasterio.transform import from_bounds
 
         band_keys = [bands[b] for b in band_names]
 

@@ -9,19 +9,17 @@ import os
 import sys
 import tempfile
 import numpy as np
-import pandas as pd
 import matplotlib.pyplot as plt
 from datetime import date, timedelta
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from config import STUDY_AREAS, COLLECTIONS
+from config import COLLECTIONS
 from utils.error_handler import StreamlitErrorBoundary
 from utils.aoi import render_aoi_selector
 from utils.pc_data import search_images, get_rgb_preview_cached, download_multiband
 from utils.supervised import (
-    CLASSIFIERS, FEATURE_BANDS, INDEX_FEATURES,
-    build_feature_stack, sample_from_reference,
+    CLASSIFIERS, sample_from_reference,
     sample_from_geojson, sample_from_csv, coords_to_indices,
     assess_supervised_classification,
 )

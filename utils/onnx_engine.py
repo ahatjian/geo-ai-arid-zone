@@ -12,7 +12,6 @@ import warnings
 import tempfile
 import numpy as np
 from typing import Optional, List, Tuple, Dict, Any, Callable
-from pathlib import Path
 
 warnings.filterwarnings("ignore")
 

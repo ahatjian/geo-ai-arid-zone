@@ -17,8 +17,7 @@ from PIL import Image
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from config import STUDY_AREAS, COLLECTIONS, COLORMAPS, CACHE_CONFIG
-from utils.error_handler import StreamlitErrorBoundary
+from config import COLLECTIONS
 from utils.aoi import render_aoi_selector
 from utils.pc_data import (
     search_images, get_rgb_preview_cached,
@@ -248,9 +247,7 @@ if search_clicked:
 
     # 导入冰冻圈模块
     from utils.cryosphere import (
-        calc_snow_cover, extract_glacier_mask,
-        estimate_snow_line, analyze_frozen_ground,
-        compute_snow_cover_stats, compute_glacier_stats,
+        compute_glacier_stats,
         SNOW_COVER_CLASSES, GLACIER_CLASSES, assess_cryosphere,
     )
 

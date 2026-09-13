@@ -3,17 +3,20 @@
 ==========================================
 """
 import streamlit as st
-import os, sys, tempfile, numpy as np, pandas as pd
+import os
+import sys
+import tempfile
+import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 from datetime import date, timedelta
 from io import BytesIO
 from PIL import Image
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-from config import STUDY_AREAS, COLLECTIONS
-from utils.error_handler import StreamlitErrorBoundary
+from config import COLLECTIONS
 from utils.aoi import render_aoi_selector
-from utils.pc_data import search_images, get_rgb_preview_cached, download_multiband
+from utils.pc_data import search_images, download_multiband
 
 st.set_page_config(page_title="生态评估", page_icon="🌍", layout="wide")
 
@@ -146,7 +149,7 @@ if search_clicked:
     ndmi = np.clip((nir - swir1) / (nir + swir1 + 1e-6), -1, 1)
 
     # PSR 评估
-    from utils.ecology import assess_eco_security, ECO_SECURITY_LEVELS
+    from utils.ecology import assess_eco_security
 
     result = assess_eco_security(
         ndvi=ndvi_main, ndmi=ndmi, ndvi_trend=ndvi_trend,
@@ -203,8 +206,10 @@ if search_clicked:
                 ax.axis("off")
                 plt.colorbar(im, ax=ax, fraction=0.035, pad=0.04)
                 buf = BytesIO()
-                plt.tight_layout(); plt.savefig(buf, format="png", dpi=120, bbox_inches="tight")
-                plt.close(); buf.seek(0)
+                plt.tight_layout()
+                plt.savefig(buf, format="png", dpi=120, bbox_inches="tight")
+                plt.close()
+                buf.seek(0)
                 st.image(Image.open(buf))
             with col_s:
                 valid = data[np.isfinite(data)]
@@ -228,8 +233,10 @@ if search_clicked:
         ax2.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 1,
                 f"{val:.1f}%", ha="center", fontsize=10)
     buf2 = BytesIO()
-    plt.tight_layout(); plt.savefig(buf2, format="png", dpi=100, bbox_inches="tight")
-    plt.close(); buf2.seek(0)
+    plt.tight_layout()
+    plt.savefig(buf2, format="png", dpi=100, bbox_inches="tight")
+    plt.close()
+    buf2.seek(0)
     st.image(Image.open(buf2))
 
     with st.expander("📋 详细统计"):

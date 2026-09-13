@@ -5,7 +5,8 @@
 返回类型、GIF 魔数、输出路径分支、参数开关、退化输入。
 """
 
-import sys, os
+import sys
+import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 import numpy as np

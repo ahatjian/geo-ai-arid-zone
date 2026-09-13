@@ -5,7 +5,6 @@
 """
 
 import numpy as np
-import os
 
 # 从统一配置导入缓存 TTL
 from config import CACHE_CONFIG

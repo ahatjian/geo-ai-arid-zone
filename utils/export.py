@@ -15,7 +15,6 @@ Geo AI 结果导出模块 — 统一的导出入口
 """
 
 import os
-import io
 import json
 import tempfile
 import warnings
@@ -169,7 +168,6 @@ def export_classification_geotiff(
         class_names: 类别名称列表
         colormap: {class_id: (R,G,B)} 可选颜色映射
     """
-    from rasterio.enums import ColorInterp
 
     if colormap is None:
         # 默认 6 类干旱区配色
@@ -437,7 +435,6 @@ def raster_to_geojson_polygons(
     """
     import rasterio
     from rasterio import features
-    import geopandas as gpd
     from shapely.geometry import shape
 
     with rasterio.open(reference_path) as src:

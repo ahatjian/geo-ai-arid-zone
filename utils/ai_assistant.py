@@ -21,10 +21,8 @@ AI 智能助手模块 — Geo AI 平台 AI 主导核心
 """
 
 import os
-import re
-import json
 import logging
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 
 import numpy as np
 
@@ -288,7 +286,7 @@ def auto_analyze(
     if np.nanmedian(bands) > 10:
         bands = bands / 10000.0
 
-    B, G, R, NIR = bands[0], bands[1], bands[2], bands[3]
+    G, R, NIR = bands[1], bands[2], bands[3]
     SWIR1 = bands[4] if bands.shape[0] > 4 else NIR
 
     # ---- 1. 光谱指数 ----

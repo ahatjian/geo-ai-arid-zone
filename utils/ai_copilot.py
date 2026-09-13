@@ -21,9 +21,8 @@ import numpy as np
 
 logger = logging.getLogger(__name__)
 
-from utils.llm import MODULE_DEFINITIONS, query_deepseek, is_llm_available  # noqa: E402
+from utils.llm import query_deepseek, is_llm_available  # noqa: E402
 from utils.ai_assistant import auto_analyze, build_platform_context  # noqa: E402
-from utils.ai_insight import generate_ai_insight  # noqa: E402
 from utils.knowledge_base import build_knowledge_context  # noqa: E402
 
 REQUEST_TIMEOUT = 35
@@ -160,7 +159,7 @@ def quick_scan(
         "land_composition": base["land_composition"],
     }
 
-    b, g, r, nir = bands[0], bands[1], bands[2], bands[3]
+    g, r, nir = bands[1], bands[2], bands[3]
     swir1 = bands[4] if bands.shape[0] > 4 else nir
 
     if "土壤盐渍化" in modules or "盐渍化" in str(modules):

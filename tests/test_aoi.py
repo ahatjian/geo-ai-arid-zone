@@ -2,7 +2,8 @@
 自定义研究区 (AOI) 组件单元测试
 测试: GeoJSON 解析 + bbox 验证
 """
-import sys, os
+import sys
+import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 import json

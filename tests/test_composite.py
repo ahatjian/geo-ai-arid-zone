@@ -1,6 +1,7 @@
 """月度时序合成测试 — composite 模块"""
 
-import sys, os
+import sys
+import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 import numpy as np

@@ -17,17 +17,35 @@ markers = [
 # 该分支一旦执行必然 NameError。
 #
 # 收紧路径 (违规数为 2026-09-13 实测):
-#   当前: E9 + F7 + F82 + W6          违规 0
-#   下一步: 并入 E4 / E7              约 74 处 (导入位置、单行多语句)
-#   再下一步: 并入 F401 未使用导入      约 498 处 (需单独一轮清理)
+#   起点: E9 + F7 + F82 + W6              违规 0
+#   本轮: 并入 E4 / E7                    约 78 处
+#   本轮: 并入 F 全组 (含 F401)           约 499 处 (其中 324 在 __init__.py)
 [tool.ruff]
 line-length = 120
 target-version = "py311"
 
+# 根目录的一次性 / 历史脚本不纳入质量门禁 —— 它们是开发期的临时工具,
+# 不是产品代码 (download_*.py 是早期数据获取脚本, 实验验证脚本.py 是一次性
+# 验证, _*.py 是调试脚本, check_env.py 是环境自检)。
+# 产品代码 app.py / config.py / pages/ / utils/ / tests/ 全部保留检查。
+exclude = [
+    "_explore_geoai.py",
+    "_test_core.py",
+    "_test_imports.py",
+    "check_env.py",
+    "实验验证脚本.py",
+    "download_all.py",
+    "download_landsat.py",
+    "download_planetary.py",
+    "download_sentinel.py",
+    "scripts",
+]
+
 [tool.ruff.lint]
 select = [
+    "E4",   # 导入风格 (E401 一行多导入 / E402 导入不在顶部)
+    "E7",   # 语句风格 (E701/E702 单行多语句 / E712 布尔比较 / E741 歧义变量名)
     "E9",   # 语法错误 / 运行时错误 (如 SyntaxError, 重复参数)
-    "F7",   # 语法类 (如 break/continue 位置错误)
-    "F82",  # 未定义名 (F821) / 重定义 (F811) —— 真实 bug 信号
+    "F",    # Pyflakes 全组 (F401 未使用导入 / F821 未定义名 / F811 重定义 / F841 未使用变量)
     "W6",   # 已废弃用法
 ]

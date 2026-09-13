@@ -5,7 +5,7 @@ Sen+MK 趋势分析模块
 """
 
 import numpy as np
-from typing import Optional, Tuple, Dict
+from typing import Optional, Dict
 import warnings
 warnings.filterwarnings("ignore")
 

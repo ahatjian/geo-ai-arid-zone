@@ -14,12 +14,12 @@ from datetime import date, timedelta
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from config import STUDY_AREAS, COLLECTIONS
+from config import COLLECTIONS
 from utils.error_handler import StreamlitErrorBoundary
 from utils.aoi import render_aoi_selector
 from utils.pc_data import search_images, get_rgb_preview_cached, download_multiband
 from utils.spectral import (
-    BAND_NAMES, PRESET_INDICES, PRESET_INDEX_NAMES,
+    PRESET_INDEX_NAMES,
     get_band_arrays, evaluate_band_math,
     get_preset_index, compute_index_stats,
 )

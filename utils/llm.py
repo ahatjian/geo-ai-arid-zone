@@ -20,7 +20,7 @@ import os
 import re
 import json
 import logging
-from typing import Optional, Dict, List
+from typing import Optional, Dict
 from datetime import datetime
 
 logger = logging.getLogger(__name__)

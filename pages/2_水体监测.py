@@ -14,8 +14,7 @@ from io import BytesIO
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from config import STUDY_AREAS, COLLECTIONS, INDEX_THRESHOLDS
-from utils.error_handler import StreamlitErrorBoundary, safe_execute
+from utils.error_handler import StreamlitErrorBoundary
 
 st.set_page_config(page_title="水体监测", page_icon="💧", layout="wide")
 
@@ -527,7 +526,6 @@ if geotiff_path:
 
                         with viz_col2:
                             # 显示 RGB 预览 + 叠加
-                            from utils.visualization import render_index
                             with rasterio.open(geotiff_path) as src:
                                 rgb_data = np.stack([
                                     src.read(band_red).astype(np.float32),

@@ -1,6 +1,7 @@
 """上传文件工具测试 — 稳定命名/防泄漏/安全"""
 
-import sys, os
+import sys
+import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 import pytest
@@ -68,6 +69,7 @@ class TestCleanupOldUploads:
             paths.append(p)
             time.sleep(0.02)
         removed = cleanup_old_uploads("t7", keep=2)
+        assert removed >= 0  # 返回删除数量
         # 至少删除了部分 (保留 keep 个)
         remaining = [p for p in paths if os.path.exists(p)]
         assert len(remaining) <= 4  # 不确定上限, 宽松断言

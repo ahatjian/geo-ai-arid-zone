@@ -13,8 +13,8 @@ from io import BytesIO
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from config import STUDY_AREAS, AI_MODELS, MODELS_DIR, ONNX_MODELS, ONNX_CONFIG
-from utils.error_handler import StreamlitErrorBoundary, safe_execute
+from config import AI_MODELS, MODELS_DIR, ONNX_MODELS, ONNX_CONFIG
+from utils.error_handler import StreamlitErrorBoundary
 from utils.aoi import render_aoi_selector
 
 st.set_page_config(page_title="AI 分类", page_icon="🤖", layout="wide")
@@ -487,7 +487,6 @@ elif "非监督" in run_mode:
                 # 保存分类 GeoTIFF
                 out_tif = os.path.join(tempfile.gettempdir(), f"kmeans_{n_clusters}类.tif")
                 import rasterio
-                from rasterio.transform import from_origin
                 with rasterio.open(out_tif, 'w', driver='GTiff',
                                    height=classification.shape[0], width=classification.shape[1],
                                    count=1, dtype='uint8', crs=km_crs, transform=km_transform) as dst:
@@ -757,7 +756,6 @@ else:
                 """)
 
                 with StreamlitErrorBoundary("AI 深度学习推理", st=st, show_traceback=True):
-                    import torch
                     import geoai
 
                     # 临时保存用户上传的模型文件

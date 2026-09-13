@@ -1,6 +1,7 @@
 """辐射定标与大气校正测试 — DOS 暗像元法/定标/归一化"""
 
-import sys, os
+import sys
+import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 import numpy as np

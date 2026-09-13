@@ -2,7 +2,8 @@
 地表温度 (LST) 模块单元测试
 测试: lst (K→℃ 反演 + 热环境分级 + 统计 + LST-NDVI 关系)
 """
-import sys, os
+import sys
+import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 import numpy as np

@@ -2,7 +2,8 @@
 核心计算模块单元测试
 测试: drought, desertification, forecast, cryosphere, ecology, agri_drought
 """
-import sys, os
+import sys
+import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 import numpy as np
@@ -270,7 +271,7 @@ class TestOtsuFallback:
         from utils.ai_engine import _segment_water_otsu_fallback
         path = self._make_water_tif(tmp_path)
         out = str(tmp_path / "mask_out.tif")
-        result = _segment_water_otsu_fallback(path, [3, 2, 1, 4], output_raster=out)
+        _segment_water_otsu_fallback(path, [3, 2, 1, 4], output_raster=out)
         assert os.path.exists(out)
         with rasterio.open(out) as src:
             assert src.count == 1

@@ -8,7 +8,8 @@ onnx 包在本项目中是**非必需依赖**（模型由用户上传，见 READ
 * 降级层 — 无 onnx 包 / 无模型文件 / 波段越界时的错误处理
 """
 
-import sys, os
+import sys
+import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 import numpy as np

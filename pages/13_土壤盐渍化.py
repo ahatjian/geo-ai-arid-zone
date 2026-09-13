@@ -16,7 +16,7 @@ from datetime import date, timedelta
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from config import STUDY_AREAS, COLLECTIONS
+from config import COLLECTIONS
 from utils.error_handler import StreamlitErrorBoundary
 from utils.aoi import render_aoi_selector
 from utils.pc_data import (
@@ -25,8 +25,7 @@ from utils.pc_data import (
 )
 from utils.salinity import (
     SALINITY_LEVELS, DEFAULT_NDSI_THRESHOLDS,
-    assess_salinity, compute_salinity_stats,
-    calc_si, calc_ndsi_salinity, calc_bi,
+    assess_salinity,
 )
 from utils.visualization import render_classification
 
@@ -418,7 +417,7 @@ if search_clicked:
     # ---- 结果一键入库 ----
     st.divider()
     st.subheader("💾 保存分析结果")
-    from utils.save_ui import render_save_button, render_save_csv_button
+    from utils.save_ui import render_save_button
 
     save_meta = {"研究区": area_name, "模块": "土壤盐渍化", "日期": main_date}
     render_save_button(

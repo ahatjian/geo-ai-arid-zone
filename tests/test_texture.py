@@ -1,10 +1,10 @@
 """GLCM 纹理分析测试 — 纹理特征提取与分类辅助"""
 
-import sys, os
+import sys
+import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 import numpy as np
-import pytest
 
 
 def make_texture_image(h=60, w=60, seed=0):

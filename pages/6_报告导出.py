@@ -10,7 +10,6 @@ import sys
 import html
 import base64
 from datetime import datetime
-from io import BytesIO
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -90,8 +89,8 @@ def _auto_collect_data():
             collected["sources"]["change_date2"] = _safe_get("cd_t2_date", "T2")
 
             # 从 level_counts 计算各类面积
-            inc_total = sum(cd_levels.get(l, 0) for l in [1, 2, 3]) * pixel_area
-            dec_total = sum(cd_levels.get(l, 0) for l in [-1, -2, -3]) * pixel_area
+            inc_total = sum(cd_levels.get(lv, 0) for lv in [1, 2, 3]) * pixel_area
+            dec_total = sum(cd_levels.get(lv, 0) for lv in [-1, -2, -3]) * pixel_area
             stable = cd_levels.get(0, 0) * pixel_area
 
             collected["sources"]["change_increase"] = inc_total
@@ -111,7 +110,6 @@ def _auto_collect_data():
         try:
             import numpy as np
             arr = np.asarray(ai_result)
-            total = arr.size
             class_areas_dict = {}
             for idx, name in enumerate(ai_names):
                 cnt = np.sum(arr == idx)
@@ -730,20 +728,20 @@ def build_report_html():
         sec = '<h2>💧 水体监测分析</h2>\n'
         if auto_collect and collected["water"]:
             sec += '<p style="color:#27ae60;font-size:13px;">🤖 数据自动采集自「水体监测」页面</p>\n'
-        sec += f'<div class="kpi-grid">\n'
+        sec += '<div class="kpi-grid">\n'
         sec += f'<div class="kpi-card"><div class="label">水体指数</div><div class="value">{water_index}</div></div>\n'
         sec += f'<div class="kpi-card"><div class="label">水体面积</div><div class="value">{water_area:.2f} km²</div></div>\n'
         sec += f'<div class="kpi-card"><div class="label">水体占比</div><div class="value">{water_pct:.1f}%</div></div>\n'
         sec += f'<div class="kpi-card"><div class="label">变化趋势</div><div class="value">{water_trend}</div></div>\n'
-        sec += f'</div>\n'
-        sec += f'<table><tr><th>指标</th><th>值</th></tr>\n'
+        sec += '</div>\n'
+        sec += '<table><tr><th>指标</th><th>值</th></tr>\n'
         sec += f'<tr><td>水体指数</td><td>{water_index}</td></tr>\n'
         sec += f'<tr><td>提取阈值</td><td>{water_threshold}</td></tr>\n'
         sec += f'<tr><td>水体面积</td><td>{water_area:.2f} km²</td></tr>\n'
         sec += f'<tr><td>水体占比</td><td>{water_pct:.1f}%</td></tr>\n'
         sec += f'<tr><td>像素分辨率</td><td>{water_pixel} m</td></tr>\n'
         sec += f'<tr><td>变化趋势</td><td>{water_trend}</td></tr>\n'
-        sec += f'</table>\n'
+        sec += '</table>\n'
         if water_notes_esc:
             sec += f'<div class="notes"><strong>分析备注：</strong>{water_notes_esc}</div>\n'
         for label, f in all_images:
@@ -758,12 +756,12 @@ def build_report_html():
         sec = '<h2>🌿 植被分析</h2>\n'
         if auto_collect and collected["veg"]:
             sec += '<p style="color:#27ae60;font-size:13px;">🤖 数据自动采集自「植被分析」页面</p>\n'
-        sec += f'<div class="kpi-grid">\n'
+        sec += '<div class="kpi-grid">\n'
         sec += f'<div class="kpi-card"><div class="label">{veg_index} 均值</div><div class="value">{veg_mean:.4f}</div></div>\n'
         sec += f'<div class="kpi-card"><div class="label">覆盖度</div><div class="value">{veg_coverage:.1f}%</div></div>\n'
         sec += f'<div class="kpi-card"><div class="label">趋势</div><div class="value">{veg_trend}</div></div>\n'
-        sec += f'</div>\n'
-        sec += f'<table><tr><th>指标</th><th>值</th></tr>\n'
+        sec += '</div>\n'
+        sec += '<table><tr><th>指标</th><th>值</th></tr>\n'
         sec += f'<tr><td>植被指数</td><td>{veg_index}</td></tr>\n'
         sec += f'<tr><td>均值</td><td>{veg_mean:.4f}</td></tr>\n'
         sec += f'<tr><td>标准差</td><td>{veg_std:.4f}</td></tr>\n'
@@ -772,7 +770,7 @@ def build_report_html():
         sec += f'<tr><td>覆盖度</td><td>{veg_coverage:.1f}%</td></tr>\n'
         sec += f'<tr><td>趋势方向</td><td>{veg_trend}</td></tr>\n'
         sec += f'<tr><td>Sen 斜率</td><td>{veg_slope:.1f} × 10⁻³/yr</td></tr>\n'
-        sec += f'</table>\n'
+        sec += '</table>\n'
         if veg_notes_esc:
             sec += f'<div class="notes"><strong>分析备注：</strong>{veg_notes_esc}</div>\n'
         for label, f in all_images:
@@ -788,15 +786,15 @@ def build_report_html():
         if auto_collect and collected["change"]:
             sec += '<p style="color:#27ae60;font-size:13px;">🤖 数据自动采集自「变化检测」页面</p>\n'
         sec += f'<p style="color:#666;">时相: T1 ({change_date1}) → T2 ({change_date2}) | 方法: {change_method} ({change_index})</p>\n'
-        sec += f'<div class="kpi-grid">\n'
+        sec += '<div class="kpi-grid">\n'
         sec += f'<div class="kpi-card"><div class="label">增加面积</div><div class="value" style="color:#27ae60;">{change_increase:.2f} km²</div></div>\n'
         sec += f'<div class="kpi-card"><div class="label">减少面积</div><div class="value" style="color:#e74c3c;">{change_decrease:.2f} km²</div></div>\n'
         sec += f'<div class="kpi-card"><div class="label">稳定面积</div><div class="value">{change_stable:.2f} km²</div></div>\n'
         total_c = change_increase + change_decrease + change_stable
         net_c = change_increase - change_decrease
         sec += f'<div class="kpi-card"><div class="label">净变化</div><div class="value">{net_c:+.2f} km²</div></div>\n'
-        sec += f'</div>\n'
-        sec += f'<table><tr><th>指标</th><th>值</th></tr>\n'
+        sec += '</div>\n'
+        sec += '<table><tr><th>指标</th><th>值</th></tr>\n'
         sec += f'<tr><td>检测指数</td><td>{change_index}</td></tr>\n'
         sec += f'<tr><td>检测方法</td><td>{change_method}</td></tr>\n'
         sec += f'<tr><td>T1 日期</td><td>{change_date1}</td></tr>\n'
@@ -805,7 +803,7 @@ def build_report_html():
         sec += f'<tr><td>减少面积</td><td>{change_decrease:.2f} km²</td></tr>\n'
         sec += f'<tr><td>稳定面积</td><td>{change_stable:.2f} km²</td></tr>\n'
         sec += f'<tr><td>净变化</td><td>{net_c:+.2f} km²</td></tr>\n'
-        sec += f'</table>\n'
+        sec += '</table>\n'
         if change_notes_esc:
             sec += f'<div class="notes"><strong>分析备注：</strong>{change_notes_esc}</div>\n'
         for label, f in all_images:
@@ -820,24 +818,24 @@ def build_report_html():
         sec = '<h2>🤖 AI 地物分类</h2>\n'
         if auto_collect and collected["ai"]:
             sec += '<p style="color:#27ae60;font-size:13px;">🤖 数据自动采集自「AI 分类」页面</p>\n'
-        sec += f'<div class="kpi-grid">\n'
+        sec += '<div class="kpi-grid">\n'
         sec += f'<div class="kpi-card"><div class="label">分类模型</div><div class="value" style="font-size:16px;">{ai_model}</div></div>\n'
         sec += f'<div class="kpi-card"><div class="label">总体精度</div><div class="value">{ai_oa:.1f}%</div></div>\n'
         sec += f'<div class="kpi-card"><div class="label">Kappa</div><div class="value">{ai_kappa:.3f}</div></div>\n'
-        sec += f'</div>\n'
-        sec += f'<table><tr><th>类别</th><th>面积 (km²)</th></tr>\n'
+        sec += '</div>\n'
+        sec += '<table><tr><th>类别</th><th>面积 (km²)</th></tr>\n'
         for cn in class_names:
             v = class_areas.get(cn, 0)
             if v > 0:
                 sec += f'<tr><td>{cn}</td><td>{v:.2f}</td></tr>\n'
-        sec += f'</table>\n'
-        sec += f'<table><tr><th>参数</th><th>值</th></tr>\n'
+        sec += '</table>\n'
+        sec += '<table><tr><th>参数</th><th>值</th></tr>\n'
         sec += f'<tr><td>模型</td><td>{ai_model}</td></tr>\n'
         sec += f'<tr><td>类别数</td><td>{ai_classes}</td></tr>\n'
         sec += f'<tr><td>Tile 大小</td><td>{ai_tilesize}</td></tr>\n'
         sec += f'<tr><td>OA</td><td>{ai_oa:.1f}%</td></tr>\n'
         sec += f'<tr><td>Kappa</td><td>{ai_kappa:.3f}</td></tr>\n'
-        sec += f'</table>\n'
+        sec += '</table>\n'
         if ai_notes_esc:
             sec += f'<div class="notes"><strong>分析备注：</strong>{ai_notes_esc}</div>\n'
         for label, f in all_images:
@@ -851,8 +849,8 @@ def build_report_html():
     if auto_collect and collected["salinity"]:
         sal = collected["sources"]
         sec = '<h2>🧂 土壤盐渍化监测</h2>\n'
-        sec += f'<p style="color:#27ae60;font-size:13px;">🤖 数据自动采集自「土壤盐渍化」页面</p>\n'
-        sec += f'<div class="kpi-grid">\n'
+        sec += '<p style="color:#27ae60;font-size:13px;">🤖 数据自动采集自「土壤盐渍化」页面</p>\n'
+        sec += '<div class="kpi-grid">\n'
         sec += f'<div class="kpi-card"><div class="label">盐渍化总面积占比</div><div class="value">{sal["salinity_total_ratio"]*100:.1f}%</div></div>\n'
         sec += f'<div class="kpi-card"><div class="label">重度及以上占比</div><div class="value" style="color:#e74c3c;">{sal["salinity_severe_ratio"]*100:.1f}%</div></div>\n'
         sec += f'<div class="kpi-card"><div class="label">主导等级</div><div class="value">{sal["salinity_dominant"]}</div></div>\n'
@@ -865,8 +863,8 @@ def build_report_html():
     if auto_collect and collected["lst"]:
         lst = collected["sources"]
         sec = '<h2>🌡️ 地表温度 LST</h2>\n'
-        sec += f'<p style="color:#27ae60;font-size:13px;">🤖 数据自动采集自「地表温度」页面</p>\n'
-        sec += f'<div class="kpi-grid">\n'
+        sec += '<p style="color:#27ae60;font-size:13px;">🤖 数据自动采集自「地表温度」页面</p>\n'
+        sec += '<div class="kpi-grid">\n'
         sec += f'<div class="kpi-card"><div class="label">平均地表温度</div><div class="value">{lst["lst_mean"]:.1f}°C</div></div>\n'
         sec += f'<div class="kpi-card"><div class="label">最高温度</div><div class="value" style="color:#e74c3c;">{lst["lst_max"]:.1f}°C</div></div>\n'
         sec += f'<div class="kpi-card"><div class="label">高温区占比</div><div class="value">{lst["lst_hot_ratio"]*100:.1f}%</div></div>\n'
@@ -879,8 +877,8 @@ def build_report_html():
     if auto_collect and collected["et"]:
         ets = collected["sources"]
         sec = '<h2>💨 蒸散发 ET 估算</h2>\n'
-        sec += f'<p style="color:#27ae60;font-size:13px;">🤖 数据自动采集自「蒸散发」页面</p>\n'
-        sec += f'<div class="kpi-grid">\n'
+        sec += '<p style="color:#27ae60;font-size:13px;">🤖 数据自动采集自「蒸散发」页面</p>\n'
+        sec += '<div class="kpi-grid">\n'
         sec += f'<div class="kpi-card"><div class="label">平均蒸散发</div><div class="value">{ets["et_mean"]:.2f} mm/day</div></div>\n'
         sec += f'<div class="kpi-card"><div class="label">平均净辐射</div><div class="value">{ets["et_rn"]:.0f} W/m²</div></div>\n'
         sec += f'<div class="kpi-card"><div class="label">潜热通量</div><div class="value">{ets["et_le"]:.0f} W/m²</div></div>\n'
@@ -893,8 +891,8 @@ def build_report_html():
     if auto_collect and collected["supervised"]:
         sup = collected["sources"]
         sec = '<h2>🎯 监督分类训练</h2>\n'
-        sec += f'<p style="color:#27ae60;font-size:13px;">🤖 数据自动采集自「监督分类」页面</p>\n'
-        sec += f'<div class="kpi-grid">\n'
+        sec += '<p style="color:#27ae60;font-size:13px;">🤖 数据自动采集自「监督分类」页面</p>\n'
+        sec += '<div class="kpi-grid">\n'
         sec += f'<div class="kpi-card"><div class="label">分类器</div><div class="value" style="font-size:16px;">{sup["sup_classifier"]}</div></div>\n'
         sec += f'<div class="kpi-card"><div class="label">总体精度 OA</div><div class="value">{sup["sup_oa"]*100:.2f}%</div></div>\n'
         sec += f'<div class="kpi-card"><div class="label">Kappa</div><div class="value">{sup["sup_kappa"]:.3f}</div></div>\n'
@@ -907,8 +905,8 @@ def build_report_html():
     if auto_collect and collected["transition"]:
         trs = collected["sources"]
         sec = '<h2>🔀 土地覆盖转移矩阵</h2>\n'
-        sec += f'<p style="color:#27ae60;font-size:13px;">🤖 数据自动采集自「土地转移」页面</p>\n'
-        sec += f'<div class="kpi-grid">\n'
+        sec += '<p style="color:#27ae60;font-size:13px;">🤖 数据自动采集自「土地转移」页面</p>\n'
+        sec += '<div class="kpi-grid">\n'
         sec += f'<div class="kpi-card"><div class="label">总变化面积</div><div class="value">{trs["trans_change"]:.2f} km²</div></div>\n'
         sec += f'<div class="kpi-card"><div class="label">时相</div><div class="value" style="font-size:13px;">{trs["trans_t1"]} → {trs["trans_t2"]}</div></div>\n'
         sec += '</div>\n'
@@ -924,8 +922,8 @@ def build_report_html():
     if auto_collect and collected["bfast"]:
         bf = collected["sources"]
         sec = '<h2>⚡ BFAST 时序断点检测</h2>\n'
-        sec += f'<p style="color:#27ae60;font-size:13px;">🤖 数据自动采集自「植被分析」页面</p>\n'
-        sec += f'<div class="kpi-grid">\n'
+        sec += '<p style="color:#27ae60;font-size:13px;">🤖 数据自动采集自「植被分析」页面</p>\n'
+        sec += '<div class="kpi-grid">\n'
         sec += f'<div class="kpi-card"><div class="label">突变事件数</div><div class="value">{bf["bfast_n"]}</div></div>\n'
         sec += f'<div class="kpi-card"><div class="label">负向突变 (退化)</div><div class="value" style="color:#e74c3c;">{bf["bfast_neg"]}</div></div>\n'
         sec += f'<div class="kpi-card"><div class="label">正向突变 (恢复)</div><div class="value" style="color:#27ae60;">{bf["bfast_pos"]}</div></div>\n'
@@ -944,8 +942,8 @@ def build_report_html():
     if auto_collect and collected["kmeans"]:
         km = collected["sources"]
         sec = '<h2>🎯 KMeans 非监督分类</h2>\n'
-        sec += f'<p style="color:#27ae60;font-size:13px;">🤖 数据自动采集自「AI 分类」页面</p>\n'
-        sec += f'<div class="kpi-grid">\n'
+        sec += '<p style="color:#27ae60;font-size:13px;">🤖 数据自动采集自「AI 分类」页面</p>\n'
+        sec += '<div class="kpi-grid">\n'
         sec += f'<div class="kpi-card"><div class="label">聚类数 K</div><div class="value">{km["km_classes"]}</div></div>\n'
         sec += f'<div class="kpi-card"><div class="label">分析像元数</div><div class="value">{km["km_pixels"]:,}</div></div>\n'
         sec += '</div>\n'
@@ -1210,7 +1208,7 @@ if preview or generate:
             except Exception as pdf_e:
                 st.caption(f"PDF 导出不可用: {pdf_e}")
 
-            st.success(f"✅ 报告已生成 — 点击上方按钮下载")
+            st.success("✅ 报告已生成 — 点击上方按钮下载")
 
             # ============================================
             # AI 智能报告全文 (DeepSeek 一键生成科研报告)

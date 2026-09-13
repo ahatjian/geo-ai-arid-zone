@@ -5,7 +5,8 @@
 状态读写、与 st.checkbox 的同步、以及 pc_data 确实委托到同一真源。
 """
 
-import sys, os
+import sys
+import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 import pytest

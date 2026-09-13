@@ -1,8 +1,9 @@
 """error_handler.py 单元测试 — 重试/降级/边界"""
-import sys, os
+import sys
+import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 import pytest
-from utils.error_handler import safe_execute, with_retry, streamlit_safe
+from utils.error_handler import safe_execute, with_retry
 
 class TestErrorHandler:
     def test_safe_execute_success(self):

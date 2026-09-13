@@ -1,6 +1,7 @@
 """影像预处理模块测试 — 云掩膜 / 重采样 / 归一化 / S-G 平滑"""
 
-import sys, os
+import sys
+import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 import numpy as np
@@ -37,8 +38,8 @@ class TestS2CloudMask:
         scl = make_scl()
         masked, cloud_mask = apply_s2_cloud_mask(bands, scl)
         # 云块区域应被掩膜
-        assert cloud_mask[10, 10] == True   # SCL=8 云
-        assert cloud_mask[17, 17] == True   # SCL=9 云
+        assert cloud_mask[10, 10]   # SCL=8 云
+        assert cloud_mask[17, 17]   # SCL=9 云
         assert np.isnan(masked[0, 10, 10])  # 该像元所有波段为 NaN
 
     def test_clear_pixels_unchanged(self):
@@ -47,7 +48,7 @@ class TestS2CloudMask:
         scl = make_scl()
         masked, cloud_mask = apply_s2_cloud_mask(bands, scl)
         # 晴空区 (SCL=4~6) 不被掩膜
-        assert cloud_mask[30, 30] == False
+        assert not cloud_mask[30, 30]
         assert masked[0, 30, 30] == bands[0, 30, 30]
 
     def test_shadow_option(self):
@@ -57,8 +58,8 @@ class TestS2CloudMask:
         _, cm_with_shadow = apply_s2_cloud_mask(bands, scl, mask_shadow=True)
         _, cm_no_shadow = apply_s2_cloud_mask(bands, scl, mask_shadow=False)
         # 关闭云影掩膜后, 云影块 (0-3) 不再被掩
-        assert cm_with_shadow[1, 1] == True
-        assert cm_no_shadow[1, 1] == False
+        assert cm_with_shadow[1, 1]
+        assert not cm_no_shadow[1, 1]
 
     def test_shape_mismatch_raises(self):
         from utils.preprocess import apply_s2_cloud_mask
@@ -74,9 +75,9 @@ class TestLandsatCloudMask:
         qa[5, 5] = 1 << 3  # bit3 = 云
         qa[10, 10] = 1 << 4  # bit4 = 云影
         masked, cloud_mask = apply_landsat_cloud_mask(bands, qa)
-        assert cloud_mask[5, 5] == True
-        assert cloud_mask[10, 10] == True
-        assert cloud_mask[0, 0] == False
+        assert cloud_mask[5, 5]
+        assert cloud_mask[10, 10]
+        assert not cloud_mask[0, 0]
         assert np.isnan(masked[0, 5, 5])
 
     def test_mask_clouds_dispatch(self):
