@@ -10,6 +10,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from PIL import Image
 import io
+import shutil
+import os
 import warnings
 import requests
 from urllib.parse import quote
@@ -17,7 +19,7 @@ from urllib.parse import quote
 warnings.filterwarnings("ignore")
 
 # 从统一配置导入
-from config import COLLECTIONS, STUDY_AREAS, CACHE_CONFIG
+from config import COLLECTIONS, STUDY_AREAS, CACHE_CONFIG, CACHE_DIR
 
 # ---- 条件缓存装饰器 ----
 try:
@@ -37,6 +39,27 @@ def _cache(ttl: int):
         return noop_decorator
 
 
+def _geo_cache_dir() -> str:
+    path = os.path.join(CACHE_DIR, "geotiffs")
+    os.makedirs(path, exist_ok=True)
+    return path
+
+
+def _safe_cache_token(value: str) -> str:
+    token = "".join(ch for ch in str(value) if ch.isalnum() or ch in "._-")
+    return token[:140] or "item"
+
+
+def _copy_cache_to_output(cache_path: str, output_path: str) -> bool:
+    if not cache_path or cache_path == output_path:
+        return False
+    try:
+        shutil.copyfile(cache_path, output_path)
+        return True
+    except OSError:
+        return False
+
+
 # ============================================
 # STAC 目录连接
 # ============================================
@@ -52,8 +75,40 @@ def get_catalog():
 # ============================================
 # 搜索影像
 # ============================================
-@_cache(ttl=CACHE_CONFIG["ttl_medium"])
+def _is_demo_mode():
+    return os.environ.get("GEOAI_DEMO_MODE", "0") == "1"
+
+
 def search_images(
+    bbox,
+    start_date,
+    end_date,
+    collection="Sentinel-2 L2A",
+    cloud_cover_max=20,
+    max_items=10,
+):
+    if _is_demo_mode():
+        from utils.demo_data import build_demo_search_results
+        return build_demo_search_results(
+            bbox=bbox,
+            start_date=start_date,
+            end_date=end_date,
+            collection=collection,
+            cloud_cover_max=cloud_cover_max,
+            max_items=max_items,
+        )
+    return _search_images_real_cached(
+        bbox=bbox,
+        start_date=start_date,
+        end_date=end_date,
+        collection=collection,
+        cloud_cover_max=cloud_cover_max,
+        max_items=max_items,
+    )
+
+
+@_cache(ttl=CACHE_CONFIG["ttl_medium"])
+def _search_images_real_cached(
     bbox,
     start_date,
     end_date,
@@ -93,11 +148,21 @@ def search_images(
 
     collection_id = COLLECTIONS[collection]["id"]
 
+    stac_query = {"eo:cloud_cover": {"lt": cloud_cover_max}}
+    platform_map = {
+        "Landsat-8": ["landsat-8"],
+        "Landsat-9": ["landsat-9"],
+        "Landsat-7": ["landsat-7"],
+        "Landsat-4-5": ["landsat-4", "landsat-5"],
+    }
+    if collection in platform_map:
+        stac_query["platform"] = {"in": platform_map[collection]}
+
     search = catalog.search(
         collections=[collection_id],
         bbox=bbox,
         datetime=f"{start_date}/{end_date}",
-        query={"eo:cloud_cover": {"lt": cloud_cover_max}},
+        query=stac_query,
         max_items=max_items,
         sortby=[{"field": "datetime", "direction": "desc"}],
     )
@@ -268,6 +333,31 @@ def get_mndwi_preview(item, collection="Sentinel-2 L2A", width=512):
 
 
 # ============================================
+# 下载任意 STAC 资产 (如 Landsat 热红外波段)
+# ============================================
+def download_asset(item, asset_name, output_path):
+    """Download a named STAC asset as a single-band GeoTIFF."""
+    cache_path = os.path.join(
+        _geo_cache_dir(),
+        f"{_safe_cache_token(item.id)}_{_safe_cache_token(asset_name)}.tif",
+    )
+    if os.path.exists(cache_path) and os.path.getsize(cache_path) > 1024:
+        _copy_cache_to_output(cache_path, output_path)
+        return output_path
+
+    try:
+        import rioxarray
+        href = item.assets[asset_name].href
+        data = rioxarray.open_rasterio(href).squeeze()
+        data.rio.to_raster(cache_path)
+        _copy_cache_to_output(cache_path, output_path)
+        return output_path
+    except Exception as e:
+        print(f"资产下载失败: {e}")
+        return None
+
+
+# ============================================
 # 下载完整波段 (GeoTIFF)
 # ============================================
 def download_band(item, band_name, output_path, collection="Sentinel-2 L2A"):
@@ -283,6 +373,14 @@ def download_band(item, band_name, output_path, collection="Sentinel-2 L2A"):
     返回:
         str: 成功返回输出路径，失败返回 None
     """
+    cache_path = os.path.join(
+        _geo_cache_dir(),
+        f"{_safe_cache_token(item.id)}_{_safe_cache_token(collection)}_{_safe_cache_token(band_name)}.tif",
+    )
+    if os.path.exists(cache_path) and os.path.getsize(cache_path) > 1024:
+        _copy_cache_to_output(cache_path, output_path)
+        return output_path
+
     try:
         import rioxarray
 
@@ -291,7 +389,11 @@ def download_band(item, band_name, output_path, collection="Sentinel-2 L2A"):
 
         href = item.assets[band_key].href
         data = rioxarray.open_rasterio(href).squeeze()
-        data.rio.to_raster(output_path)
+        if data.ndim == 3:
+            band_index = list(bands.keys()).index(band_name)
+            data = data[band_index] if band_index < len(data) else data[0]
+        data.rio.to_raster(cache_path)
+        _copy_cache_to_output(cache_path, output_path)
 
         return output_path
     except Exception as e:
@@ -318,23 +420,37 @@ def download_multiband(item, output_path, collection="Sentinel-2 L2A", band_name
     返回:
         str: 成功返回输出路径，失败返回 None
     """
-    # 缓存命中: 文件已存在且有效
-    import os
     if os.path.exists(output_path) and os.path.getsize(output_path) > 1024:
         if progress_callback:
             try:
-                progress_callback(1, 1)  # 缓存命中视为瞬时完成
+                progress_callback(1, 1)
             except Exception:
                 pass
         return output_path
 
+    bands = COLLECTIONS[collection]["bands"]
+    if band_names is None:
+        band_names = ["blue", "green", "red", "nir", "swir1", "swir2"]
+
+    band_token = "_".join(_safe_cache_token(b) for b in band_names)
+    cache_path = os.path.join(
+        _geo_cache_dir(),
+        f"{_safe_cache_token(item.id)}_{_safe_cache_token(collection)}_{band_token}.tif",
+    )
+
+    if os.path.exists(cache_path) and os.path.getsize(cache_path) > 1024:
+        _copy_cache_to_output(cache_path, output_path)
+        if progress_callback:
+            try:
+                progress_callback(1, 1)
+            except Exception:
+                pass
+        return output_path
+
+
     try:
         import rasterio
         from rasterio.transform import from_bounds
-
-        bands = COLLECTIONS[collection]["bands"]
-        if band_names is None:
-            band_names = ["blue", "green", "red", "nir", "swir1", "swir2"]
 
         band_keys = [bands[b] for b in band_names]
 
@@ -353,7 +469,10 @@ def download_multiband(item, output_path, collection="Sentinel-2 L2A", band_name
             # 重采样到统一尺寸
             if data.shape != first_data.shape:
                 data = data.rio.reproject_match(first_data)
-            all_bands.append(data.values.astype(first_data.dtype))
+            band_values = data.values
+            if band_values.ndim == 3:
+                band_values = band_values[i] if i < len(band_values) else band_values[0]
+            all_bands.append(band_values.astype(first_data.dtype))
             # 进度回调 (每完成一个波段)
             if progress_callback:
                 try:
@@ -364,7 +483,7 @@ def download_multiband(item, output_path, collection="Sentinel-2 L2A", band_name
         # 写入多波段 TIFF
         stack = np.stack(all_bands, axis=0)
         with rasterio.open(
-            output_path,
+            cache_path,
             "w",
             driver="GTiff",
             height=stack.shape[1],
@@ -376,6 +495,7 @@ def download_multiband(item, output_path, collection="Sentinel-2 L2A", band_name
         ) as dst:
             dst.write(stack)
 
+        _copy_cache_to_output(cache_path, output_path)
         return output_path
     except Exception as e:
         print(f"多波段下载失败: {e}")
@@ -391,10 +511,10 @@ def get_rgb_preview_cached(item_id: str, collection: str = "Sentinel-2 L2A", wid
     """
     缓存版 RGB 预览 — 通过 Planetary Computer 渲染服务获取。
     使用 item_id 而非 Item 对象作为缓存键，绕过 STAC Item 不可哈希问题。
-
-    注意: 此函数需要一次 STAC API 调用来获取 Item 对象。
-    推荐在页面中传递已有的 Item json 数据。
     """
+    if item_id.startswith("demo_"):
+        from utils.demo_data import get_demo_rgb
+        return get_demo_rgb(item_id, collection, width=width)
     catalog = get_catalog()
     collection_id = COLLECTIONS[collection]["id"]
     item = catalog.get_collection(collection_id).get_item(item_id)
@@ -404,6 +524,9 @@ def get_rgb_preview_cached(item_id: str, collection: str = "Sentinel-2 L2A", wid
 @_cache(ttl=CACHE_CONFIG["ttl_medium"])
 def get_ndvi_preview_cached(item_id: str, collection: str = "Sentinel-2 L2A", width: int = 512):
     """缓存版 NDVI 预览 — 基于 item_id"""
+    if item_id.startswith("demo_"):
+        from utils.demo_data import get_demo_rgb
+        return get_demo_rgb(item_id, collection, width=width)
     catalog = get_catalog()
     collection_id = COLLECTIONS[collection]["id"]
     item = catalog.get_collection(collection_id).get_item(item_id)
@@ -413,6 +536,9 @@ def get_ndvi_preview_cached(item_id: str, collection: str = "Sentinel-2 L2A", wi
 @_cache(ttl=CACHE_CONFIG["ttl_medium"])
 def get_mndwi_preview_cached(item_id: str, collection: str = "Sentinel-2 L2A", width: int = 512):
     """缓存版 MNDWI 预览 — 基于 item_id"""
+    if item_id.startswith("demo_"):
+        from utils.demo_data import get_demo_rgb
+        return get_demo_rgb(item_id, collection, width=width)
     catalog = get_catalog()
     collection_id = COLLECTIONS[collection]["id"]
     item = catalog.get_collection(collection_id).get_item(item_id)

@@ -111,12 +111,11 @@ def _auto_collect_data():
         try:
             import numpy as np
             arr = np.asarray(ai_result)
-            # 计算各类像素占比
             total = arr.size
             class_areas_dict = {}
             for idx, name in enumerate(ai_names):
                 cnt = np.sum(arr == idx)
-                area_km2 = (cnt * 100) / 1e6  # 假设 10m 分辨率: 100m²/pixel
+                area_km2 = (cnt * 100) / 1e6
                 class_areas_dict[name] = area_km2
 
             collected["sources"]["ai_model"] = "UNet + ResNet50 (AI)"
@@ -124,6 +123,27 @@ def _auto_collect_data():
             collected["sources"]["ai_oa"] = 0.0
             collected["sources"]["ai_kappa"] = 0.0
             collected["sources"]["ai_tilesize"] = 512
+            collected["sources"]["ai_class_areas"] = class_areas_dict
+            collected["ai"] = True
+        except Exception:
+            pass
+    elif _safe_get("lc_result"):
+        lc = _safe_get("lc_result")
+        try:
+            class_areas_dict = {
+                row["class_name"]: float(row.get("area_km2", 0.0))
+                for row in lc.get("stats", [])
+            }
+            source = _safe_get("lc_source", "ESA/ESRI")
+            collected["sources"]["ai_model"] = (
+                "ESA WorldCover (公开产品)" if source == "esa" else
+                "ESRI Land Cover (公开产品)" if source == "esri" else
+                "公开土地覆盖产品"
+            )
+            collected["sources"]["ai_classes"] = len(class_areas_dict)
+            collected["sources"]["ai_oa"] = 0.0
+            collected["sources"]["ai_kappa"] = 0.0
+            collected["sources"]["ai_tilesize"] = 10
             collected["sources"]["ai_class_areas"] = class_areas_dict
             collected["ai"] = True
         except Exception:

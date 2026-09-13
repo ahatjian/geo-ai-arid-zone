@@ -34,6 +34,7 @@
 - 📄 **PDF 科研报告** — reportlab 生成带中文字体的 PDF 版报告（HTML/PDF 双格式下载）
 - 📝 **AI 智能报告全文** — DeepSeek 一键生成完整科研报告（执行摘要/分项分析/综合结论/对策建议 + 指标数据表，Markdown 下载）
 - ⚡ **AI 自动执行工作流** — 自然语言描述需求 → AI 解析 → 自动填充研究区/日期/模块并执行（"分析塔里木盆地2025年植被和干旱"一键完成）
+- 🧭 **AI 研究规划 Copilot** — 一句话研究目标 → AI 自动生成研究方案、执行快速扫描、输出科研结论与下一步建议
 - 📚 **RAG 遥感知识库** — 内置 35 条指数公式/术语/干旱区常识，AI 对话自动检索注入（减少幻觉，公式回答准确）
 - 🎨 **图像增强与变换** — PCA 主成分分析 + 空间滤波（均值/中值/高斯/锐化/边缘）+ 对比度增强（拉伸/均衡化/伽马/CLAHE）+ IHS 融合
 - 🎯 **非监督分类** — KMeans 聚类（含 NDVI/MNDWI/NDBI 特征栈 + 类别自动推断）
@@ -71,6 +72,14 @@ cd web-geo-ai && pip install -r requirements.txt
 streamlit run app.py
 # 访问 http://localhost:8501
 ```
+
+## 高效缓存
+
+平台会自动把下载过的单波段、多波段和热红外影像缓存到 `.cache/geotiffs/`，同一景影像在不同分析页面之间直接复用，避免重复下载和重复流量消耗。系统状态页可查看缓存占用并一键清理。
+
+## 离线演示模式
+
+数据浏览页侧边栏提供 **🧪 离线演示模式**。启用后不访问外部卫星服务，自动生成本地模拟的 Sentinel-2 / Landsat 影像，可用于弱网、断网或答辩现场完整演示搜索、分析、预测、导出全流程。真实科研分析时关闭该开关即可恢复 Planetary Computer 数据源。
 
 ## DeepSeek AI 配置
 
@@ -123,7 +132,7 @@ web-geo-ai/
 │   ├── 23_辐射定标大气校正.py        # DOS大气校正 + 辐射定标
 │   ├── 24_空间邻域分析.py            # AI智能缓冲区 + 叠加分析
 │   └── 25_AI助手.py                # AI对话/一键分析/异常检测/影像理解/质量诊断
-├── utils/                        # 工具函数库 (45 模块)
+├── utils/                        # 工具函数库 (48 模块)
 │   ├── pc_data.py                # Planetary Computer STAC 数据获取
 │   ├── indices.py                # NDVI/MNDWI/EVI/AWEIsh 指数计算
 │   ├── drought.py                # SPI/SPEI/VCI/TCI/VHI/NDDI/TVDI/CDI
@@ -152,6 +161,7 @@ web-geo-ai/
 │   ├── aoi.py                    # 自定义研究区 (AOI) 选择组件 + GeoJSON 解析
 │   ├── error_handler.py          # 统一错误处理
 │   ├── ai_assistant.py           # AI 对话/自动分析/异常检测 (上下文感知)
+│   ├── ai_copilot.py              # AI 研究规划 + 快速扫描 + 研究结论生成
 │   ├── ai_vision.py              # AI 视觉理解 + 质量诊断
 │   ├── ai_report.py              # AI 智能报告全文
 │   ├── knowledge_base.py         # RAG 遥感知识库 (35条指数/术语)
@@ -163,6 +173,7 @@ web-geo-ai/
 │   ├── bfast.py                  # BFAST 断点检测
 │   ├── spatial.py                # 空间邻域分析
 │   ├── atmospheric.py            # DOS 大气校正
+│   ├── demo_data.py               # 离线演示数据生成与本地影像缓存
 │   ├── save_ui.py                # 结果一键入库组件
 │   ├── map_utils.py              # 研究区地图 (leafmap降级静态图)
 │   └── pdf_report.py             # PDF 中文科研报告
@@ -217,15 +228,38 @@ web-geo-ai/
 3. 设置 `main` 分支, 主文件 `app.py`
 4. Advanced Settings → Python 3.11 → Secrets 配置
 
-### Docker
+### 服务器部署与持久化
+
+部署到服务器时，建议通过环境变量指定持久化目录，避免容器重启或横向扩容后数据丢失：
+
+- `GEOAI_DATA_DIR`：平台数据目录
+- `GEOAI_MODELS_DIR`：AI 模型目录
+- `GEOAI_CACHE_DIR`：STAC/影像/离线演示缓存目录
+- `GEOAI_RESULTS_DIR`：数据下载中心结果库目录
+
+示例：
+
+```bash
+docker run -d -p 8501:8501 \
+  -e DEEPSEEK_API_KEY="$DEEPSEEK_API_KEY" \
+  -e GEOAI_RESULTS_DIR=/data/geoai/results \
+  -e GEOAI_CACHE_DIR=/data/geoai/cache \
+  -e GEOAI_MODELS_DIR=/data/geoai/models \
+  -v /data/geoai:/data/geoai \
+  geo-ai-app
+```
+
+密钥应通过环境变量或平台 Secrets 注入，不要把 `.streamlit/secrets.toml` 打进镜像。
+
+## Docker
 ```bash
 docker build -t geo-ai-app . && docker run -p 8501:8501 geo-ai-app
 ```
 
 ## 状态
 
-- **版本**: v1.23 | **页面**: 25 | **工具模块**: 39
-- **测试**: 392 用例全部通过 | **部署**: Streamlit Cloud ✅
+- **版本**: v1.23 | **页面**: 25 | **工具模块**: 48
+- **测试**: 426 用例通过 (1 项按条件跳过) | **部署**: Streamlit Cloud ✅
 - **Python**: 3.11 | **PyTorch**: 2.11.0+cpu
 
 ## License

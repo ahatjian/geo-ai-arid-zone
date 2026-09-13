@@ -1,6 +1,6 @@
 """
 Geo AI 干旱区遥感智能分析平台 — 首页入口
-版本 v1.21 — 25 模块完整链路: 从数据浏览到智能工作流 + AI 解读
+版本 v1.23 — 25 模块完整链路: 从数据浏览到智能工作流 + AI 解读
 """
 
 import streamlit as st
@@ -13,6 +13,49 @@ from config import APP_TITLE, APP_ICON, APP_VERSION, STUDY_AREAS
 from utils.error_handler import StreamlitErrorBoundary
 
 # ============================================
+def _home_page():
+    pass
+
+
+_PAGE_SPECS = [
+    ("AI 助手", "pages/25_AI助手.py", "🤖"),
+    ("AI 分类", "pages/4_AI分类.py", "🤖"),
+    ("报告导出", "pages/6_报告导出.py", "📄"),
+    ("智能工作流", "pages/12_工作流.py", "⚡"),
+    ("数据浏览", "pages/1_数据浏览.py", "🗺️"),
+    ("水体监测", "pages/2_水体监测.py", "💧"),
+    ("植被分析", "pages/3_植被分析.py", "🌿"),
+    ("变化检测", "pages/5_变化检测.py", "🔄"),
+
+    ("干旱监测", "pages/7_干旱监测.py", "🏜️"),
+    ("冰冻圈分析", "pages/8_冰冻圈分析.py", "❄️"),
+    ("农业干旱", "pages/9_农业干旱.py", "🌾"),
+    ("时序动画", "pages/10_时序动画.py", "🎬"),
+    ("生态评估", "pages/11_生态评估.py", "🌍"),
+
+    ("土壤盐渍化", "pages/13_土壤盐渍化.py", "🧂"),
+    ("地表温度 LST", "pages/14_LST.py", "🌡️"),
+    ("指数计算器", "pages/15_指数计算器.py", "🧮"),
+    ("土地转移矩阵", "pages/16_土地转移.py", "🔀"),
+    ("蒸散发估算", "pages/17_蒸散发.py", "💨"),
+    ("监督分类", "pages/18_监督分类.py", "🎯"),
+    ("矢量导出", "pages/19_矢量导出.py", "🗺️"),
+    ("数据下载中心", "pages/20_数据下载中心.py", "📦"),
+    ("系统状态", "pages/21_系统状态.py", "🛠️"),
+    ("图像增强", "pages/22_图像增强.py", "🎨"),
+    ("辐射定标大气校正", "pages/23_辐射定标大气校正.py", "🌤️"),
+    ("空间邻域分析", "pages/24_空间邻域分析.py", "🗺️"),
+]
+
+_pages = [st.Page(_home_page, title="首页", icon="🏠", default=True)]
+for _title, _path, _icon in _PAGE_SPECS:
+    _pages.append(st.Page(_path, title=_title, icon=_icon))
+
+_selected_page = st.navigation(_pages)
+if _selected_page.title != "首页":
+    _selected_page.run()
+    st.stop()
+
 # 页面配置
 # ============================================
 st.set_page_config(

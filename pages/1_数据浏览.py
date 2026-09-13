@@ -55,6 +55,16 @@ with st.sidebar:
     cloud_cover = st.slider("最大云量 (%)", 0, 100, 20)
     max_items = st.slider("最大结果数", 1, 20, 5)
 
+    # 离线演示模式 (无网络/答辩断网时可完整跑通全流程)
+    demo_mode = st.checkbox(
+        "🧪 离线演示模式",
+        value=os.environ.get("GEOAI_DEMO_MODE", "0") == "1",
+        help="使用本地生成的模拟影像，离线演示时仍可完成搜索、分析、导出全流程",
+    )
+    os.environ["GEOAI_DEMO_MODE"] = "1" if demo_mode else "0"
+    if demo_mode:
+        st.caption("✅ 已启用本地演示影像，当前不访问外部卫星服务")
+
     # 搜索按钮
     search_clicked = st.button("🔍 搜索影像", type="primary")
 
@@ -64,10 +74,8 @@ with st.sidebar:
     st.subheader("📁 本地文件")
     uploaded_file = st.file_uploader("上传 GeoTIFF", type=["tif", "tiff"])
     if uploaded_file:
-        tmp_dir = tempfile.gettempdir()
-        local_tif = os.path.join(tmp_dir, os.path.basename(uploaded_file.name))
-        with open(local_tif, "wb") as f:
-            f.write(uploaded_file.getvalue())
+        from utils.upload_utils import save_upload_stable
+        local_tif = save_upload_stable(uploaded_file, "data")
         st.session_state["local_tif"] = local_tif
         st.success(f"✅ 已加载: {uploaded_file.name}")
 
@@ -382,6 +390,9 @@ if "search_results" in st.session_state and st.session_state["search_results"]:
                                 file_name=fname,
                                 mime="image/tiff",
                             )
+                        st.session_state["multiband_tif"] = output_path
+                        st.session_state["multiband_name"] = fname
+                        st.session_state["multiband_satellite"] = satellite_used
                         st.success(f"✅ 全波段下载完成: {fname}")
                     else:
                             st.error("多波段下载失败")

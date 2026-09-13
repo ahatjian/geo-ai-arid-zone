@@ -183,6 +183,9 @@ from .ai_assistant import (
 from .ai_vision import (
     image_fingerprint, vision_describe, quality_diagnose,
 )
+from .ai_copilot import (
+    generate_research_plan, quick_scan, generate_copilot_report, run_copilot,
+)
 from .ai_report import (
     generate_full_report, sections_from_sources,
 )
@@ -193,7 +196,7 @@ from .empty_states import (
     no_image_guidance, no_data_guidance, no_result_guidance,
 )
 from .upload_utils import (
-    save_upload_stable, cleanup_old_uploads,
+    save_upload_stable, cleanup_old_uploads, get_shared_geotiff_path,
 )
 from .cryosphere import (
     SNOW_COVER_CLASSES, GLACIER_CLASSES, CryosphereResult,

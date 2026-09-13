@@ -61,16 +61,148 @@ from utils.ai_assistant import (
     chat_with_assistant, auto_analyze, detect_anomalies,
     anomaly_insight, is_ai_available,
 )
+from utils.upload_utils import get_shared_geotiff_path
 
 AI_ON = is_ai_available()
 
-tab_chat, tab_auto, tab_anom, tab_vision, tab_quality = st.tabs([
+tab_plan, tab_chat, tab_auto, tab_anom, tab_vision, tab_quality = st.tabs([
+    "🧭 AI 研究规划",
     "💬 AI 对话助手",
     "🪄 AI 一键分析",
     "🕵️ AI 异常检测",
     "👁️ AI 影像理解",
     "🏥 AI 质量诊断",
 ])
+
+# ============================================================
+# Tab 0: AI 研究规划 (Copilot)
+# ============================================================
+with tab_plan:
+    st.subheader("🧭 AI 研究规划")
+    st.caption("给 AI 一个研究目标，它会解析研究区和模块，制定方案，并用当前影像快速扫描后给出结论。")
+
+    plan_prompt = st.text_area(
+        "描述你的研究目标",
+        placeholder="例如：分析塔里木盆地 2025 年植被变化与干旱风险，并评估绿洲生态稳定性",
+        height=90,
+        key="copilot_prompt",
+    )
+
+    source_mode = st.radio(
+        "影像来源",
+        ["🧠 仅生成研究方案", "📤 上传 GeoTIFF", "🗺️ 使用共享影像"],
+        horizontal=True,
+    )
+    copilot_bands = None
+    copilot_satellite = "Sentinel-2 L2A"
+    if "上传" in source_mode:
+        copilot_file = st.file_uploader("上传多波段 GeoTIFF", type=["tif", "tiff"], key="copilot_upload")
+        if copilot_file:
+            copilot_path = save_upload_tmp(copilot_file)
+            try:
+                copilot_bands = load_bands(copilot_path)
+                st.success(f"✅ 已加载 {copilot_bands.shape[0]} 波段")
+            except Exception as e:
+                st.error(f"❌ 读取失败: {e}")
+            finally:
+                try:
+                    os.remove(copilot_path)
+                except OSError:
+                    pass
+    elif "共享" in source_mode:
+        shared_path = get_shared_geotiff_path(st.session_state)
+        if shared_path:
+            try:
+                copilot_bands = load_bands(shared_path)
+                copilot_satellite = st.session_state.get("multiband_satellite", "Sentinel-2 L2A")
+                st.success(f"✅ 使用共享影像: {st.session_state.get('multiband_name', 'shared.tif')}")
+            except Exception as e:
+                st.error(f"❌ 共享影像读取失败: {e}")
+        else:
+            st.info("👈 请先在「数据浏览」页下载全波段影像，或开启离线演示模式并搜索影像")
+
+    if st.button("🧭 AI 生成方案并执行", type="primary", disabled=not plan_prompt.strip()):
+        with st.spinner("AI 正在理解目标、制定方案并生成结论..."):
+            from utils.ai_copilot import run_copilot
+
+            result = run_copilot(
+                prompt=plan_prompt.strip(),
+                bands_data=copilot_bands,
+                satellite=copilot_satellite,
+            )
+
+        plan = result["plan"]
+        st.divider()
+        st.markdown(f"### 📍 研究目标")
+        st.write(plan_prompt.strip())
+        st.caption(
+            f"AI 模式：{'DeepSeek AI' if result['llm_available'] else '本地规则引擎'} | "
+            f"研究区：{plan['study_area']} | "
+            f"推荐模块：{' → '.join(plan['modules'])}"
+        )
+
+        st.markdown("### 🗂️ AI 推荐执行方案")
+        plan_rows = [
+            {"步骤": s["step"], "模块": s["module"], "执行内容": s["action"], "预期成果": s["output"]}
+            for s in plan["steps"]
+        ]
+        import pandas as pd
+
+        st.dataframe(pd.DataFrame(plan_rows), width="stretch", hide_index=True)
+
+        if plan.get("knowledge"):
+            with st.expander("📚 注入的遥感知识库", expanded=False):
+                st.markdown(plan["knowledge"])
+
+        platform_ctx = plan.get("platform_context", "")
+        if platform_ctx and "尚未完成" not in platform_ctx:
+            with st.expander("🧠 AI 已感知你的分析状态", expanded=False):
+                st.markdown(platform_ctx.replace("\n", "  \n"))
+
+        if result.get("scan"):
+            scan = result["scan"]
+            st.markdown("### 🧮 快速扫描指标")
+            c1, c2, c3, c4 = st.columns(4)
+            with c1:
+                st.metric("NDVI 均值", f"{scan['ndvi_mean']:.4f}")
+            with c2:
+                st.metric("植被覆盖", f"{scan['vegetation_ratio']*100:.1f}%")
+            with c3:
+                st.metric("水体覆盖", f"{scan['water_ratio']*100:.1f}%")
+            with c4:
+                st.metric("主导地物", scan["dominant_landcover"])
+            if "nddi_mean" in scan:
+                c5, c6 = st.columns(2)
+                with c5:
+                    st.metric("NDDI 均值", f"{scan['nddi_mean']:.4f}")
+                with c6:
+                    st.metric("干旱风险", f"{scan['drought_risk_ratio']*100:.1f}%")
+            if "ndsi_salinity_mean" in scan:
+                c7, c8 = st.columns(2)
+                with c7:
+                    st.metric("盐分指数均值", f"{scan['ndsi_salinity_mean']:.4f}")
+                with c8:
+                    st.metric("盐渍化风险", f"{scan['salinity_ratio']*100:.1f}%")
+        else:
+            st.info("📌 本次未提供影像，仅生成研究方案。可在上方选择共享影像或上传 GeoTIFF 后再次执行。")
+
+        st.markdown("### 🧠 AI 研究结论")
+        report_esc = __import__("html").escape(result["report"] or "")
+        st.markdown(
+            f"<div style='background:#f6fbf8;border-left:4px solid #2ecc71;"
+            f"padding:16px 20px;border-radius:8px;line-height:1.95;font-size:14px;'>"
+            f"{report_esc}</div>",
+            unsafe_allow_html=True,
+        )
+        st.download_button(
+            "📥 下载研究结论 (Markdown)",
+            (f"# Geo AI 研究结论\n\n**研究目标**：{plan_prompt.strip()}\n\n"
+             f"**研究区**：{plan['study_area']}\n\n"
+             f"**推荐模块**：{'、'.join(plan['modules'])}\n\n"
+             f"**AI 结论**：\n{result['report']}").encode("utf-8"),
+            file_name="geo_ai_research_conclusion.md",
+            mime="text/markdown",
+        )
 
 # ============================================================
 # Tab 1: AI 对话助手
