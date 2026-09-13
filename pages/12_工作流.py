@@ -13,7 +13,7 @@ from PIL import Image
 import re
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-from config import STUDY_AREAS, COLLECTIONS
+from config import STUDY_AREAS, COLLECTIONS, APP_VERSION
 from utils.error_handler import StreamlitErrorBoundary
 from utils.pc_data import search_images, download_multiband
 
@@ -551,7 +551,7 @@ with tab_report:
         </div>
 
         <div class="footer">
-        <p>Geo AI 干旱区遥感智能分析平台 v1.23 | 自动生成</p>
+        <p>Geo AI 干旱区遥感智能分析平台 {APP_VERSION} | 自动生成</p>
         </div>
         </body></html>
         """
