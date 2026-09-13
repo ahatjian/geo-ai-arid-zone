@@ -450,6 +450,7 @@ def download_multiband(item, output_path, collection="Sentinel-2 L2A", band_name
 
     try:
         import rasterio
+        from utils.logging_config import LogTimer
 
         band_keys = [bands[b] for b in band_names]
 
@@ -462,22 +463,24 @@ def download_multiband(item, output_path, collection="Sentinel-2 L2A", band_name
         # 读取所有波段
         all_bands = []
         total_bands = len(band_keys)
-        for i, bk in enumerate(band_keys):
-            href = item.assets[bk].href
-            data = rioxarray.open_rasterio(href).squeeze()
-            # 重采样到统一尺寸
-            if data.shape != first_data.shape:
-                data = data.rio.reproject_match(first_data)
-            band_values = data.values
-            if band_values.ndim == 3:
-                band_values = band_values[i] if i < len(band_values) else band_values[0]
-            all_bands.append(band_values.astype(first_data.dtype))
-            # 进度回调 (每完成一个波段)
-            if progress_callback:
-                try:
-                    progress_callback(i + 1, total_bands)
-                except Exception:
-                    pass
+        # 6 波段下载是全平台最慢的单步操作 (30s-2min), 服务端需要留耗时记录
+        with LogTimer(f"下载多波段 {item.id} ({total_bands}波段)"):
+            for i, bk in enumerate(band_keys):
+                href = item.assets[bk].href
+                data = rioxarray.open_rasterio(href).squeeze()
+                # 重采样到统一尺寸
+                if data.shape != first_data.shape:
+                    data = data.rio.reproject_match(first_data)
+                band_values = data.values
+                if band_values.ndim == 3:
+                    band_values = band_values[i] if i < len(band_values) else band_values[0]
+                all_bands.append(band_values.astype(first_data.dtype))
+                # 进度回调 (每完成一个波段)
+                if progress_callback:
+                    try:
+                        progress_callback(i + 1, total_bands)
+                    except Exception:
+                        pass
 
         # 写入多波段 TIFF
         stack = np.stack(all_bands, axis=0)

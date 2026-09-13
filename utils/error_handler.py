@@ -149,6 +149,12 @@ class StreamlitErrorBoundary:
         if exc_type is not None:
             self._error_occurred = True
 
+            # 无论是否在 Streamlit 上下文中都留一条结构化错误记录,
+            # 便于在服务器日志里同时看到"用户看到了什么"与"服务端出了什么"
+            from utils.logging_config import log_error
+            log_error(self.page_name, exc_val,
+                      context={"exception_type": exc_type.__name__})
+
             if self.st is not None:
                 self.st.error(f"## ⚠️ {self.page_name} 发生错误")
                 self.st.error(f"**{exc_type.__name__}**: {str(exc_val)}")
@@ -163,8 +169,7 @@ class StreamlitErrorBoundary:
                     "或刷新页面重试。如问题持续存在, 请联系管理员。"
                 )
             else:
-                import sys
-                print(f"[{self.page_name}] 错误: {exc_val}", file=sys.stderr)
+                # 错误摘要已由 log_error 输出, 这里只补完整堆栈
                 traceback.print_exception(exc_type, exc_val, exc_tb)
 
             return True  # 抑制异常

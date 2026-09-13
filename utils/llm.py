@@ -19,6 +19,7 @@ LLM 智能查询模块 — DeepSeek API 集成
 import os
 import re
 import json
+import time
 import logging
 from typing import Optional, Dict
 from datetime import datetime
@@ -175,6 +176,9 @@ def query_deepseek(prompt: str, api_key: Optional[str] = None) -> Dict:
         return fallback_parse(prompt)
 
     import requests
+    from utils.logging_config import log_api_call
+
+    started = time.time()
     last_error: Optional[Exception] = None
     for attempt in range(DEEPSEEK_MAX_RETRIES + 1):
         try:
@@ -204,16 +208,19 @@ def query_deepseek(prompt: str, api_key: Optional[str] = None) -> Dict:
             json_match = re.search(r'\{[^{}]+\}', content, re.DOTALL)
             if json_match:
                 parsed = json.loads(json_match.group())
+                log_api_call("DeepSeek", time.time() - started, success=True,
+                             status=f"第 {attempt + 1} 次尝试")
                 return _validate_result(parsed)
             raise ValueError(f"无法从响应解析 JSON: {content[:200]}")
         except Exception as e:
             last_error = e
             logger.warning(f"DeepSeek 请求失败 (第 {attempt + 1} 次): {e}")
             if attempt < DEEPSEEK_MAX_RETRIES:
-                import time
                 time.sleep(1.5 * (attempt + 1))
 
     logger.debug(f"DeepSeek 请求全部失败, 降级到模板匹配: {last_error}")
+    log_api_call("DeepSeek", time.time() - started, success=False,
+                 status=f"{DEEPSEEK_MAX_RETRIES + 1} 次尝试后降级模板匹配")
     return fallback_parse(prompt)
 
 

@@ -3,14 +3,21 @@
 ==============
 平台可观测性基础 — 统一日志 + API 调用追踪
 
+所有记录写入名为 "geo-ai" 的统一 logger (带时间戳的 StreamHandler):
+Streamlit 中会出现在运行终端, 部署到服务器时可被日志采集器接管。
+
 使用:
-  from utils.logging_config import log, LogTimer
+  from utils.logging_config import log_info, log_error, log_api_call, LogTimer
 
   with LogTimer("STAC search"):
       results = search_images(...)
   # 自动记录: [TIMER] STAC search: 2.34s
 
-  log.info("模块名", message="操作说明", **kwargs)
+  log_api_call("DeepSeek", 1.23, success=True, status="第 1 次尝试")
+  log_error("工作流", exc, context={"step": "download"})
+
+注: 早期版本文档写的是 `from utils.logging_config import log`, 但本模块
+从未导出过名为 `log` 的对象 —— 此处已更正为实际的具名函数。
 """
 
 import time
