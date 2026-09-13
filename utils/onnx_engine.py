@@ -31,6 +31,9 @@ ONNX_PROVIDERS = [
 # Sentinel-2 常见波段数
 S2_BAND_COUNTS = {4, 6, 10, 13}
 
+# 波段数上限 — 用于推断输入是 (C, H, W) 还是 (H, W, C)
+MAX_BANDS = max(S2_BAND_COUNTS)
+
 # 默认滑动窗口参数
 DEFAULT_WINDOW_SIZE = 512
 DEFAULT_OVERLAP = 256
@@ -282,6 +285,32 @@ def _verify_onnx_export(model, onnx_path, dummy_input, input_names, output_names
 # ONNX 滑动窗口推理 (核心)
 # ============================================
 
+def _ensure_chw(input_array: np.ndarray) -> np.ndarray:
+    """把 (H, W, C) 输入转成 (C, H, W); 已是 (C, H, W) 则原样返回。
+
+    判别依据是波段数与空间尺寸的数量级差异: 遥感影像的波段数有物理上限
+    (Sentinel-2 全波段 13 个), 而空间尺寸通常远大于此, 因此只需看
+    "哪一维小到像波段数"。仅当首尾维度都超过上限时才真正歧义,
+    此时按 (C, H, W) 处理并告警 — 生产调用点传的都是该布局。
+    """
+    if input_array.ndim != 3:
+        return input_array
+
+    n_first, n_last = input_array.shape[0], input_array.shape[-1]
+
+    if n_last <= MAX_BANDS < n_first:
+        return np.transpose(input_array, (2, 0, 1))  # (H, W, C) -> (C, H, W)
+
+    if n_first > MAX_BANDS and n_last > MAX_BANDS:
+        warnings.warn(
+            f"无法判断输入布局 (形状 {input_array.shape}): 首尾维度均 > {MAX_BANDS}。"
+            f"按 (C, H, W) 处理; 若实际为 (H, W, C) 请先自行 transpose。",
+            stacklevel=2,
+        )
+
+    return input_array
+
+
 def run_onnx_inference(
     onnx_model_path: str,
     input_array: np.ndarray,
@@ -320,13 +349,7 @@ def run_onnx_inference(
     start_time = time.time()
 
     # 确保输入为 (C, H, W)
-    if input_array.ndim == 3:
-        if input_array.shape[0] > input_array.shape[-1]:
-            pass  # already (C, H, W)
-        elif input_array.shape[-1] < min(input_array.shape[:2]):
-            pass  # already (C, H, W)
-        else:
-            input_array = np.transpose(input_array, (2, 0, 1))  # (H, W, C) -> (C, H, W)
+    input_array = _ensure_chw(input_array)
 
     n_channels, h, w = input_array.shape
 

@@ -89,6 +89,8 @@ def create_timeseries_animation(
         raise ValueError(f"data_stack 必须是 3D (H,W,T), 实际: {data_stack.ndim}D")
 
     H, W, T = data_stack.shape
+    if T == 0:
+        return None  # 无时相数据, 无帧可合成
 
     # 自动范围
     if vmin is None:
@@ -194,6 +196,8 @@ def create_multi_index_animation(
     first_name = list(data_stacks.keys())[0]
     first_data = np.asarray(list(data_stacks.values())[0], dtype=np.float64)
     T = first_data.shape[-1]
+    if T == 0:
+        return None  # 无时相数据, 无帧可合成
 
     # 默认配置
     default_configs = {
@@ -281,6 +285,8 @@ def create_trend_animation(
 
     timeseries = np.asarray(timeseries, dtype=np.float64)
     T = len(timeseries)
+    if T == 0:
+        return None  # 无时相数据, 无帧可合成
 
     frames = []
     for t in range(1, T + 1):
