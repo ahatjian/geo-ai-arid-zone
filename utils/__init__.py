@@ -105,6 +105,9 @@ from .transition import (
 from .aoi import (
     parse_geojson_bbox, validate_bbox, render_aoi_selector,
 )
+from .demo_mode import (
+    is_demo_mode, set_demo_mode, render_demo_mode_toggle,
+)
 from .evapotranspiration import (
     ET_LEVELS, ETResult, DEFAULT_ET_THRESHOLDS,
     calc_fvc, calc_emissivity, calc_atmospheric_emissivity,

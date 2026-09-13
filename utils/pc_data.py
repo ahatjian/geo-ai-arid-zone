@@ -76,7 +76,9 @@ def get_catalog():
 # 搜索影像
 # ============================================
 def _is_demo_mode():
-    return os.environ.get("GEOAI_DEMO_MODE", "0") == "1"
+    # 开关状态的唯一真源在 utils.demo_mode (UI 与底层模块共用)
+    from utils.demo_mode import is_demo_mode
+    return is_demo_mode()
 
 
 def search_images(

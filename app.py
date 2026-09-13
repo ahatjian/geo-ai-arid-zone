@@ -47,6 +47,30 @@ _PAGE_SPECS = [
     ("空间邻域分析", "pages/24_空间邻域分析.py", "🗺️"),
 ]
 
+# ============================================
+# 页面配置
+# ============================================
+# 置于所有 st 元素命令之前。各页面脚本也会各自调用 set_page_config
+# 覆盖标题 —— Streamlit 1.3x+ 起该命令允许多次调用且为叠加式,
+# 后一次只覆盖显式指定的参数。
+st.set_page_config(
+    page_title=APP_TITLE,
+    page_icon=APP_ICON,
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
+
+# ============================================
+# 全站共享侧边栏
+# ============================================
+# st.navigation 的入口文件充当各页面的共享 frame —— 在此渲染的
+# sidebar 元素出现在所有页面上, 因此全局开关接一次即可, 无需在
+# 25 个页面内重复。
+with st.sidebar:
+    from utils.demo_mode import render_demo_mode_toggle
+    render_demo_mode_toggle()
+    st.divider()
+
 _pages = [st.Page(_home_page, title="首页", icon="🏠", default=True)]
 for _title, _path, _icon in _PAGE_SPECS:
     _pages.append(st.Page(_path, title=_title, icon=_icon))
@@ -55,15 +79,6 @@ _selected_page = st.navigation(_pages)
 if _selected_page.title != "首页":
     _selected_page.run()
     st.stop()
-
-# 页面配置
-# ============================================
-st.set_page_config(
-    page_title=APP_TITLE,
-    page_icon=APP_ICON,
-    layout="wide",
-    initial_sidebar_state="expanded",
-)
 
 # ============================================
 # 自定义 CSS

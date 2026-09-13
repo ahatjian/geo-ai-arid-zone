@@ -14,6 +14,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from config import STUDY_AREAS, COLLECTIONS
 from utils.error_handler import StreamlitErrorBoundary, safe_execute
 from utils.aoi import render_aoi_selector
+from utils.demo_mode import is_demo_mode
 
 st.set_page_config(page_title="数据浏览", page_icon="🗺️", layout="wide")
 
@@ -55,15 +56,10 @@ with st.sidebar:
     cloud_cover = st.slider("最大云量 (%)", 0, 100, 20)
     max_items = st.slider("最大结果数", 1, 20, 5)
 
-    # 离线演示模式 (无网络/答辩断网时可完整跑通全流程)
-    demo_mode = st.checkbox(
-        "🧪 离线演示模式",
-        value=os.environ.get("GEOAI_DEMO_MODE", "0") == "1",
-        help="使用本地生成的模拟影像，离线演示时仍可完成搜索、分析、导出全流程",
-    )
-    os.environ["GEOAI_DEMO_MODE"] = "1" if demo_mode else "0"
+    # 离线演示模式开关已上移到 app.py 的全局侧边栏 (全站共享同一状态)
+    demo_mode = is_demo_mode()
     if demo_mode:
-        st.caption("✅ 已启用本地演示影像，当前不访问外部卫星服务")
+        st.caption("🧪 演示模式已开启 (开关在侧边栏顶部)")
 
     # 搜索按钮
     search_clicked = st.button("🔍 搜索影像", type="primary")
