@@ -35,6 +35,46 @@ def _find_chinese_font() -> Optional[str]:
     return None
 
 
+def _register_cjk_font() -> Optional[str]:
+    """注册可用的中文字体, 返回字体名; 全部失败时返回 None。
+
+    三级降级:
+      1. 系统中文字体 (Windows 微软雅黑/黑体, Linux Noto CJK) — 字形最好
+      2. reportlab 内置 CID 字体 STSong-Light — 不依赖任何字体文件,
+         Docker / 云服务器等未装中文字体的环境仍能产出中文 PDF
+      3. 均不可用 → None
+
+    第 2 级是关键: 服务器部署通常没有系统中文字体, 若只依赖第 1 级,
+    线上 PDF 报告会静默失效 (返回 None), 而本地开发机因有字体不会暴露。
+    """
+    font_name = "CJKFont"
+    font_path = _find_chinese_font()
+
+    if font_path:
+        try:
+            from reportlab.pdfbase import pdfmetrics
+            from reportlab.pdfbase.ttfonts import TTFont
+
+            # reportlab 4.x 可直接加载 .ttc 字体集合 (自动取首个子字体)。
+            # 原实现走 TTFontFile + subfontIndex, 但取的是不存在的
+            # `fileName` 属性 (实际叫 `filename`), 每次都抛 AttributeError,
+            # 靠外层 except 重试才没暴露 —— 已移除该分支。
+            pdfmetrics.registerFont(TTFont(font_name, font_path))
+            return font_name
+        except Exception:
+            pass  # 落到内置 CID 字体
+
+    try:
+        from reportlab.pdfbase import pdfmetrics
+        from reportlab.pdfbase.cidfonts import UnicodeCIDFont
+
+        cid_name = "STSong-Light"
+        pdfmetrics.registerFont(UnicodeCIDFont(cid_name))
+        return cid_name
+    except Exception:
+        return None
+
+
 def generate_report_pdf(
     title: str,
     meta_lines: List[str],
@@ -67,31 +107,9 @@ def generate_report_pdf(
     except ImportError:
         return None
 
-    font_path = _find_chinese_font()
-    if not font_path:
+    font_name = _register_cjk_font()
+    if not font_name:
         return None
-
-    try:
-        from reportlab.pdfbase import pdfmetrics
-        from reportlab.pdfbase.ttfonts import TTFont
-        from reportlab.pdfbase.ttfonts import TTFontFile
-
-        font_name = "CJKFont"
-        if font_path.endswith(".ttc"):
-            # .ttc 集合需要指定子字体索引 (0=常规)
-            from reportlab.pdfbase.ttfonts import TTFontFile as _TTF
-            ttffile = _TTF(font_path, subfontIndex=0)
-            pdfmetrics.registerFont(TTFont(font_name, ttffile.fileName))
-        else:
-            pdfmetrics.registerFont(TTFont(font_name, font_path))
-    except Exception:
-        # 字体注册失败则回退 (可能无法渲染中文)
-        try:
-            from reportlab.pdfbase import pdfmetrics
-            from reportlab.pdfbase.ttfonts import TTFont
-            pdfmetrics.registerFont(TTFont(font_name, font_path))
-        except Exception:
-            return None
 
     # ---- 样式 ----
     title_style = ParagraphStyle(

@@ -221,6 +221,47 @@ class TestPdfReport:
         assert pdf is not None and pdf[:4] == b"%PDF"
 
 
+class TestPdfFontFallback:
+    """PDF 中文字体的三级降级。
+
+    这一段是 CI 首次运行抓出来的: 本地 Windows 有微软雅黑, 测试全绿;
+    GitHub runner (以及任何 Linux 服务器) 没装中文字体, 字体查找返回
+    None, PDF 直接返回 None —— 线上"PDF 科研报告"功能静默失效。
+    """
+
+    def test_survives_without_any_system_font(self, monkeypatch):
+        """模拟 Linux/Docker: 系统无中文字体时仍须产出 PDF"""
+        import utils.pdf_report as pr
+        monkeypatch.setattr(pr, "_find_chinese_font", lambda: None)
+
+        pdf = pr.generate_report_pdf(
+            "塔里木盆地植被分析报告",
+            ["研究区: 塔里木盆地"],
+            [{"heading": "植被状况", "content": "NDVI 均值 0.32。"}],
+        )
+        assert pdf is not None
+        assert pdf[:4] == b"%PDF"
+
+    def test_cid_font_used_as_fallback(self, monkeypatch):
+        """无系统字体时应回落到 reportlab 内置 CID 字体"""
+        import utils.pdf_report as pr
+        monkeypatch.setattr(pr, "_find_chinese_font", lambda: None)
+        assert pr._register_cjk_font() == "STSong-Light"
+
+    def test_system_font_preferred_when_present(self):
+        """有系统字体时优先用系统字体 (字形覆盖更完整)"""
+        import utils.pdf_report as pr
+        if not pr._find_chinese_font():
+            pytest.skip("本机未安装系统中文字体")
+        assert pr._register_cjk_font() == "CJKFont"
+
+    def test_registration_failure_falls_back_not_raises(self, monkeypatch):
+        """系统字体注册抛异常时也要降级, 而不是让 PDF 生成失败"""
+        import utils.pdf_report as pr
+        monkeypatch.setattr(pr, "_find_chinese_font", lambda: "/nonexistent/font.ttf")
+        assert pr._register_cjk_font() == "STSong-Light"
+
+
 # ============================================================
 # 云掩膜资产配置 — 页面据此自动获取 SCL / QA_PIXEL
 # ============================================================
