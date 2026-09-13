@@ -78,3 +78,5 @@ logs/
 # Jupyter
 .ipynb_checkpoints/
 .env
+
+.pytest_tmp/
