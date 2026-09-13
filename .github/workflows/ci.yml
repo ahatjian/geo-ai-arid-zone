@@ -1,0 +1,84 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:  # 允许手动触发
+
+# 同一分支的新推送取消仍在运行的旧任务
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ==========================================
+  # Lint — 只装 ruff, 秒级反馈
+  # ==========================================
+  lint:
+    name: Lint (ruff)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install ruff
+        run: pip install ruff
+
+      # 规则集见 pyproject.toml 的 [tool.ruff.lint]
+      - name: Ruff check
+        run: ruff check .
+
+  # ==========================================
+  # Test — 完整依赖 + 全量测试
+  # ==========================================
+  test:
+    name: Test (pytest)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      # 先单独装 CPU 版 torch/torchvision。
+      # 直接装 requirements.txt 会从 PyPI 拉到 ~2GB 的 CUDA wheel,
+      # 而 CI 没有 GPU, 纯属浪费 (也没有 CUDA 运行时)。
+      - name: Install CPU PyTorch
+        run: |
+          python -m pip install --upgrade pip
+          pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      # requirements.txt 是面向部署的, 不含测试工具
+      - name: Install test tools
+        run: pip install pytest pytest-cov
+
+      - name: Run tests
+        run: python -m pytest tests/ -q --cov=utils --cov-report=term-missing
+
+  # ==========================================
+  # Config — 校验 app.py 能正常导入 (捕获导航/配置层错误)
+  # ==========================================
+  smoke:
+    name: Smoke (import app + pages compile)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Compile all Python files
+        run: |
+          python -m compileall -q pages utils app.py config.py
+          echo "✅ 全部编译通过"

@@ -25,9 +25,12 @@
 import os
 import tempfile
 import zipfile
-from typing import Optional, List, Dict, Tuple
+from typing import Optional, List, Dict, Tuple, TYPE_CHECKING
 
 import numpy as np
+
+if TYPE_CHECKING:  # 仅供类型注解解析, 运行时零开销
+    import geopandas as gpd
 import pandas as pd
 
 # ============================================

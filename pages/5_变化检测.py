@@ -45,6 +45,140 @@ st.title("🔄 双时相变化检测")
 st.markdown("自动搜索两期卫星影像或手动上传，计算指数差异并识别多级变化区域")
 
 # ============================================
+# 共享分析函数 (STAC模式调用)
+# ============================================
+def _run_change_analysis(t1_path, t2_path, idx_cfg, method, threshold, pixel_size):
+    """执行变化检测核心分析，结果存入 session_state"""
+    from utils.indices import load_bands_from_geotiff, calc_ndvi, calc_mndwi, calc_evi
+    import rasterio
+    from rasterio.warp import reproject, Resampling
+
+    # 加载所有6波段 (STAC下载的是标准6波段 multiband)
+    bands_t1 = load_bands_from_geotiff(t1_path)
+    bands_t2 = load_bands_from_geotiff(t2_path)
+
+    b_t1 = bands_t1["bands"]
+    b_t2 = bands_t2["bands"]
+
+    # multiband下载: band 1=blue, 2=green, 3=red, 4=nir, 5=swir1, 6=swir2
+    # load_bands_from_geotiff 默认 1-based, 传入None则用标准范围
+    # 直接按键获取
+    blue1, green1, red1, nir1, swir1_1 = b_t1[1], b_t1[2], b_t1[3], b_t1[4], b_t1[5]
+    blue2, green2, red2, nir2, swir1_2 = b_t2[1], b_t2[2], b_t2[3], b_t2[4], b_t2[5]
+
+    # 计算指数
+    if idx_cfg["key"] == "ndvi":
+        index_t1 = calc_ndvi(red1, nir1)
+        index_t2 = calc_ndvi(red2, nir2)
+    elif idx_cfg["key"] == "mndwi":
+        index_t1 = calc_mndwi(green1, swir1_1)
+        index_t2 = calc_mndwi(green2, swir1_2)
+    elif idx_cfg["key"] == "evi":
+        index_t1 = calc_evi(blue1, red1, nir1)
+        index_t2 = calc_evi(blue2, red2, nir2)
+
+    # 空间对齐
+    h_min = min(index_t1.shape[0], index_t2.shape[0])
+    w_min = min(index_t1.shape[1], index_t2.shape[1])
+    index_t1 = index_t1[:h_min, :w_min]
+    index_t2 = index_t2[:h_min, :w_min]
+
+    valid_mask = np.isfinite(index_t1) & np.isfinite(index_t2)
+    total_pixels = max(np.sum(valid_mask), 1)
+
+    # 变化计算
+    if method == "差值法 (Difference)":
+        change_raw = index_t2 - index_t1
+    else:
+        safe_t1 = np.where(index_t1 == 0, 1e-6, index_t1)
+        change_raw = index_t2 / safe_t1
+
+    # 7级分类
+    change_class = classify_multilevel(change_raw, valid_mask, threshold)
+
+    level_counts = count_levels(change_class, valid_mask)
+    pixel_area_km2 = (pixel_size * pixel_size) / 1_000_000
+
+    idx_t1_mean = np.nanmean(index_t1[valid_mask])
+    idx_t2_mean = np.nanmean(index_t2[valid_mask])
+
+    st.session_state["cd_change_class"] = change_class
+    st.session_state["cd_index_t1"] = index_t1
+    st.session_state["cd_index_t2"] = index_t2
+    st.session_state["cd_level_counts"] = level_counts
+    st.session_state["cd_stats"] = {
+        "total_pixels": total_pixels,
+        "pixel_area_km2": pixel_area_km2,
+        "idx_t1_mean": idx_t1_mean,
+        "idx_t2_mean": idx_t2_mean,
+        "method": method,
+        "threshold": threshold,
+        "pixel_size": pixel_size,
+    }
+
+
+def _run_landcover_cross(change_class, bbox):
+    """土地覆盖交叉分析"""
+    try:
+        from utils.landcover import get_esa_landcover
+
+        # get_esa_landcover 直接返回 (class_array, meta)，无需下载到本地文件
+        esa_data, _meta = get_esa_landcover(bbox)
+        if esa_data is None or esa_data.size == 0:
+            st.session_state["cd_landcover_cross"] = None
+            return
+
+        # 对齐 ESA 和 change_class
+        h_min = min(change_class.shape[0], esa_data.shape[0])
+        w_min = min(change_class.shape[1], esa_data.shape[1])
+        cc = change_class[:h_min, :w_min]
+        lc = esa_data[:h_min, :w_min]
+
+        valid = (lc > 0) & (lc <= 11)  # ESA 11类
+
+        # ESA 类别简并
+        ESA_NAMES = {
+            10: "森林", 20: "灌木", 30: "草地",
+            40: "农田", 50: "建设用地",
+            60: "裸地/稀疏植被", 70: "冰雪",
+            80: "水体", 90: "湿地", 100: "苔原",
+        }
+
+        # 简并到主要类别
+        def simplify_lc(val):
+            if val in (10, 20): return "森林/灌木"
+            if val == 30: return "草地"
+            if val == 40: return "农田"
+            if val == 50: return "建设用地"
+            if val in (60, 70, 90, 100): return "裸地/稀疏植被"
+            if val == 80: return "水体"
+            return "其他"
+
+        simple_lc = np.array([simplify_lc(v) for v in lc.flatten()]).reshape(lc.shape)
+
+        # 交叉表: 变化级别 × 土地覆盖
+        levels = list(range(-3, 4))
+        from utils.visualization import MULTILEVEL_LABELS
+        lc_types = ["森林/灌木", "草地", "农田", "建设用地", "裸地/稀疏植被", "水体", "其他"]
+
+        cross = {}
+        for lv in levels:
+            cross[lv] = {}
+            for lt in lc_types:
+                cross[lv][lt] = int(np.sum((cc == lv) & (simple_lc == lt)))
+
+        st.session_state["cd_landcover_cross"] = {
+            "data": cross,
+            "levels": levels,
+            "lc_types": lc_types,
+        }
+    except Exception as e:
+        print(f"Landcover cross failed: {e}")
+        st.session_state["cd_landcover_cross"] = None
+
+
+
+# ============================================
 # 侧边栏 - 模式 + 参数
 # ============================================
 with st.sidebar:
@@ -571,139 +705,6 @@ else:
                     }
                     st.session_state["cd_analysis_done"] = True
                     st.rerun()
-
-
-# ============================================
-# 共享分析函数 (STAC模式调用)
-# ============================================
-def _run_change_analysis(t1_path, t2_path, idx_cfg, method, threshold, pixel_size):
-    """执行变化检测核心分析，结果存入 session_state"""
-    from utils.indices import load_bands_from_geotiff, calc_ndvi, calc_mndwi, calc_evi
-    import rasterio
-    from rasterio.warp import reproject, Resampling
-
-    # 加载所有6波段 (STAC下载的是标准6波段 multiband)
-    bands_t1 = load_bands_from_geotiff(t1_path)
-    bands_t2 = load_bands_from_geotiff(t2_path)
-
-    b_t1 = bands_t1["bands"]
-    b_t2 = bands_t2["bands"]
-
-    # multiband下载: band 1=blue, 2=green, 3=red, 4=nir, 5=swir1, 6=swir2
-    # load_bands_from_geotiff 默认 1-based, 传入None则用标准范围
-    # 直接按键获取
-    blue1, green1, red1, nir1, swir1_1 = b_t1[1], b_t1[2], b_t1[3], b_t1[4], b_t1[5]
-    blue2, green2, red2, nir2, swir1_2 = b_t2[1], b_t2[2], b_t2[3], b_t2[4], b_t2[5]
-
-    # 计算指数
-    if idx_cfg["key"] == "ndvi":
-        index_t1 = calc_ndvi(red1, nir1)
-        index_t2 = calc_ndvi(red2, nir2)
-    elif idx_cfg["key"] == "mndwi":
-        index_t1 = calc_mndwi(green1, swir1_1)
-        index_t2 = calc_mndwi(green2, swir1_2)
-    elif idx_cfg["key"] == "evi":
-        index_t1 = calc_evi(blue1, red1, nir1)
-        index_t2 = calc_evi(blue2, red2, nir2)
-
-    # 空间对齐
-    h_min = min(index_t1.shape[0], index_t2.shape[0])
-    w_min = min(index_t1.shape[1], index_t2.shape[1])
-    index_t1 = index_t1[:h_min, :w_min]
-    index_t2 = index_t2[:h_min, :w_min]
-
-    valid_mask = np.isfinite(index_t1) & np.isfinite(index_t2)
-    total_pixels = max(np.sum(valid_mask), 1)
-
-    # 变化计算
-    if method == "差值法 (Difference)":
-        change_raw = index_t2 - index_t1
-    else:
-        safe_t1 = np.where(index_t1 == 0, 1e-6, index_t1)
-        change_raw = index_t2 / safe_t1
-
-    # 7级分类
-    change_class = classify_multilevel(change_raw, valid_mask, threshold)
-
-    level_counts = count_levels(change_class, valid_mask)
-    pixel_area_km2 = (pixel_size * pixel_size) / 1_000_000
-
-    idx_t1_mean = np.nanmean(index_t1[valid_mask])
-    idx_t2_mean = np.nanmean(index_t2[valid_mask])
-
-    st.session_state["cd_change_class"] = change_class
-    st.session_state["cd_index_t1"] = index_t1
-    st.session_state["cd_index_t2"] = index_t2
-    st.session_state["cd_level_counts"] = level_counts
-    st.session_state["cd_stats"] = {
-        "total_pixels": total_pixels,
-        "pixel_area_km2": pixel_area_km2,
-        "idx_t1_mean": idx_t1_mean,
-        "idx_t2_mean": idx_t2_mean,
-        "method": method,
-        "threshold": threshold,
-        "pixel_size": pixel_size,
-    }
-
-
-def _run_landcover_cross(change_class, bbox):
-    """土地覆盖交叉分析"""
-    try:
-        from utils.landcover import get_esa_landcover
-
-        # get_esa_landcover 直接返回 (class_array, meta)，无需下载到本地文件
-        esa_data, _meta = get_esa_landcover(bbox)
-        if esa_data is None or esa_data.size == 0:
-            st.session_state["cd_landcover_cross"] = None
-            return
-
-        # 对齐 ESA 和 change_class
-        h_min = min(change_class.shape[0], esa_data.shape[0])
-        w_min = min(change_class.shape[1], esa_data.shape[1])
-        cc = change_class[:h_min, :w_min]
-        lc = esa_data[:h_min, :w_min]
-
-        valid = (lc > 0) & (lc <= 11)  # ESA 11类
-
-        # ESA 类别简并
-        ESA_NAMES = {
-            10: "森林", 20: "灌木", 30: "草地",
-            40: "农田", 50: "建设用地",
-            60: "裸地/稀疏植被", 70: "冰雪",
-            80: "水体", 90: "湿地", 100: "苔原",
-        }
-
-        # 简并到主要类别
-        def simplify_lc(val):
-            if val in (10, 20): return "森林/灌木"
-            if val == 30: return "草地"
-            if val == 40: return "农田"
-            if val == 50: return "建设用地"
-            if val in (60, 70, 90, 100): return "裸地/稀疏植被"
-            if val == 80: return "水体"
-            return "其他"
-
-        simple_lc = np.array([simplify_lc(v) for v in lc.flatten()]).reshape(lc.shape)
-
-        # 交叉表: 变化级别 × 土地覆盖
-        levels = list(range(-3, 4))
-        from utils.visualization import MULTILEVEL_LABELS
-        lc_types = ["森林/灌木", "草地", "农田", "建设用地", "裸地/稀疏植被", "水体", "其他"]
-
-        cross = {}
-        for lv in levels:
-            cross[lv] = {}
-            for lt in lc_types:
-                cross[lv][lt] = int(np.sum((cc == lv) & (simple_lc == lt)))
-
-        st.session_state["cd_landcover_cross"] = {
-            "data": cross,
-            "levels": levels,
-            "lc_types": lc_types,
-        }
-    except Exception as e:
-        print(f"Landcover cross failed: {e}")
-        st.session_state["cd_landcover_cross"] = None
 
 
 # ============================================

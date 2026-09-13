@@ -120,7 +120,6 @@ def _prepare_raster_for_write(arr):
 
 def save_processed_raster(arr, default_name, key_suffix, source_path):
     import os
-    import tempfile
     import rasterio
     from utils.save_ui import render_save_button
 
