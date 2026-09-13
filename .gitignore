@@ -80,3 +80,8 @@ logs/
 .env
 
 .pytest_tmp/
+
+# 测试覆盖率产物
+.coverage
+.coverage.*
+htmlcov/
