@@ -260,8 +260,8 @@ docker build -t geo-ai-app . && docker run -p 8501:8501 geo-ai-app
 ## 状态
 
 - **版本**: v1.24 | **页面**: 25 | **工具模块**: 48
-- **测试**: 530 用例通过 (1 项按条件跳过) | **部署**: Streamlit Cloud ✅
-- **CI**: GitHub Actions (ruff lint + pytest + 编译检查)
+- **测试**: 534 用例通过 (1 项按条件跳过) | **覆盖率**: 63% | **部署**: Streamlit Cloud ✅
+- **CI**: GitHub Actions 全绿 — ruff lint + pytest + 编译检查
 - **Python**: 3.11 | **PyTorch**: 2.11.0+cpu
 
 ## License
